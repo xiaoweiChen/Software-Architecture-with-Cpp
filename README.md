@@ -2,7 +2,7 @@
 
 Design modern systems using effective architecture concepts, design patterns, and techniques with C++20
 
-(*使用有效的体系结构概念，设计模式和C++20进行现代的系统设计*)
+(*使用有效的体系结构概念，设计模式和C++20进行系统设计*)
 
 * 作者：Adrian Ostrowski，Piotr Gaczkowski
 
