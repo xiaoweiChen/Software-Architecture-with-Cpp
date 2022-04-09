@@ -18,61 +18,60 @@ Design modern systems using effective architecture concepts, design patterns, an
 
 ***通过理解诸如微服务、DevOps和使用现代C++标准和特性的本地云等架构，将业务需求应用到IT基础设施，并交付高质量的产品***
 
-Software architecture refers to the high-level design of complex applications. It is evolving just like the languages we use, but there are architectural concepts and patterns that you can learn to write high-performance apps in a high-level language without sacrificing readability and maintainability.
+软件体系结构是指复杂应用的高级设计。就像语言一样，它也在不断发展，但在不牺牲可读性和可维护性的情况下，可以了解一些架构概念和模式，以及用高级语言编写高性能的应用。
 
-If you're working with modern C++, this practical guide will help you put your knowledge to work and design distributed, large-scale apps. You'll start by getting up to speed with architectural concepts, including established patterns and rising trends, then move on to understanding what software architecture actually is and start exploring its components.
+如果正在使用现代C++，本书会把相应的知识运用到实际工作中，设计分布式的、大规模的应用。首先，快速了解体系结构概念，包括已建立的模式和正在兴起的趋势，然后继续理解什么是软件体系结构，并开始研究其组件。
 
-Next, you'll discover the design concepts involved in application architecture and the patterns in software development, before going on to learn how to build, package, integrate, and deploy your components. In the concluding chapters, you'll explore different architectural qualities, such as maintainability, reusability, testability, performance, scalability, and security. Finally, you will get an overview of distributed systems, such as service-oriented architecture, microservices, and cloud-native, and understand how to apply them in application development.
+接下来，在学习如何构建、打包、集成和部署组件之前，再了解应用程序体系结构中涉及的设计概念和软件开发中的模式。在最后一章中，将探讨不同的体系结构质量，例如：可维护性、可重用性、可测试性、性能、可扩展性和安全性。最后，将概述分布式系统，如面向服务的体系结构、微服务和本地云，并了解如何在应用开发中应用。
 
-By the end of this book, you'll be able to build distributed services using modern C++ and associated tools to deliver solutions as per your clients' requirements.
+本书的最后，将使用现代C++和相关工具构建分布式服务，从而根据客户的需求交付解决方案。
 
 #### 关键特性
 
-- Design scalable large-scale applications with the C++ programming language
-- Architect software solutions in a cloud-based environment with continuous integration and continuous delivery (CI/CD)
-- Achieve architectural goals by leveraging design patterns, language features, and useful tools
+- 用C++设计可扩展的大规模应用程序
+- 基于云的持续集成和持续交付(CI/CD)中的软件架构解决方案
+- 通过设计模式、语言特性和工具来实现体系结构的目标
 
 #### 内容纲要
 
-- Understand how to apply the principles of software architecture
-- Apply design patterns and best practices to meet your architectural goals
-- Write elegant, safe, and performant code using the latest C++ features
-- Build applications that are easy to maintain and deploy
-- Explore the different architectural approaches and learn to apply them as per your requirement
-- Simplify development and operations using application containers
-- Discover various techniques to solve common problems in software design and development
+- 理解如何应用软件架构的原则
+- 应用设计模式和最佳实践来满足体系结构的目标
+- 使用最新的C++特性编写优雅、安全、高效的代码
+- 构建易于维护和部署的应用
+- 探索不同体系结构的方法，并根据需求进行应用
+- 使用容器简化开发和操作
+- 了解在软件设计和开发中常见问题的解决方法
 
 ## 适读人群
 
-This software architecture C++ programming book is for experienced C++ developers looking to become software architects or develop enterprise-grade applications.
+这本软件架构C++编程书是为有经验的C++开发者准备的，并且这些开发者希望成为软件架构师，或想要开发企业级应用。
+
+为了帮助使用现代C++的开发者将能够将知识运用到软件架构的实践指南中，本书采取了实践的方法来实现相关方案，一定会让读者们感觉干货满满。
 
 ## 作者简介
 
-**[Adrian Ostrowski](https://www.amazon.com/Adrian-Ostrowski/e/B08ZQTDGHR/ref=aufs_dp_mata_dsk)** is a modern C++ enthusiast interested in the development of both the C++ language itself and the high-quality code written in it. A lifelong learner with over a decade of experience in the IT industry and more than 8 years of experience with C++ specifically, he's always eager to share his knowledge. His past projects range from parallel computing, through fiber networking, to working on a commodity exchange's trading system. Currently, he's one of the architects of Intel and Habana's integration with machine learning frameworks.
+**[Adrian Ostrowski](https://www.amazon.com/Adrian-Ostrowski/e/B08ZQTDGHR/ref=aufs_dp_mata_dsk)**是一个现代C++爱好者，对C++的开发和编写的高质量代码都很感兴趣。他在IT行业有超过十年的经验，特别是在C++方面有超过8年的经验，总是会与他人分享知识。其操刀的项目包括通过光纤网络进行并行计算，以及在商品交易所的交易系统上工作。目前，他是英特尔和Habana机器学习框架的设计师之一。
 
-In his spare time, Adrian used to promote music bands together with Piotr and has learned how to fly a glider. Currently, he likes riding his bicycle, going to music events, and browsing memes.
+在业余时间里，他曾与Piotr一起推广乐队，并学会了如何驾驶滑翔机。目前，他喜欢骑自行车、参加音乐活动和浏览一些网络梗。
 
-> To Agnieszka, for all her love and support
-> To Mateusz, for being a great mentor
-> To my parents, for sparking the curiosity in me
-> To my friends, for not being hidden and for all they do
+> 敬Agnieszka，感谢她的爱和支持
+> 敬Mateusz，我的良师益友
+> 敬我的父母，是你们激发了我的好奇心
+> 敬我的朋友们，感谢你们所做的一切
 >
 > <p align="right"> — Adrian Ostrowski</p>
 
-**[Piotr Gaczkowski](https://www.amazon.com/Piotr-Gaczkowski/e/B08Y7V74KM/ref=aufs_dp_mata_dsk)** has more than 10 years of experience in programming and practicing DevOps and uses his skills to improve people's lives. He likes building simple solutions to human problems, organizing cultural events, and teaching fellow professionals. Piotr is keen on automating boring activities and using his experience to share knowledge by conducting courses and writing articles about personal growth and remote work.
+**[Piotr Gaczkowski](https://www.amazon.com/Piotr-Gaczkowski/e/B08Y7V74KM/ref=aufs_dp_mata_dsk)**在编程和实践DevOps方面有超过10年的经验。他喜欢为问题构建简单的解决方案，组织文化活动，教授专业人士。Piotr热衷于将无聊的活动自动化，并利用自己的经验，通过开设课程、撰写有关个人成长和远程工作的文章来分享知识。
 
-He has worked in the IT industry both in full-time positions and as a freelancer, but his true passion is music. When not making his skills useful at work, you can find him building communities.
+他曾在IT行业从事全职工作和自由职业，但他真正热爱的是音乐。当他的技能不能在工作中发挥作用时，他就会去在建立社区。
 
-> To Emilia, who tolerated me when I was writing this book; my parents, who encouraged me to
-> learn coding; the mastermind group members who cheered me on in this journey; Hackerspace
-> Trójmiasto, for positive vibes; IOD, for reminding me that I love writing; 255, for the workouts;
-> and all the friends who shared the journey with me. Love you!
->
+> 致Emilia，她在我写这本书的时候容非常包容我；我的父母鼓励我编程；为我加油鼓劲的智囊团成员；Hackerspace Trójmiasto，气氛组重要成员；IOD，提醒我要保持对写作的热爱；255，检验工作；以及所有和我一起走过这段旅程的朋友们。爱你们！
+> 
 > <p align="right"> — Piotr Gaczkowski</p>
 
 ## 审评者介绍
 
-**Andrey Gavrilin** is a senior software engineer working for an international company that provides treasury management cloud solutions. He has an MSc degree in engineering (industrial automation) and has worked in different areas such as accounting and staffing, road data bank, web and Linux distribution development, and fintech. His interests include mathematics, electronics, embedded systems, full-stack web development, retro gaming, and retro programming.
+**Andrey Gavrilin**是一名高级软件工程师，就职于提供财务管理云解决方案的国际公司。他拥有工程(工业自动化)硕士学位，曾在会计和人力资源、道路数据库、Web和Linux发行开发以及金融科技等不同领域工作。他的兴趣包括数学、电子、嵌入式系统、全栈网页开发、复古游戏和复古编程。
 
 ## 本书相关
 
