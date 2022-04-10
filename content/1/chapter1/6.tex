@@ -1,0 +1,89 @@
+Let's now move closer to the programming language we'll be using the most throughout this book. C++ is a multi-paradigm language that has been around for a few decades now. During the years since its inception, it has changed a lot. When C++11 came out, Bjarne Stroustrup, the creator of the language, said that it felt like a completely new language. The release of C++20 marks another milestone in the evolution of this beast, bringing a similar revolution to how we write code. One thing, however, stayed the same during all those years: the language's philosophy.
+
+In short, it can be summarized by three rules:
+
+\begin{itemize}
+\item There should be no language beneath C++ (except assembly).
+\item You only pay for what you use.
+\item Offer high-level abstractions at low cost (there's a strong aim for zero-cost).
+\end{itemize}
+
+Not paying for what you don't use means that, for example, if you want to have your data member created on the stack, you can. Many languages allocate their objects on the heap, but it's not necessary for C++. Allocating on the heap has some cost to it – probably your allocator will have to lock a mutex for this, which can be a big burden in some types of applications. The good part is you can easily allocate variables without dynamically allocating memory each time pretty easily.
+
+High-level abstractions are what differentiate C++ from lower-level languages such as C or assembly. They allow for expressing ideas and intent directly in the source code, which plays great with the language's type safety. Consider the following code snippet:
+
+\begin{lstlisting}[style=styleCXX]
+struct Duration {
+	int millis_;
+};
+
+void example() {
+	auto d = Duration{};
+	d.millis_ = 100;
+	
+	auto timeout = 1; // second
+	d.millis_ = timeout; // ouch, we meant 1000 millis but assigned just 1
+}
+\end{lstlisting}
+
+A much better idea would be to leverage the type-safety features offered by the language:
+
+\begin{lstlisting}[style=styleCXX]
+#include <chrono>
+
+using namespace std::literals::chrono_literals;
+
+struct Duration {
+	std::chrono::milliseconds millis_;
+};
+
+void example() {
+	auto d = Duration{};
+	// d.millis_ = 100; // compilation error, as 100 could mean anything
+	d.millis_ = 100ms; // okay
+	auto timeout = 1s; // or std::chrono::seconds(1);
+	d.millis_ =
+		timeout; // okay, converted automatically to milliseconds
+}
+\end{lstlisting}
+
+The preceding abstraction can save us from mistakes and doesn't cost us anything while doing so; the assembly generated would be the same as for the first example. That's why it's called a zero-cost abstraction. Sometimes C++ allows us to use abstractions that actually result in better code than if they were not used. One example of a language feature that, when used, could often result in such benefit is coroutines from C++20.
+
+Another great set of abstractions, offered by the standard library, are algorithms. Which of the following code snippets do you think is easier to read and easier to prove bug-free? Which expresses the intent better?
+
+\begin{lstlisting}[style=styleCXX]
+// Approach #1
+int count_dots(const char *str, std::size_t len) {
+	int count = 0;
+	for (std::size_t i = 0; i < len; ++i) {
+		if (str[i] == '.') count++;
+	}
+	return count;
+}
+
+// Approach #2
+int count_dots(std::string_view str) {
+	return std::count(std::begin(str), std::end(str), '.');
+}
+\end{lstlisting}
+
+Okay, the second function has a different interface, but even it if was to stay the same, we could just create \texttt{std::string\_view} from the pointer and the length. Since it's such a lightweight type, it should be optimized away by your compiler.
+
+Using higher-level abstractions leads to simpler, more maintainable code. The C++ language has strived to provide zero-cost abstractions since its inception, so build upon that instead of redesigning the wheel using lower levels of abstraction.
+
+Speaking of simple and maintainable code, the next section introduces some rules and heuristics that are invaluable on the path to writing such code.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

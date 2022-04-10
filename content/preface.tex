@@ -1,0 +1,120 @@
+\begin{flushright}
+	\zihao{0} 前言
+\end{flushright}
+
+Modern C++ allows you to write high-performing applications in a high-level language without sacrificing readability and maintainability. There's more to software architecture than just language, though. We're going to show you how to design and build applications that are robust and scalable and that perform well.
+
+Complete with step-by-step explanations of essential concepts, practical examples, and selfassessment questions, you will begin by understanding the importance of architecture, looking at a case study of an actual application.
+
+You'll learn how to use established design patterns at the level of a single application, exploring how to make your applications robust, secure, performant, and maintainable. You'll then build higher-level services that connect multiple single applications using patterns such as service-oriented architecture, microservices, containers, and serverless technology.
+
+By the end of this book, you will be able to build distributed services using modern C++ and associated tools to deliver solutions that your clients will recommend.
+
+Are you interested in becoming a software architect or looking to learn more about modern trends in architecture? If so, this book should help you!
+
+\hspace*{\fill} \\ %插入空行
+\noindent\textbf{适读人群}
+
+为了帮助使用现代C++的开发者将能够将知识运用到软件架构的实践指南中，本书采取了实践的方法来实现相关方案，一定会让读者们感觉干货满满。
+
+\hspace*{\fill} \\ %插入空行
+\textbf{本书内容}
+
+\textit{第1章，Importance of Software Architecture and Principles of Great Design}。looks at why we
+design software in the first place.
+
+\textit{第2章，Architectural Styles}。covers the different approaches you can take in terms of
+architecture.
+
+\textit{第3章，Functional and Nonfunctional Requirements}。explores understanding the needs of clients.
+
+\textit{第4章，Architectural and System Design}。is all about creating effective software solutions.
+
+\textit{第5章，Leveraging C++ Language Features}。gets you speaking native C++.
+
+\textit{第6章，Design Patterns and C++}。focuses on modern C++ idioms and useful code constructs.
+
+\textit{第7章，Building and Packaging}。 is about getting code to production.
+
+\textit{第8章，Writing Testable Code}。teaches you how to find bugs before the clients do.
+
+\textit{第9章，Continuous Integration and Continuous Deployment}。introduces the modern way of automating software releases.
+
+\textit{第10章，Security in Code and Deployment}。is where you will learn how to make sure it's hard to break your systems.
+
+\textit{第11章，Performance}。looks at performance (of course!). C++ should be fast – can it be even faster?
+
+\textit{第12章，Service-Oriented Architecture}。sees you building systems based on services.
+
+\textit{第13章，Designing Microservices}。focuses on doing one thing only – designing microservices.
+
+\textit{第14章，Containers}。gives you a unified interface to build, package, and run applications.
+
+\textit{第15章，Cloud-Native Design}。goes beyond traditional infrastructure to explore cloud native design.
+
+\hspace*{\fill} \\ %插入空行
+\textbf{编译环境}
+
+The code examples in this book are mostly written for GCC 10. They should work with Clang or Microsoft Visual C++ as well, though certain features from C++20 may be missing in older versions of the compilers. To get a development environment as close to the authors' as possible, we advise you to use Nix (\url{https://nixos.org/download.html}) and direnv (\url{https://direnv.net/}) in a Linux-like environment. These two tools should configure the compilers and supporting packages for you if you run direnv allow in a directory containing examples.
+
+Without Nix and direnv, we can't guarantee that the examples will work correctly. If you're on macOS, Nix should work just fine. If you're on Windows, the Windows Subsystem for Linux 2 is a great way to have a Linux development environment with Nix.
+
+To install both tools, you have to run the following:
+
+\begin{tcblisting}{commandshell={}}
+# Install Nix
+curl -L https://nixos.org/nix/install | sh
+# Configure Nix in the current shell
+. $HOME/.nix-profile/etc/profile.d/nix.sh
+# Install direnv
+nix-env -i direnv
+# Download the code examples
+git clone
+https://github.com/PacktPublishing/Hands-On-Software-Architecture-with-Cpp.
+git
+# Change directory to the one with examples
+cd Hands-On-Software-Architecture-with-Cpp
+# Allow direnv and Nix to manage your development environment
+direnv allow
+\end{tcblisting}
+
+After executing the preceding command, Nix should download and install all the necessary dependencies. This might take a while but it helps to ensure we're using exactly the same tools.
+
+\textbf{如果你正在使用这本书的数字版本，我们建议自己输入代码或通过GitHub库访问代码(链接在下一节中提供)。这样做将帮助您避免与复制和粘贴代码相关的任何潜在错误}
+
+\hspace*{\fill} \\ %插入空行
+\textbf{下载示例}
+
+可以从GitHub网站\url{https://	github.com/PacktPublishing/Software-Architecture-with-Cpp}下载本书的示例代码文件。如果代码有更新，会在现有的GitHub库中更新。
+
+我们还有其他的代码包，还有丰富的书籍和视频目录，都在\url{https://github.com/PacktPublishing/}。去看看吧!
+
+\hspace*{\fill} \\ %插入空行
+\textbf{联系方式}
+
+我们欢迎读者的反馈。
+
+\textbf{反馈}：如果你对这本书的任何方面有疑问，需要在你的信息的主题中提到书名，并给我们发邮件到\url{customercare@packtpub.com}。
+
+\textbf{勘误}：尽管我们谨慎地确保内容的准确性，但错误还是会发生。如果您在本书中发现了错误，请向我们报告，我们将不胜感激。请访问\url{www.packtpub.com/support/errata}，选择相应书籍，点击勘误表提交表单链接，并输入详细信息。
+
+\textbf{盗版}:如果您在互联网上发现任何形式的非法拷贝，非常感谢您提供地址或网站名称。请通过\url{copyright@packt.com}与我们联系，并提供材料链接。
+
+\textbf{如果对成为书籍作者感兴趣}：如果你对某主题有专长，又想写一本书或为之撰稿，请访问\url{authors.packtpub.com}。
+
+\hspace*{\fill} \\ %插入空行
+\textbf{欢迎评论}
+
+请留下评论。当您阅读并使用了本书，为什么不在购买网站上留下评论呢？其他读者可以看到您的评论，并根据您的意见来做出购买决定。我们在Packt可以了解您对我们产品的看法，作者也可以看到您对他们撰写书籍的反馈。谢谢你！
+
+想要了解Packt的更多信息，请访问\url{packt.com}。
+
+
+
+
+
+
+
+
+
+

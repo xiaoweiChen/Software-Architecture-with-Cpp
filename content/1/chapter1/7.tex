@@ -1,0 +1,324 @@
+
+There are many principles to keep in mind when writing code. When writing objectoriented code, you should be familiar with the quartet of abstraction, encapsulation, inheritance, and polymorphism. Regardless of whether your writing C++ in a mostly objectoriented programming manner or not, you should keep in mind the principles behind the two acronyms: SOLID and DRY.
+
+SOLID is a set of practices that can help you write cleaner and less bug-prone software. It's an acronym made from the first letters of the five concepts behind it:
+
+\begin{itemize}
+\item Single responsibility principle
+\item Open-closed principle
+\item Liskov substitution principle
+\item Interface segregation
+\item Dependency Inversion
+\end{itemize}
+
+We assume you already have the idea of how those principles relate to object-oriented programming, but since C++ is not always object-oriented, let's look at how they apply to different areas.
+
+Some of the examples use dynamic polymorphism, but the same would apply to static polymorphism. If you're writing performance-oriented code (and you probably are if you chose C++), you should know that using dynamic polymorphism can be a bad idea in terms of performance, especially on the hot path. Further on in the book, you'll learn how to write statically polymorphic classes using the \textbf{Curiously Recurring Template Pattern (CRTP)}.
+
+\subsubsubsection{1.7.1\hspace{0.2cm}Single responsibility principle}
+
+In short, the Single Responsibility Principle (SRP) means each code unit should have exactly one responsibility. This means writing functions that do one thing only, creating types that are responsible for a single thing, and creating higher-level components that are focused on one aspect only. 
+
+This means that if your class manages some type of resources, such as file handles, it should do only that, leaving parsing them, for example, to another type.
+
+Often, if you see a function with "And" in its name, it's violating the SRP and should be refactored. Another sign is when a function has comments indicating what each section of the function (sic!) does. Each such section would probably be better off as a distinct function.
+
+A related topic is the principle of least knowledge. In its essence, it says that no object should know no more than necessary about other objects, so it doesn't depend on any of their internals, for example. Applying it leads to more maintainable code with fewer interdependencies between components.
+
+\subsubsubsection{1.7.2\hspace{0.2cm}Open-closed principle}
+
+The Open-Closed Principle (OCP) means that code should be open for extension but closed for modification. Open for extension means that we could extend the list of types the code supports easily. Closed for modification means existing code shouldn't change, as this can often cause bugs somewhere else in the system. A great feature of C++ demonstrating this principle is \textit{operator<<} of \textit{ostream}. To extend it so that it supports your custom class, all you need to do is to write code similar to the following:
+
+\begin{lstlisting}[style=styleCXX]
+std::ostream &operator<<(std::ostream &stream, const MyPair<int, int>
+&mp) {
+	stream << mp.firstMember() << ", ";
+	stream << mp.secondMember();
+	return stream;
+}
+\end{lstlisting}
+
+Note that our implementation of \textit{operator<<} is a free (non-member) function. You should prefer those to member functions if possible as it actually helps encapsulation. For more details on this, consult the article by Scott Meyers in the Further reading section at the end of this chapter. If you don't want to provide public access to some field that you wish to print to \textit{ostream}, you can make \textit{operator<<} a friend function, like so:
+
+\begin{lstlisting}[style=styleCXX]
+class MyPair {
+	// ...
+	friend std::ostream &operator<<(std::ostream &stream,
+	const MyPair &mp);
+};
+std::ostream &operator<<(std::ostream &stream, const MyPair &mp) {
+	stream << mp.first_ << ", ";
+	stream << mp.second_ << ", ";
+	stream << mp.secretThirdMember_;
+	return stream;
+}
+\end{lstlisting}
+
+Note that this definition of OCP is slightly different from the more common one related to polymorphism. The latter is about creating base classes that can't be modified themselves, but are open for others to inherit from them.
+
+Speaking of polymorphism, let's move on to the next principle as it is all about using it correctly.
+
+\subsubsubsection{1.7.3\hspace{0.2cm}Liskov substitution principle}
+
+In essence, the \textbf{Liskov Substitution Principle (LSP)} states that if a function works with a pointer or reference to a base object, it must also work with a pointer or reference to any of its derived objects. This rule is sometimes broken because the techniques we apply in source code do not always work in real-world abstractions.
+
+A famous example is a square and a rectangle. Mathematically speaking, the former is a specialization of the latter, so there's an "is a" relationship from one to the other. This tempts us to create a \textit{Square} class that inherits from the \textit{Rectangle} class. So, we could end up with code like the following:
+
+\begin{lstlisting}[style=styleCXX]
+class Rectangle {
+public:
+	virtual ~Rectangle() = default;
+	virtual double area() { return width_ * height_; }
+	virtual void setWidth(double width) { width_ = width; }
+	virtual void setHeight(double height) { height_ = height; }
+private:
+	double width_;
+	double height_;
+};
+
+class Square : public Rectangle {
+public:
+	double area() override;
+	void setWidth(double width) override;
+	void setHeight(double height) override;
+};
+\end{lstlisting}
+
+How should we implement the members of the \textit{Square} class? If we want to follow the LSP and save the users of such classes from surprises, we can't: our square would stop being a square if we called \textit{setWidth}. We can either stop having a square (not expressible using the preceding code) or modify the height as well, thus making the square look different than a rectangle.
+
+If your code violates the LSP, it's likely that you're using an incorrect abstraction. In our case, \textit{Square} shouldn't inherit from \textit{Rectangle} after all. A better approach could be making the two implement a \textit{GeometricFigure} interface.
+
+Since we are on the topic of interfaces, let's move on to the next item, which is also related to them.
+
+\subsubsubsection{1.7.4\hspace{0.2cm}Interface segregation principle}
+
+The interface segregation principle is just about what its name suggests. It is formulated as follows:
+
+\noindent
+\hspace*{0.8cm}\textit{No client should be forced to depend on methods that it does not use.}
+
+That sounds pretty obvious, but it has some connotations that aren't that obvious. Firstly, you should prefer more but smaller interfaces to a single big one. Secondly, when you're adding a derived class or are extending the functionality of an existing one, you should think before you extend the interface the class implements.
+
+Let's show this on an example that violates this principle, starting with the following interface:
+
+\begin{lstlisting}[style=styleCXX]
+class IFoodProcessor {
+public:
+	virtual ~IFoodProcessor() = default;
+	virtual void blend() = 0;
+};
+\end{lstlisting}
+
+We could have a simple class that implements it:
+
+\begin{lstlisting}[style=styleCXX]
+class Blender : public IFoodProcessor {
+public:
+	void blend() override;
+};
+\end{lstlisting}
+
+So far so good. Now say we want to model another, more advanced food processor and we recklessly tried to add more methods to our interface:
+
+\begin{lstlisting}[style=styleCXX]
+class IFoodProcessor {
+public:
+	virtual ~IFoodProcessor() = default;
+	virtual void blend() = 0;
+	virtual void slice() = 0;
+	virtual void dice() = 0;
+};
+
+class AnotherFoodProcessor : public IFoodProcessor {
+public:
+	void blend() override;
+	void slice() override;
+	void dice() override;
+};
+\end{lstlisting}
+
+Now we have an issue with the \textit{Blender} class as it doesn't support this new interface – there's no proper way to implement it. We could try to hack a workaround or throw \textit{std::logic\_error}, but a much better solution would be to just split the interface into two, each with a separate responsibility:
+
+\begin{lstlisting}[style=styleCXX]
+class IBlender {
+public:
+	virtual ~IBlender() = default;
+	virtual void blend() = 0;
+};
+
+class ICutter {
+public:
+	virtual ~ICutter() = default;
+	virtual void slice() = 0;
+	virtual void dice() = 0;
+};
+\end{lstlisting}
+
+Now our \textit{AnotherFoodProcessor} can just implement both interfaces, and we don't need to change the implementation of our existing food processor.
+
+We have one last SOLID principle left, so let's learn about it now.
+
+\subsubsubsection{1.7.5\hspace{0.2cm}Dependency inversion principle}
+
+Dependency inversion is a principle useful for decoupling. In essence, it means that highlevel modules should not depend on lower-level ones. Instead, both should depend on abstractions.
+
+C++ allows two ways to inverse the dependencies between your classes. The first one is the regular, polymorphic approach and the second uses templates. Let's see how to apply both of them in practice.
+
+Assume you're modeling a software development project that is supposed to have frontend and backend developers. A simple approach would be to write it like so:
+
+\begin{lstlisting}[style=styleCXX]
+class FrontEndDeveloper {
+public:
+	void developFrontEnd();
+};
+
+class BackEndDeveloper {
+public:
+	void developBackEnd();
+};
+
+class Project {
+public:
+	void deliver() {
+		fed_.developFrontEnd();
+		bed_.developBackEnd();
+	}
+private:
+	FrontEndDeveloper fed_;
+	BackEndDeveloper bed_;
+};
+\end{lstlisting}
+
+Each developer is constructed by the \textit{Project} class. This approach is not ideal, though, since now the higher-level concept, \textit{Project}, depends on lower-level ones – modules for individual developers. Let's see how applying dependency inversion using polymorphism changes this. We can define our developers to depend on an interface as follows:
+
+\begin{lstlisting}[style=styleCXX]
+class Developer {
+public:
+	virtual ~Developer() = default;
+	virtual void develop() = 0;
+};
+
+class FrontEndDeveloper : public Developer {
+public:
+	void develop() override { developFrontEnd(); }
+	private:
+	void developFrontEnd();
+};
+
+class BackEndDeveloper : public Developer {
+public:
+	void develop() override { developBackEnd(); }
+	private:
+	void developBackEnd();
+};
+\end{lstlisting}
+
+Now, the \textit{Project} class no longer has to know the implementations of the developers. Because of this, it has to accept them as constructor arguments:
+
+\begin{lstlisting}[style=styleCXX]
+class Project {
+public:
+	using Developers = std::vector<std::unique_ptr<Developer>>;
+	explicit Project(Developers developers)
+		: developers_{std::move(developers)} {}
+		
+	void deliver() {
+		for (auto &developer : developers_) {
+			developer->develop();
+		}
+	}
+
+private:
+	Developers developers_;
+};
+\end{lstlisting}
+
+In this approach, \textit{Project} is decoupled from the concrete implementations and instead depends only on the polymorphic interface named \textit{Developer}. The "lower-level" concrete classes also depend on this interface. This can help you shorten your build time and allows for much easier unit testing – now you can easily pass mocks as arguments in your test code.
+
+Using dependency inversion with virtual dispatch comes at a cost, however, as now we're dealing with memory allocations and the dynamic dispatch has overhead on its own. Sometimes C++ compilers can detect that only one implementation is being used for a given interface and will remove the overhead by performing devirtualization (often you need to mark the function as \textit{final} for this to work). Here, however, two implementations are used, so the cost of dynamic dispatch (commonly implemented as jumping through \textbf{virtual method tables}, or \textbf{vtables} for short) must be paid.
+
+There is another way of inverting dependencies that doesn't have those drawbacks. Let's see how this can be done using a variadic template, a generic lambda from C++14, and \textit{variant}, either from C++17 or a third-party library such as Abseil or Boost. First are the developer classes:
+
+\begin{lstlisting}[style=styleCXX]
+class FrontEndDeveloper {
+public:
+	void develop() { developFrontEnd(); }
+private:
+	void developFrontEnd();
+};
+
+class BackEndDeveloper {
+public:
+	void develop() { developBackEnd(); }
+private:
+	void developBackEnd();
+};
+\end{lstlisting}
+
+Now we don't rely on an interface anymore, so no virtual dispatch will be done. The \textit{Project} class will still accept a vector of \textit{Developers}:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename... Devs>
+class Project {
+public:
+	using Developers = std::vector<std::variant<Devs...>>;
+	
+	explicit Project(Developers developers)
+		: developers_{std::move(developers)} {}
+	
+	void deliver() {
+		for (auto &developer : developers_) {
+			std::visit([](auto &dev) { dev.develop(); }, developer);
+		}
+	}
+
+private:
+	Developers developers_;
+};
+\end{lstlisting}
+
+If you're not familiar with \textit{variant}, it's just a class that can hold any of the types passed as template parameters. Because we're using a variadic template, we can pass however many types we like. To call a function on the object stored in the variant, we can either extract it using \textit{std::get} or use \textit{std::visit} and a callable object – in our case, the generic lambda. It shows how duck-typing looks in practice. Since all our developer classes implement the \textit{develop} function, the code will compile and run. If your developer classes would have different methods, you could, for instance, create a function object that has overloads of \textit{operator()} for different types.
+
+Because \textit{Project} is now a template, we have to either specify the list of types each time we create it or provide a type alias. You can use the final class like so:
+
+\begin{lstlisting}[style=styleCXX]
+using MyProject = Project<FrontEndDeveloper, BackEndDeveloper>;
+auto alice = FrontEndDeveloper{};
+auto bob = BackEndDeveloper{};
+auto new_project = MyProject{{alice, bob}};
+new_project.deliver();
+\end{lstlisting}
+
+This approach is guaranteed to not allocate separate memory for each developer or use a virtual table. However, in some cases, this approach results in less extensibility, since once the variant is declared, you cannot add another type to it.
+
+As the last thing to mention about dependency inversion, we'd like to note that there is a similarly named idea called dependency injection, which we even used in our examples. It's about injecting the dependencies through constructors or setters, which can be beneficial to code testability (think about injecting mock objects, for example). There are even whole frameworks for injecting dependencies throughout whole applications, such as Boost.DI. Those two concepts are related and often used together.
+
+\subsubsubsection{1.7.6\hspace{0.2cm}The DRY rule}
+
+DRY is short for "don't repeat yourself." It means you should avoid code duplication and reuse when it's possible. This means you should extract a function or a function template when your code repeats similar operations a few times. Also, instead of creating several similar types, you should consider writing a template.
+
+It's also important not to reinvent the wheel when it's not necessary, that is, not to repeat others' work. Nowadays there are dozens of well-written and mature libraries that can help you with writing high-quality software faster. We'd like to specifically mention a few of them:
+
+\begin{itemize}
+\item Boost C++ Libraries (\url{https://www.boost.org/})
+\item Facebook's Folly (\url{https://github.com/facebook/folly})
+\item Electronic Arts' EASTL (\url{https://github.com/electronicarts/EASTL})
+\item Bloomberg's BDE (\url{https://github.com/bloomberg/bde})
+\item Google's Abseil (\url{https://abseil.io/})
+\item The Awesome Cpp list (\url{https://github.com/fffaraz/awesome-cpp}) with
+dozens more
+\end{itemize}
+
+Sometimes duplicating code can have its benefits, however. One such scenario is developing microservices. Of course, it's always a good idea to follow DRY inside a single microservice, but violating the DRY rule for code used in multiple services can actually be worth it. Whether we're talking about model entities or logic, it's easier to maintain multiple services when code duplication is allowed.
+
+Imagine having multiple microservices reusing the same code for an entity. Suddenly one of them needs to modify one field. All the other services now have to be modified as well. The same goes for dependencies of any common code. With dozens or more microservices that have to be modified because of changes unrelated to them, it's often easier for maintenance to just duplicate the code.
+
+Since we're talking about dependencies and maintenance, let's proceed to the next section, which discusses a closely related topic.
+
+
+
+
+
+
+
+
