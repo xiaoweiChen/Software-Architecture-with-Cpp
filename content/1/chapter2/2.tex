@@ -1,0 +1,97 @@
+
+Stateful and stateless are two opposite ways to write software, each with their own pros and cons.
+
+As the name suggests, stateful software's behavior depends on its internal state. Let's take a web service, for instance. If it remembers its state, the consumer of the service can send less data in each request, because the service remembers the context of those requests. However, saving on the request size and bandwidth has a hidden cost on the web service's side. If the user sends many requests at the same time, the service now has to synchronize its work. As multiple requests could change the state, at the same time, not having synchronization could lead to data races.
+
+If the service was stateless, however, then each request coming to it would need to contain all the data needed to process it successfully. This means that the requests would get bigger and use up more bandwidth, but on the other hand, it would allow for better performance and scaling of the service. If you're familiar with functional programming, you would probably find stateless services intuitive. Processing each request can be understood as a call to a pure function. In fact, many of the advantages that stateless programming provides stem from its functional programming roots. Mutable state is the enemy of concurrent code. Functional programming relies on immutable values, even if this means making copies instead of modifying existing objects. Thanks to this, each thread can work independently and no data races are possible. 
+
+Since there are no race conditions, no locks are required as well, which can be an enormous boost in terms of performance. No locks also mean that you will no longer need to deal with deadlocks. Having pure functions means that your code will be easier to debug, too, since you don't have any side effects. Not having side effects, in turn, is also helpful for compilers, as optimizing code without side effects is a much easier task and can be performed more aggressively. Yet another benefit of writing code in a functional manner is that the sources you write tend to be more terse and expressive, especially when compared to code that heavily depends on the \textbf{Gang of Four (GoF)} design patterns.
+
+This doesn't necessarily mean that if bandwidth is not an issue, you should always go with stateless. Those decisions can be made on many levels, from single classes or functions to whole applications.
+
+Take classes, for example. If you're modeling, say, a \textit{Consultant}, it makes sense that the class would contain fields such as the consultant's name, contact data, hourly rate, current and past projects, and whatnot. It is natural for it to be stateful. Now, imagine that you need to calculate the pay they receive for their work. Should you create a \textit{PaymentCalculator} class? Should you add a member or a free function to calculate this? If you go with the class approach, should you pass a \textit{Consultant} as a constructor parameter or a method argument? Should the class have properties such as allowances?
+
+Adding a member function to calculate the pay would break the \textbf{Single Responsibility Principle (SRP)}, as now the class would then have two responsibilities: calculating the pay and storing the consultant's data (state). This means introducing a free function or a separate class for this purpose should be preferred to having such hybrid classes.
+
+Should there be a state in such a class in the first place? Let's discuss the different approaches to our \textit{PaymentCalculator} class.
+
+One approach would be to expose the properties required for calculation purposes:
+
+\begin{lstlisting}[style=styleCXX]
+class PaymentCalculator;
+{
+public:
+	double calculate() const;
+	
+	void setHours(double hours);
+	void setHourlyRate(double rate);
+	void setTaxPercentage(double tax);
+	
+private:
+	double hours_;
+	double netHourlyRate_;
+	double taxPercentage_;
+};
+\end{lstlisting}
+
+This approach has two cons. The first is that it's not thread-safe; a single instance of such a \textit{PaymentCalculator} class cannot be used in multiple threads without locks. The second is that once our calculations become more complicated, the class will probably start duplicating more fields from our \textit{Consultant} class.
+
+To eliminate the duplication, we could rework our class to store a Consultant instance like this:
+
+\begin{lstlisting}[style=styleCXX]
+class PaymentCalculator {
+public:
+	double calculate() const;
+	
+	void setConsultant(const Consultant &c);
+	void setTaxPercentage(double tax);
+	
+private:
+	gsl::not_null<const Consultant *> consultant_;
+	double taxPercentage_;
+};
+\end{lstlisting}
+
+Note that since we cannot rebind references easily, we're using a helper class from the \textbf{Guideline Support Library (GSL)} to store a rebindable pointer in a wrapper that automatically ensures we're not storing a null value.
+
+This approach still has the disadvantage of not being thread-safe. Can we do any better? It turns out that we can make the class thread-safe by making it stateless:
+
+\begin{lstlisting}[style=styleCXX]
+class PaymentCalculator {
+public:
+	static double calculate(const Consultant &c, double taxPercentage);
+};
+\end{lstlisting}
+
+If there is no state to manage, it doesn't really matter if you decide to create free functions (perhaps in a distinct namespace) or group them as static functions of a class, as we did in the preceding snippet. In terms of classes, it's useful to distinguish between value (entity) types and operation types, as mixing them can lead to SRP violations.
+
+\subsubsubsection{2.2.1\hspace{0.2cm}Stateless and stateful services}
+
+The same principles that we discussed for classes can be mapped to higher-level concepts, for instance, microservices.
+
+What does a stateful service look like? Let's take FTP as an example. If it's not anonymous, it requires the user to pass a username and password to create a session. The server stores this data to identify the user as still connected, so it's constantly storing state. Each time the user changes the working directory, the state gets updated. Each change done by the user is reflected as a change of state, even when they disconnect. Having a stateful service means that depending on the state, you can be returned different results for two identically looking \textit{GET} requests. If the server los s the state, your requests can even stop processing correctly
+
+Stateful services can also have issues with incomplete sessions or unfinished transactions and added complexity. How long should you keep the sessions open? How can you verify whether the client has crashed or disconnected? When should we roll back any changes made? While you can come up with answers to those questions, it's usually easier to rely on the consumers of your service communicating with it in a dynamic, "intelligent" way. Since they'll be maintaining some kind of state on their own, having a service that also maintains the state is not only unnecessary but often wasteful.
+
+Stateless services, as the REST ones described later in the book, take the opposite approach. Each request must contain all the data required in order for it to be successfully processed, so two identical idempotent requests (such as \textit{GET}) will cause identical replies. This is assuming the data stored on the server doesn't change, but data is not necessarily the same thing as state. All that matters is that each request is self-contained.
+
+Statelessness is fundamental in modern internet services. The HTTP protocol is stateless, while many service APIs, for example, Twitter's, are stateless as well. REST, which Twitter's API relies on, is designed to be functionally stateless. The whole concept behind this acronym, \textbf{Representational State Transfer (REST)}, carries the notion that all the state required for processing the request must be transferred within it. If this is not the case, you can't say you have a RESTful service. There are, however, some exceptions to the rule, driven by practical needs.
+
+If you're building an online store, you probably want to store information pertaining to your customers, such as their order history and shipping addresses. The client on the customer's side probably stores an authentication cookie, while the server will probably store some user data in a database. The cookie replaces our need for managing a session, as it'd be done in a stateful service.
+
+Keeping sessions on the server side is a bad approach for services for several reasons: they add a lot of complexity that could be avoided, they make bugs harder to replicate, and most importantly, they don't scale. If you'd want to distribute the load to another server, chances are you'd have trouble replicating the sessions with the load and synchronizing them between servers. All session information should be kept on the client's side.
+
+This means that if you wish to have a stateful architecture, you need to have a good reason to. Take the FTP protocol, for instance. It has to replicate the changes both on the client side and server side. The user only authenticates to a single, specific server, in order to perform single-stated data transfers. Compare this with services such as Dropbox, where the data is often shared between users and the file access is abstracted away through an API, to see why a stateless model would suit this case better.
+
+
+
+
+
+
+
+
+
+
+
+
+

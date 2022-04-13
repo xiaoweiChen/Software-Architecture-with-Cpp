@@ -1,0 +1,34 @@
+The simplest architectural style in which you can develop your application is a monolithic one. This is why many projects are started using this style. A monolithic application is just one big block, meaning that functionally distinguishable parts of the application, such as dealing with I/O, data processing, and the user interface, are all interwoven instead of being in separate architectural components. Another notable example of this architectural style is the Linux kernel. Note that the kernel being monolithic does not stop it from being modular.
+
+It can be easier to deploy such a monolithic application than a multi-component one as there is simply one thing that needs to be deployed. It can also be easier to test, as end-toend testing just requires that you launch a single component. Integration is easier too since, as well as scaling your solution, you can just add more instances behind a load balancer. With all those advantages, why would anyone dread this architectural style? It turns out that despite those advantages, there are also many drawbacks.
+
+The scalability offered sounds nice in theory, but what if your application has modules with different resource requirements? How about needing to scale just one module from your application? The lack of modularity, an inherent property of monolithic systems, is the source of many flaws associated with this architecture.
+
+What's more, the longer you develop a monolithic application, the more problems you'll have in maintaining it. It's a challenge to keep the internals of such an application loosely coupled, as it's so easy to just add yet another dependency between its modules. As such an application grows, it becomes harder and harder to understand it, so the development process will most probably slow down over time because of the added complexity. It can also be hard to maintain \textbf{Design-Driven Development}'s (\textbf{DDD}) bounded contexts when developing monoliths.
+
+Having one big application has drawbacks regarding the deployment and execution sides as well. It will take a lot longer to start such an application than it would take to start more, smaller services. And regardless of what you change in the application, you might not like that it forces you to redeploy the whole application at once. Now, imagine that one of your developers introduces a resource leak in the application. If the leaky code is executed over and over, it will not only bring down its single aspect of the app's functionality, it can also bring down the rest of the application as well.
+
+If you're a fan of using bleeding-edge technologies in your project, a monolithic style doesn't bring any great news either. Since you now need to migrate your whole application at once, it's harder to update any libraries or frameworks.
+
+The preceding explanation suggests that a monolithic architecture is only good for simple and small applications. There is, however, one more situation where it could actually be a good idea to use it. If you care about performance, having a monolith can sometimes help you to squeeze more from your app in terms of latency or throughput when compared to microservices. Inter-process communication will always incur some overhead, which monolithic applications don't need to pay. If you're interested in measurements, see the paper listed in the \textit{Further reading} section of this chapter.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

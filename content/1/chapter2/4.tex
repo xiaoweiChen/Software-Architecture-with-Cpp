@@ -1,0 +1,176 @@
+
+Because of the drawbacks of monolithic architectures, other approaches have emerged. A common idea is to split your solution into multiple services that communicate with each other. You can then split the development between different teams, each taking care of a separate service. The boundaries of each team's work are clear, unlike in the monolithic architecture style.
+
+A \textbf{service-oriented architecture}, or \textbf{SOA} for short, means that the business functions are modularized and presented as separate services for the consumer applications to use. Each service should have a self-describing interface and hide any implementation details, such as the internal architecture, technologies, or the programming language used. This allows for multiple teams to develop the services however they like, meaning that under the hood, each can use what suits their needs best. If you have two teams of developers, one proficient in C\# and one in C++, they can develop two services that can easily communicate with one another.
+
+Advocates of SOA came up with a manifesto prioritizing the following:
+
+\begin{itemize}
+\item
+Business value over technical strategy
+
+\item
+Strategic goals over project-specific benefits
+
+\item
+Intrinsic interoperability over custom integration
+
+\item
+Shared services over purpose-specific implementations
+
+\item
+Flexibility over optimization
+
+\item
+Evolutionary refinement over pursuit of initial perfection
+\end{itemize}
+
+Even though this manifesto doesn't bind you to a specific tech stack, or implementation, or type of services, the two most common types of services are SOAP and REST. Aside from those, recently, there's a third one that has been growing in popularity: gRPC-based. You can find out more about these in the chapters on services-oriened architecture and microservices.
+
+\subsubsubsection{2.4.1\hspace{0.2cm}Microservices}
+
+As the name suggests, microservices is a software development pattern where an application is split as a collection of loosely-coupled services that communicate using lightweight protocols. The microservices pattern is similar to the UNIX philosophy stating that a program should only have one purpose. According to UNIX philosophy, advanced problems are solved by composing such programs into UNIX pipelines. Similarly, microservice-based systems are composed of many microservices and supporting services.
+
+Let's start with an overview of the pros and cons of this architectural style.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Benefits and disadvantages of microservices}
+
+The small size of services in a microservice architecture means that they're faster to develop, deploy, and understand. As the services are built independently of each other, the time necessary to compile their new versions can be drastically reduced. Thanks to this, it is easier to employ rapid prototyping and development when dealing with this architectural style. This, in turn, makes it possible to reduce the lead-time, meaning that business requirements can be introduced and evaluated much quicker.
+
+Some other benefits of a microservice-based approach include the following:
+
+\begin{itemize}
+\item
+Modularity, which is inherent to this architectural style.
+
+\item
+Better testability.
+
+\item
+Flexibility when replacing system parts (such as single services, databases, message brokers, or cloud providers).
+
+\item
+Integration with legacy systems: it is not necessary to migrate an entire application, just the parts that require current development.
+
+\item
+Enabling distributed development: independent development teams can work on multiple microservices in parallel.
+
+\item
+Scalability: a microservice may be scaled independently of the others.
+\end{itemize}
+
+On the other hand, here are some disadvantages of microservices:
+
+\begin{itemize}
+\item	
+They require a mature DevOps approach and reliance on CI/CD automation.
+
+\item
+They are harder to debug, and require better monitoring and distributed tracing.
+
+\item
+Additional overhead (in terms of auxiliary services) may outweigh the benefits for smaller applications.
+\end{itemize}
+
+Let's now discuss what are the characteristics of services written in this architectural style.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Characteristics of microservices}
+
+Since the microservice style is fairly recent, there is no single definition for microservices. According to Martin Fowler, there are several essential characteristics of microservices, which we will describe next:
+
+\begin{itemize}
+\item	
+Each service should be an independently replaceable and upgradeable component. This is connected to easier deployment and loose coupling between the services, as opposed to components being libraries in a monolithic application. In the latter case, when you replace one library, you often have to redeploy the whole application.
+
+\item
+Each service should be developed by a cross-functional team, focused on a specific business capability. Ever heard of Conway's law?
+
+\begin{flushleft}
+\tt
+"Any organization that designs a system (defined broadly) will produce a design whose structure is a copy of the organization's communication structure."
+\end{flushleft}
+\begin{flushright}
+\texttt{– Melvyn Conway, 1967}
+\end{flushright}
+
+If you don't have cross-functional teams, you end up with software silos. The lack of communication that comes with them will make you constantly jump through hurdles to successfully deliver.
+
+\item
+Each service should be a product, which is owned by the development team throughout its lifetime. This stays in contrast to the project mentality, where you develop software and just pass it on for someone to maintain.
+
+\item
+Services should have smart endpoints and use dump pipes, not the other way around. This stands in contrast to traditional services, which often rely on the logic of an \textbf{Enterprise Service Bus (ESB)}, which often manages the routing of messages and transforms them according to business rules. In microservices, you achieve cohesiveness by storing the logic in the service and avoid coupling with messaging components. Using "dumb" message queues, such as ZeroMQ, can help with this goal.
+
+\item
+Services should be governed in a decentralized way. Monoliths are usually written using one specific technology stack. When they're being split into microservices, each one can choose whatever suits its own specific needs best. Governing and assuring that each microservice runs 24/7 is done by a team responsible for this specific service instead of a central department. Companies such as Amazon, Netflix, and Facebook follow this approach and observe that making developers responsible for the flawless execution of their services in production helps to ensure high quality.
+
+\item
+Services should manage their data in a decentralized way. Instead of having one database for all of them, each microservice can choose a database that best matches its needs. Having decentralized data can lead to some challenges with handling updates, but allows for better scaling. This is why microservices often coordinate in a transaction-free manner and offer eventual consistency.
+
+\item
+The infrastructure used by services should be managed automatically. To deal with dozens of microservices in an efficient manner, you need to have Continuous Integration and Continuous Delivery in place, as otherwise, deploying your services will be hell. Automated runs of all your tests will save you lots of time and trouble. Implementing Continuous Deployment on top of that will shorten the feedback loop and allow your customers to use your new features faster, too.
+
+\item
+Microservices should be prepared for the failure of other services that they depend on. In a distributed deployment environment with so many moving parts, it's normal for some of them to break from time to time. Your services should be able to handle such failures gracefully. Patterns such as Circuit Breaker or Bulkhead (described later in the book) can help to achieve this. To make your architecture resilient, it's also critical to be able to bring failing services back up efficiently or even to know ahead of time that they're going to crash. Real-time monitoring of latency, throughput, and resource usage is essential for this. Get to know Netflix's Simian Army toolkit as it's invaluable for creating a resilient architecture.
+
+\item
+Architectures based on microservices should be ready to constantly evolve. You should design microservices and the cooperation between them in a manner that allows for easy replacement of a single microservice, or sometimes even groups of them. It's tricky to design the services properly, especially since some of the complexity that was once in the code of one bigger module can now be present as complex communication schemes between services, where it's harder to manage – so-called Spaghetti Integration. This means the experience and skill set of the architect plays a more important role than with traditional services or a monolithic approach.
+
+\end{itemize}
+
+On top of that, here are some other characteristics shared by many (but not all) microservices:
+
+\begin{itemize}
+\item	
+Using separate processes that communicate over network protocols
+	
+\item
+Using technology-agnostic protocols (such as HTTP and JSON)
+
+\item
+Keeping services small and with a low runtime overhead
+\end{itemize}
+
+Now, you should have a good understanding of what the characteristics of microservicebased systems are, so let's see how this approach compares with other architectural styles.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Microservices and other architectural styles}
+
+Microservices may be used as an architectural pattern on their own. However, they are often combined with other architectural choices, such as cloud-native computing, serverless applications, and mostly with lightweight application containers.
+
+Service-oriented architectures bring loose coupling and high cohesion. Microservices can do it too, when applied correctly. However, it can be somewhat challenging because it requires good intuition to partition the system into the usually vast amount of microservices.
+
+There are more similarities between microservices and their bigger cousins as they, too, can have SOAP-, REST-, or gRPC-based messaging and use technologies such as message queues for being event-driven. They also have well-known patterns to help with achieving the required quality attributes, such as fault tolerance (for example, through the isolation of faulty components), but in order to have an efficient architecture, you must decide on your approach to elements such as API gateways, service registries, load balancing, fault tolerance, monitoring, configuration management, and, of course, the technology stack to use.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Scaling microservices}
+
+Microservices scale differently to monolithic applications. In monoliths, the entire functionality is handled by a single process. Scaling the application means replicating this process across different machines. Such scaling doesn't take into account which of the functionalities are heavily used and which do not require additional resources.
+
+With microservices, each functional element is handled as a separate service, which means a separate process. In order to scale a microservices-based application, only the parts that require more resources can be replicated to different machines. Such an approach makes it easier to better use the available resources.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Transitioning to microservices}
+
+Most companies have some kind of existing monolithic code that they don't want to immediately rewrite using microservices, but still want to transition to this kind of architecture. In such cases, it's possible to adapt microservices incrementally, by adding more and more services that interact with the monolith. You can create new functionalities as microservices or just cut out some parts of the monolith and create microservices out of them. 
+
+More details regarding microservices, including how to build your own from scratch, are available in Chapter 13, Designing Microservices.
+
+
+
+
+
+
+
+
+
+
+
+

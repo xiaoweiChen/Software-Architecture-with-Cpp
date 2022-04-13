@@ -1,5 +1,6 @@
 
-Coupling and cohesion are two terms that go hand in hand in software. Let's see what each of them means and how they relate to each other.
+Coupling and cohesion are two terms that go hand in hand in software. Let's see what each of them means and how they relate to each other.
+
 
 \subsubsubsection{1.8.1\hspace{0.2cm}Coupling}
 
@@ -9,7 +10,8 @@ For example, if a class depends on private members of another class, it means th
 
 To weaken the coupling in the preceding scenario, we could think about adding parameters for the member functions instead of directly accessing other classes' private members.
 
-Another example of tightly coupled classes is the first implementation of the Project and developer classes in the dependency inversion section. Let's see what would happen if we were to add yet another developer type:
+Another example of tightly coupled classes is the first implementation of the Project and developer classes in the dependency inversion section. Let's see what would happen if we were to add yet another developer type:
+
 
 \begin{lstlisting}[style=styleCXX]
 class MiddlewareDeveloper {
@@ -32,7 +34,8 @@ private:
 };
 \end{lstlisting}
 
-It looks like instead of just adding the \textit{MiddlewareDeveloper} class, we had to modify the public interface of the \textit{Project} class. This means they're tightly coupled and that this implementation of the \textit{Project} class actually breaks the OCP. For comparison, let's now see how the same modification would be applied to the implementation using dependency inversion:
+It looks like instead of just adding the \textit{MiddlewareDeveloper} class, we had to modify the public interface of the \textit{Project} class. This means they're tightly coupled and that this implementation of the \textit{Project} class actually breaks the OCP. For comparison, let's now see how the same modification would be applied to the implementation using dependency inversion:
+
 
 \begin{lstlisting}[style=styleCXX]
 class MiddlewareDeveloper {
@@ -41,10 +44,12 @@ public:
 	
 private:
 	void developMiddleware();
-};
+};
+
 \end{lstlisting}
 
-No changes to the \textit{Project} class were required, so now the classes are loosely coupled. All we needed to do was to add the \textit{MiddlewareDeveloper} class. Structuring our code this way allows for smaller rebuilds, faster development, and easier testing, all with less code that's easier to maintain. To use our new class, we only need to modify the calling code:
+No changes to the \textit{Project} class were required, so now the classes are loosely coupled. All we needed to do was to add the \textit{MiddlewareDeveloper} class. Structuring our code this way allows for smaller rebuilds, faster development, and easier testing, all with less code that's easier to maintain. To use our new class, we only need to modify the calling code:
+
 
 \begin{lstlisting}[style=styleCXX]
 using MyProject = Project<FrontEndDeveloper, MiddlewareDeveloper,
@@ -66,7 +71,8 @@ Cohesion is a measure of how strongly a software unit's elements are related. In
 
 On a class level, the more fields a method manipulates, the more cohesive it is to the class. This means that the most commonly spotted low-cohesion data types are those big monolithic ones. When there's too much going on in a class, it most probably is not cohesive and breaks the SRP, too. This makes such classes hard to maintain and bug-prone.
 
-Smaller classes can be incohesive as well. Consider the following example. It may seem trivial, but posting real-life scenarios, often hundreds if not thousands of lines long, would be impractical:
+Smaller classes can be incohesive as well. Consider the following example. It may seem trivial, but posting real-life scenarios, often hundreds if not thousands of lines long, would be impractical:
+
 
 \begin{lstlisting}[style=styleCXX]
 class CachingProcessor {
@@ -82,10 +88,11 @@ private:
 	void limitCacheSize(std::size_t size);
 	void notifyListeners(const Result &result);
 	// ...
-};
+};
 \end{lstlisting}
 
-We can see that our processor actually does three types of work: the actual work, the caching of the results, and managing listeners. A common way to increase cohesion in such scenarios is to extract a class or even multiple ones:
+We can see that our processor actually does three types of work: the actual work, the caching of the results, and managing listeners. A common way to increase cohesion in such scenarios is to extract a class or even multiple ones:
+
 
 \begin{lstlisting}[style=styleCXX]
 class WorkResultsCache {
@@ -113,12 +120,14 @@ private:
 	WorkResultsCache cache_;
 	ResultNotifier notifier_;
 	// ...
-};
+};
+
 \end{lstlisting}
 
 Now each part is done by a separate, cohesive entity. Reusing them is now possible without much hassle. Even making them a template class should require little work. Last but not least, testing such classes should be easier as well.
 
-Putting this on a component or system level is straightforward – each component, service, and system you design should be concise and focus on doing one thing and doing it right:
+Putting this on a component or system level is straightforward – each component, service, and system you design should be concise and focus on doing one thing and doing it right:
+
 
 \begin{center}
 \includegraphics[width=0.9\textwidth]{content/1/chapter1/images/2.jpg}\\
