@@ -1,0 +1,66 @@
+
+Now that you know what requirements to focus on, let's discuss a few techniques for gathering these requirements.
+
+\subsubsubsection{3.4.1\hspace{0.2cm}Knowing the context}
+
+When mining requirements, you should take into account the broader context. You must identify what potential problems may have a negative impact on your product in the future. Those risks often come from the outside. Let's revisit our Uber-like service scenario. An example risk for your service could be a potential change in legislation: you should be aware that some countries may try to change the law to remove you from their market. Uber's way to mitigate those risks is to have local partners cope with regional limitations.
+
+Future risks aside, you must also be aware of current issues, such as the lack of subject matter experts in the company, or heavy competition on the market. Here's what you can do:
+
+\begin{itemize}
+\item 
+Be aware of and note any assumptions being made. It's best to have a dedicated document for tracking those.
+
+\item 
+Ask questions to clarify or eliminate your assumptions, if possible.
+
+\item 
+You need to consider the dependencies inside your project, as they can influence the development schedule. Other useful areas are the business rules that shape the day-to-day behavior of the company, as your product will likely need to adhere to and possibly enhance those.
+
+\item 
+Moreover, if there's enough data relating to the users or the business, you should try to mine it to get insights and find useful patterns that can help with making decisions regarding the future product and its architecture. If you already have some users but are unable to mine data, it's often useful to just observe how they behave.
+\end{itemize}
+
+Ideally, you could record them when they perform their daily tasks using the currently deployed systems. This way, you could not only automate parts of their work but also change their workflow to a more efficient one entirely. However, remember that users don't like changing their habits, so it's better to introduce changes gradually where possible.
+
+\subsubsubsection{3.4.2\hspace{0.2cm}Knowing existing documentation}
+
+Existing documents can be a great source of information, even though they can also have their issues. You should reserve some time to at least get familiar with all the existing documents related to your work. Chances are that there are some requirements hidden in them. On the other hand, keep in mind that the documentation is never perfect; highly likely it will lack some significant information. You should also be prepared for it to be outdated. There is never one source of truth when it comes to architecture, so aside from reading documents, you should have lots of discussions with the people involved. Nonetheless, reading documents can be a great way of preparing yourself for such discussions.
+
+\subsubsubsection{3.4.3\hspace{0.2cm}Knowing your stakeholders}
+
+To be a successful architect, you must learn to communicate with business people as requirements come, directly or indirectly, from them. Whether they're from your company or a customer, you should get to know the context of their business. For instance, you must know the following:
+
+\begin{itemize}
+\item 
+What drives the business?
+
+\item 
+What goals does the company have?
+
+\item 
+What specific objectives will your product help to achieve?
+\end{itemize}
+
+Once you are aware of this, it will be much easier to establish a common ground with many people coming from management or executives, as well as gathering more specific requirements regarding your software. If the company cares about the privacy of its users, for instance, it can have a requirement to store as little data about its users as possible and to encrypt it using a key stored only on a user's device. Often, if such requirements come from the company culture, it will be too obvious for some employees to even articulate them. Knowing the context of the business can help you to ask proper questions and help the company in return.
+
+Having said that, remember that your stakeholders can, and will, have needs that aren't necessarily directly reflected in the company's objectives. They can have their own ideas for functionality to provide or metrics that the software should achieve. Perhaps a manager promised his employees a chance to learn a new technology or work with a specific one. If this project is important for their career, they can be a strong ally and even convince others as to your decisions.
+
+Another important group of stakeholders is the people responsible for deploying your software. They can come with their own subgroup of needs, called transition requirements. Examples of those include user and database migration, infrastructure transition, or data conversion, so don't forget to reach out to them to gather these as well.
+
+\subsubsubsection{3.4.4\hspace{0.2cm}Gathering requirements from stakeholders}
+
+At this point, you should have a list of stakeholders with their roles and contact information. Now it's time to make use of it: be sure to make time to talk with each stakeholder about what they need from the system and how they envision it. You can hold interviews such as 1:1 meetings or group ones. When talking with your stakeholders, help them to make informed decisions – show the potential outcomes of their answers on the end product.
+
+It's common for stakeholders to say that all of their requirements are equally important. Try to persuade them to prioritize their requirements according to the value they bring to their business. Certainly, there will be some mission-critical requirements, but most probably, the project won't fail if a bunch of others won't be delivered, not to mention any nice-tohaves that will land on your requirements wish list.
+
+Aside from interviews, you can also organize workshops for them, which could work like brainstorming sessions. In such workshops, once the common ground is established and everybody knows why they're taking part in such a venture, you can start asking everyone for as many usage scenarios as they can think of. Once these have been established, you can proceed with consolidating similar ones, after which you should prioritize and, finally, refine all the stories. Workshops are not just about functional requirements; each usage scenario can have a quality attribute assigned as well. After refining, all the quality attributes should be measurable. The final thing to note is this: you don't need to bring all stakeholders into such events, as they can sometimes take more than a day, depending on the size of the system.
+
+Now that you know how to mine for requirements using various techniques and sources, let's discuss how to pour your findings into well-crafted documents.
+
+
+
+
+
+
+

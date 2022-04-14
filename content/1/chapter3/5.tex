@@ -1,0 +1,159 @@
+
+Once you're done with the steps described previously, it's time to put all the requirements you've gathered and refine them together in a single document. It doesn't matter what form the document will take and how you will manage it. What matters is that you have a document that puts all the stakeholders on the same page with regard to what is required from the product and what value each requirement brings.
+
+Requirements are produced and consumed by all stakeholders, and a broad set of them will need to read your document. This means that you should write it so that it brings value for people of various technical skills from customers, salespeople, and marketers, through designers and project managers, to software architects, developers, and testers.
+
+Sometimes it makes sense to prepare two versions of the document, one for the people closest to the business side of the project, and another, a more technical one, for the development team. However, usually, it's enough to just have one document written to be understandable by everyone, with sections (sometimes single paragraphs) or whole chapters meant to cover the more technical details.
+
+Let's now take a tour of what sections could go into your requirements document.
+
+\subsubsubsection{3.5.1\hspace{0.2cm}Documenting the context}
+
+A requirements document should act as one of the entry points for people getting on board with your project: it should outline the purpose of your product, who will use it, and how it can be used. Before design and development, the product team members should read it to have a clear idea of what they'll actually work on.
+
+The context section should provide an overview of the system – why it's being built, what business goals is it trying to accomplish, and what key functionality it will deliver. 
+
+You can describe a few typical user personas, such as John the CTO, or Ann the driver, to give the readers a better chance to think about the users of the system as actual human beings and know what to expect from them.
+
+All those things described in the Knowing the context section should also be summarized as parts of this context section, or sometimes even given separate sections in the document. The context and scope sections should provide all the information required by most nonproject stakeholders. They should be concise and precise.
+
+The same goes for any open questions you may want to research and decide on later. For each decision you make, it's best to note the following:
+
+\begin{itemize}
+\item 
+What the decision itself was
+
+\item 
+Who made it and when
+
+\item 
+What rationale stands behind it
+\end{itemize}
+
+Now that you know how to document the context of your project, let's learn how to properly describe its scope too.
+
+\subsubsubsection{3.5.2\hspace{0.2cm}Documenting the scope}
+
+This section should define what's in the scope of the project, as well as what is beyond the scope. You should provide a rationale for why the scope is defined in a particular way, especially when writing about things that won't make the cut.
+
+This section should also cover the high-level functional and nonfunctional requirements, but details should go into the subsequent sections of the document. If you're familiar with Agile practices, just describe epics and bigger user stories here.
+
+If you or your stakeholders have any assumptions regarding the scope, you should mention those here. If the scope is subject to change due to any issues or risks, you should also write some words about it, and similarly for any trade-offs you had to make.
+
+\subsubsubsection{3.5.3\hspace{0.2cm}Documenting functional requirements}
+
+Each requirement should be precise and testable. Consider this example: "The system will have a ranking system for the drivers." How would you create tests against it? It's better to create a section for the ranking system and specify the precise requirements for it there.
+
+Consider this other example: If there's a free driver close to the rider, they should be notified of the incoming ride request. What if there's more than one driver available? What maximum distance can we still describe as being close?
+
+This requirement is both imprecise and lacking parts of the business logic. We can only hope that the case where there are no free drivers is covered by another requirement.
+
+In 2009, Rolls Royce developed its Easy Approach to Requirements Syntax (EARS), to help cope with this. In EARS, there are five basic types of requirements, which should be written in a different way and serve different purposes. They can be later combined to create more complex requirements. Those basic ones are as follows:
+
+\begin{itemize}
+\item 
+\textbf{Ubiquitous requirement}: "The \textit{\$SYSTEM} shall \textit{\$REQUIREMENT}," for example, the application will be developed in C++.
+
+\item 
+\textbf{Event-driven}: "When \textit{\$TRIGGER} \textit{\$OPTIONAL\\\_PRECONDITION} the \textit{\$SYSTEM}
+shall \textit{\$REQUIREMENT}," for example, "When an order arrives, the gateway will produce a NewOrderEvent.
+
+\item 
+\textbf{Unwanted behavior}: "If \textit{\$CONDITION}, then the \textit{\$SYSTEM} shall \textit{\$REQUIREMENT}," for example if the processing of the request takes longer than 1 second, the tool will display a progress bar.
+
+\item
+\textbf{State-driven}: "While \textit{\$STATE}, the \textit{\$SYSTEM} shall \textit{\$REQUIREMENT}," for example, while a ride is taking place, the app will display a map to help the driver navigate to the destination.
+
+\item
+\textbf{Optional feature}: "Where \textit{\$FEATURE}, the \textit{\$SYSTEM} shall \textit{\$REQUIREMENT}," for example, where A/C is present, the app will let the user set the temperature through the mobile application.
+\end{itemize}
+
+An example of a more complex requirement would be: When using a dual-server setup, if the backup server doesn't hear from the primary one for 5 seconds, it should try to register itself as a new primary server.
+
+You don't need to use EARS, but it can help if you struggle with ambiguous, vague, overly complex, untestable, omissive, or otherwise badly worded requirements. Whatever way or wording you choose, be sure to use a concise model, which is based on common syntax and uses predefined keywords. It's also good practice to assign an identificator for each requirement you list, so you'll have an easy way to refer to them.
+
+When it comes to more detailed requirements formats, it should have the following fields:
+
+\begin{itemize}
+\item 
+\textbf{ID or Index}: To easily identify a specific requirement.
+
+\item 
+\textbf{Title}: You can use the EARS template here.
+
+\item 
+\textbf{Detailed Description}: You can put whatever information you find relevant here, for example, user stories.
+
+\item
+\textbf{Owner}: Who this requirement serves. This can be the product owner, the sales team, legal, IT, and so on.
+
+\item
+\textbf{Priority}: Pretty self-explanatory.
+
+\item
+\textbf{Deliver By}: If this requirement is needed for any key date, you can note it here. 
+\end{itemize}
+
+Now that we know how to document functional requirements, let's discuss how you should approach documenting the nonfunctional ones.
+
+\subsubsubsection{3.5.4\hspace{0.2cm}Documenting nonfunctional requirements}
+
+Each quality attribute, such as performance or scalability, should have its own section in your document, with specific, testable requirements listed. Most of the QAs are measurable, so having specific metrics can do a world of good to resolve future questions. You can also have a separate section about the constraints that your project has.
+
+With regard to wording, you can use the same EARS template to document your NFRs. Alternatively, you can also specify them as user stories using the personas that you defined in the context of this chapter.
+
+
+\subsubsubsection{3.5.5\hspace{0.2cm}Managing the version history of your documentation}
+
+You can take one of the two following approaches: either create a version log inside the document or use an external versioning tool. Both have their pros and cons, but we recommend going with the latter approach. Just like you use a version control system for your code, you can use it for your documentation. We're not saying you must use a Markdown document stored in a Git repo, but that's a perfectly valid approach as long as you're also generating a \textbf{business people-readable} version of it, be it a web page or a PDF file. Alternatively, you can just use online tools, such as RedmineWikis, or Confluence pages, which allow you to put a meaningful comment describing what's been changed on each edit you publish and to view the differences between versions.
+
+If you decided to take a revision log approach, it's usually a table that includes the following fields:
+
+\begin{itemize}
+\item 
+\textbf{Revision}: A number identifying which iteration of the document the changes were introduced at. You can also add tags for special revisions, such as \textit{the first draft}, if you so wish.
+
+\item 
+\textbf{Updated by}: Who made the change.
+
+\item 
+\textbf{Reviewed by}: Who reviewed the change.
+
+\item
+\textbf{Change description}: A \textit{commit message} for this revision. It states what changes have taken place.
+\end{itemize}
+
+\subsubsubsection{3.5.6\hspace{0.2cm}Documenting requirements in Agile projects}
+
+Many proponents of Agile would claim that documenting all the requirements is simply a waste of time as they will probably change anyway. However, a good approach is to treat them similarly to items in your backlog: the ones that will be developed in the upcoming sprints should be defined in more detail than the ones that you wish to implement later. Just like you won't split your epics into stories and stories into tasks before it's necessary, you can get away with having just roughly described, less granular requirements until you're certain that you need them implemented.
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
+\hspace*{0.7cm}Note who or what was the source of a given requirement so that you'll know how who can provide you with necessary input for refining it in the future.
+\end{tcolorbox}
+
+Let's take our Dominican Fair, for example. Say in the next sprint, we'll be building the shop page for a visitor to view, and in the sprint after that one, we'll be adding a subscription mechanism. Our requirements could look like the following:
+
+\begin{table}[H]
+	\begin{tabular}{|l|l|l|l|}
+		\hline
+		\textbf{ID} & \textbf{Priority} & \textbf{Description}                                                                                                            & \textbf{Stakeholders}                                   \\ \hline
+		DF-42       & P1                & \begin{tabular}[c]{@{}l@{}}The shop's page must show the shop's inventory, with a\\ photo and price for each item.\end{tabular} & Josh, Rick                                              \\ \hline
+		DF-43       & P2                & \begin{tabular}[c]{@{}l@{}}The shop's page must feature a map with the shop's\\ location.\end{tabular}                          & \begin{tabular}[c]{@{}l@{}}Josh,\\ Candice\end{tabular} \\ \hline
+		DF-44       & P2                & Customers must be able to subscribe to shops.                                                                                   & Steven                                                  \\ \hline
+	\end{tabular}
+\end{table}
+
+As you can see, the first two items relate to the feature we'll be doing next. so they are described in more detail. Who knows, maybe before the next sprint, the requirement about subscriptions will be dropped, so it doesn't make sense to think about every detail of it.
+
+There are cases, on the other hand, that would still require you to have a complete list of requirements. If you need to deal with external regulators or internal teams such as auditing, legal, or compliance, chances are they'll still require a well-written physical document from you. Sometimes just handing them a document containing work items extracted from your backlog is OK. It's best to communicate with such stakeholders just like with any other ones: gather their expectations to know the minimum viable documentation that satisfies their needs.
+
+What's important about documenting requirements is to have an understanding between you and the parties proposing specific requirements. How can this be achieved? Once you have a draft ready to go, you should show your documentation to them and gather feedback. This way, you'll know what was ambiguous, unclear, or missing. Even if it takes a few iterations, it will help you have a common ground with your stakeholders, so you'll gain more confidence that you're building the right thing.
+
+\subsubsubsection{3.5.7\hspace{0.2cm}Other sections}
+
+It's a good idea to have a links and resources section in which you point to stuff such as the issue tracker boards, artifacts, CI, the source repo, and whatever else you'll find handy. Architectural, marketing, and other kinds of documents can also be listed here.
+
+If needed, you can also include a glossary.
+
+You now know how to document your requirements and related information. Let's now say a few words about documenting the designed system.
+

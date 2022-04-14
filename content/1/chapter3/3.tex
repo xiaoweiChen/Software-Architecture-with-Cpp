@@ -1,0 +1,77 @@
+
+When designing a software system, it's common to deal with dozens or hundreds of various requirements. In order to make sense of them and come up with a good design, you need to know which of them are important and which could be implemented regardless of your design decisions, or even dismissed. You should learn how to recognize the most important ones so you can focus on them first and deliver the most value in the shortest possible time.
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
+\hspace*{0.7cm}You should prioritize requirements using two metrics: the business value and the impact on architecture. Those that will be high on both scales are most important and should be dealt with as a matter of priority. If you come up with too many such requirements, you should revisit your prioritization scheme. If it doesn't help, it might be that the system just isn't achievable.
+\end{tcolorbox}
+
+ASRs are those that have a measurable impact on your system's architecture. They can be both functional and nonfunctional. How can you identify which ones are actually significant? If the absence of a specific requirement were to allow you to create a different architecture, you are looking at an ASR. Late discovery of such requirements will often cost you both time and money, as you'll need to redesign some part of your system, if not the whole solution. You can only hope it won't cost you other resources and your reputation, too.
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
+\hspace*{0.7cm}It's a common mistake to start by applying concrete technologies to your architecture from the very beginning of your architectural work. We strongly suggest that you first gather all the requirements, focus on the ones significant for the architecture, and only then decide what technologies and technology stacks to build your project on.
+\end{tcolorbox}
+
+Since it's that important to recognize ASRs, let's talk about a few patterns that can help you with this.
+
+\subsubsubsection{3.3.1\hspace{0.2cm}Indicators of architectural significance}
+
+If you have a requirement to integrate with any external system, this is most likely going to influence your architecture. Let's go through some common indicators that a requirement is an ASR:
+
+\begin{itemize}
+\item 
+\textbf{Needing to create a software component to handle it}: Examples include sending emails, pushing notifications, exchanging data with the company's SAP server, or using a specific data storage.
+
+\item 
+\textbf{Having a significant impact on the system}: Core functionality often defines what your system should look like. Cross-cutting concerns, such as authorization, auditability, or having transactional behavior, are other good examples.
+
+\item 
+\textbf{Being hard to achieve}: Having low latency is a great example: unless you think of it early in development, it can be a long battle to achieve it, especially if you suddenly realize you can't really afford to have garbage collections when you're on your hot path.
+
+\item 
+\textbf{Forcing trade-offs when satisfying certain architectures}: Perhaps your design decision will even need to compromise some requirements in favor of other, more important ones if the cost is too high. It's a good practice to log such decisions somewhere and to notice that you're dealing with ASRs here. If any requirement constrains you or limits the product in any way, it's very likely significant for the architecture. If you want to come up with the best architecture given many trade-offs, then be sure to read about the \textbf{Architecture Trade-off Analysis Method (ATAM)}, which you can read about under one of the links in the Further reading section.
+\end{itemize}
+
+Constraints and the environment your application will run in can also impact your architecture. Embedded apps need to be designed in a different way to those running in the cloud, and apps being developed by less-experienced developers should probably use a simple and safe framework instead of using one with a steep learning curve or developing their own.
+
+\subsubsubsection{3.3.2\hspace{0.2cm}Hindrances in recognizing ASRs and how to deal with them}
+
+Contrary to intuition, many architecturally significant requirements are difficult to spot at first glance. This is caused by two factors: they can be hard to define and even if they're described, this can be done vaguely. Your customers might not yet be clear about what they need, but you should still be proactive in asking questions to steer clear of any assumptions. If your system is to send notifications, you must know whether those are real time or whether a daily email will suffice, as the former could require you to create a publisher-subscriber architecture. 
+
+In most cases, you'll need to make some assumptions since not everything is known upfront. If you discover a requirement that challenges your assumptions, it might be an ASR. If you assume you can maintain your service between 3 a.m. and 4 a.m. and you realize your customers from a different time zone will still need to use it, it will challenge your assumption and likely change the product's architecture.
+
+What's more, people often tend to treat quality attributes vaguely during the earlier phases of projects, especially less-experienced or less-technical individuals. On the other hand, that's the best moment to address such ASRs, as the cost of implementing them in the system is the lowest.
+
+It's worth noting, however, that many people, when specifying requirements, like to use vague phrases without actually thinking it through. If you were designing a service similar to Uber, some examples could be: \textit{when receiving a DriverSearchRequest, the system must reply with an AvailableDrivers message fast, or the system must be available 24/7}.
+
+Upon asking questions, it often turns out that 99.9\% monthly availability is perfectly fine, and fast is actually a few seconds. Such phrases always require clarification, and it's often valuable to know the rationale behind them. Perhaps it is just someone's subjective opinion, not backed by any data or business needs. Also, note that in the request and response case, the quality attribute is hidden inside another requirement, making it even harder to catch.
+
+Finally, requirements being architecturally significant for one system aren't necessarily of the same importance to another, even if those systems serve similar purposes. Some will become more important over time, once the system grows and starts to communicate with more and more other systems. Others may become important once the needs for the product change. This is why there's no silver bullet in telling which of your requirements will be ASRs, and which won't. 
+
+Equipped with all this knowledge on how to distinguish the important requirements from the rest, you know what to look for. Let's now say a few words about \textit{where} to look.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
