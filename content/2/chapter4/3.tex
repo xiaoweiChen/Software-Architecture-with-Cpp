@@ -1,0 +1,254 @@
+
+Availability and fault tolerance are software qualities that are at least somewhat important for every architecture. What's the point of creating a software system if the system can't be reached? In this section, we'll learn what exactly those terms mean and a few techniques to provide them in your solutions.
+
+\subsubsubsection{4.3.1\hspace{0.2cm}Calculating your system's availability}
+
+Availability is the percentage of the time that a system is up, functional, and reachable. Crashes, network failures, or extremely high load (for example, from a DDoS attack) that prevents the system from responding can all affect its availability.
+
+Usually, it's a good idea to strive for as high a level of availability as possible. You may stumble upon the term counting the nines, as  availability is often specified as 99\% (two nines), 99.9\% (three), and so on. Each additional nine is much harder to obtain, so be careful when making promises. Take a look at the following table to see how much downtime you could afford if you specified it on a monthly basis:
+
+\begin{table}[H]
+	\begin{tabular}{|l|l|}
+		\hline
+		\multicolumn{1}{|c|}{\textbf{Downtime/month}} & \multicolumn{1}{c|}{\textbf{Uptime}} \\ \hline
+		7 hours 18 minutes                            & 99\% (“two nines”)                   \\ \hline
+		43 minutes 48 seconds                         & 99.9\% (“three nines”)               \\ \hline
+		4 minutes 22.8 seconds                        & 99.99\% (“four nines”)               \\ \hline
+		26.28 seconds                                 & 99.999\% (“five nines”)              \\ \hline
+		2.628 seconds                                 & 99.9999\% (“six nines”)              \\ \hline
+		262.8 ms                                      & 99.99999\% (“seven nines”)           \\ \hline
+		26.28 ms                                      & 99.999999\% (“eight nines”)          \\ \hline
+		2.628 ms                                      & 99.9999999\% (“nine nines”)          \\ \hline
+	\end{tabular}
+\end{table}
+
+A common practice for cloud applications is to provide a Service-Level Agreement (SLA), which specifies how much downtime can occur per a given period of time (for example, a year). An SLA for your cloud service will strongly depend on the SLAs of the cloud services you build upon.
+
+To calculate a compound availability between two services that need to cooperate, you should just multiply their uptimes. This means if you have two services with 99.99\% availability, their compound availability will be 99.99\% * 99.99\% = 99.98\%. To calculate the availability of redundant services (such as two independent regions), you should multiply their unavailability. For instance, if two regions have 99.99\% availability, their total unavailability will be (100\% – 99.99\%) * (100\% – 99.99\%) = 0.01\% * 0.01\% = 0.0001\%, so their compound availability is 99.9999\%.
+
+Unfortunately, it's impossible to provide 100\% availability. Failures do occur from time to time, so let's learn how to make your system tolerate them.
+
+\subsubsubsection{4.3.2\hspace{0.2cm}Building fault-tolerant systems}
+
+Fault tolerance is a system's ability to detect such failures and to handle them gracefully. It's essential that your cloud-based services are resilient, as due to the nature of the cloud, many different things can suddenly go south. Good fault tolerance can help your service's availability.
+
+Different types of issues require different handling: from prevention, through detection, to minimizing the impact. Let's start with common ways to avoid having a single point of failure.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Redundancy}
+
+One of the most basic preventions is introducing \textbf{redundancy}. Similar to how you can have a spare tire for your car, you can have a backup service that takes over when your primary server goes down. This stepping-in is also known as \textbf{failover}.
+
+How does the backup server know when to step in? One way to implement this is by using the heartbeat mechanism described in the \textit{Detecting faults} section.
+
+To make the switch faster, you can send all the messages that are going into the primary server also to the backup one. This is called a \textbf{hot standby}, as opposed to a cold one – initializing from zero. A good idea in such a case is to stay one message behind, so if a \textit{poisoned} message kills the primary server, the backup one can simply reject it.
+
+The preceding mechanism is called an \textbf{active-passive} (or \textbf{master-slave}) failover, as the backup server doesn't handle incoming traffic. If it did, we would have an \textbf{active-active} (or \textbf{master-master}) failover. For more on active-active architectures, refer to the last link in the \textit{Further reading} section.
+
+Be sure you don't lose any data when the failover happens. Using a message queue with backing storage may help with this.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{Leader election}
+
+It's also important for both the servers to know which one is which – if both start behaving as primary instances, you'll likely be in trouble. Choosing the primary server is called the leader election pattern. There are a few ways to do so, for example, by introducing a thirdparty arbiter, by racing to take exclusive ownership of a shared resource, by choosing the instance with the lowest rank, or by using algorithms such as bully election or token ring election.
+
+Leader election is also an essential part of the next related concept: achieving consensus.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{Consensus}
+
+If you want your system to operate even when network partitions happen or some instances of your service experience faults, you need a way for your instances to reach consensus. They must agree what values to commit and often in what order. A simple approach is by allowing each instance to vote on the correct state. However, in some cases this is not enough to reach a consensus correctly or at all. Another approach would be to elect a leader and let it propagate its value. Because it's not easy to implement such algorithms by hand, we'd recommend using popular industry-proven consensus protocols such as Paxos and Raft. The latter is growing in popularity as it is simpler and easier to understand.
+
+Let's now discuss another way to prevent your system from faulting.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Replication}
+
+This one is especially popular with databases, and it helps with scaling them, too. \textbf{Replication} means you will run a few instances of your service in parallel with duplicated data, all handling incoming traffic.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}Don't confuse replication with sharding. The latter doesn't require any data redundancy, but can often bring you great performance at scale. If you're using Postgres, we recommend you try out Citus (\url{https://www.citusdata.com}).
+\end{tcolorbox}
+
+In terms of databases, there are two ways you can replicate. 
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Master-slave replication}
+
+In this scenario, all the servers are able to perform read-only operations, but there's only one master server that can also write. The data is replicated from the master, through the slaves, either in a one-to-many topology or using a tree topology. If the master fails, the system can still operate in read-only mode until this fault is remediated.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Multi-master replication}
+
+You can also have a system with multiple master servers. If there are two servers, you have a \textit{master-master replication} scheme. If one of the servers dies, the others can still operate normally. However, now you either need to synchronize the writes or provide looser consistency guarantees. Also, you need to provide a \textbf{load balancer}.
+
+Examples of such replication include Microsoft's Active Directory, OpenLDAP, Apache's CouchDB, or Postgres-XL.
+
+Let's now discuss two ways to prevent faults caused by too high a load.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Queue-based load leveling}
+
+This tactic is aimed at reducing the impact of sudden spikes in your system's load. Flooding a service with requests can cause performance issues, reliability ones, and even dropping valid requests. Once again, queues are there to save the day.
+
+To implement this pattern, we just need to introduce a queue for the incoming requests to be added asynchronously. You can use Amazon's SQS, Azure's Service Bus, Apache Kafka, ZeroMQ, or other queues to achieve that.
+
+Now, instead of having spikes in incoming requests, the load will get averaged. Our service can grab the requests from the said queue and process them without even knowing that the load was increased. Simple as that.
+
+If your queue is performant and your tasks can be parallelized, a side benefit of this pattern would be better scalability.
+
+Also, if your service isn't available, the requests will still get added into the queue for said service to process when it recovers, so this may be a way to help with bumping the availability.
+
+If the requests come infrequently, consider implementing your service as a function that runs only when there are items in the queue to save costs.
+
+Keep in mind that when using this pattern, the overall latency will increase by the addition of the queue. Apache Kafka and ZeroMQ should yield low latency, but if that's a dealbreaker, there's yet another way to deal with increased load.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Back pressure}
+
+If the load remains high, chances are you'll have more tasks than you're able to handle. This can cause cache misses and swapping if the requests will no longer fit into memory, as well as dropping requests and other nasty things. If you expect a heavy load, applying back pressure might be a great way to deal with it.
+
+In essence, back pressure means that instead of putting more pressure on our service with each incoming request, we push back into the caller so it needs to handle the situation. There are a few different ways to do so.
+
+For instance, we can block our thread that receives network packets. The caller will then see that it is unable to push the request to our service – instead, we push the pressure up the stream.
+
+Another way is to recognize greater load and simply return an error code, for example, 503. You can model your architecture so that this is done for you by another service. One such service is the Envoy Proxy (\url{https://envoyproxy.io}), which can come in handy on many other occasions too.
+
+Envoy can apply back pressure based on predefined quotas, so your service will actually never get overloaded. It can also measure the time it takes to process requests and apply back pressure only if it goes above a certain threshold. There are many other cases for which a variety of error codes will get returned. Hopefully, the caller has a plan on what to do if the pressure goes back on them.
+
+Now that we know how to prevent faults, let's learn how to detect them once they occur.
+
+\subsubsubsection{4.3.3\hspace{0.2cm}Detecting faults}
+
+Proper and fast fault detection can save you a lot of trouble, and often money. There are many ways to detect faults tailored to different needs. Let's go over a selection of them.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Sidecar design pattern}
+
+Since we were discussing Envoy, it might be worth saying that it's an example of the \textbf{sidecar design pattern}. This pattern is useful in many more cases than just error prevention and detection, and Envoy is a great example of this.
+
+In general, sidecars allow you to add a number of capabilities to your services without the need to write additional code. Similarly, as a physical sidecar can be attached to a motorcycle, a software sidecar can be attached to your service – in both cases extending the offered functionality.
+
+How can a sidecar be helpful in detecting faults? First of all, by providing health checking capabilities. When it comes to passive health checking, Envoy can detect whether any instance in a service cluster has started behaving badly. This is called \textbf{outlier detection}. Envoy can look for consecutive 5XX error codes, gateway failures, and so on. Aside from detecting such faulty instances, it can eject them so the overall cluster remains healthy.
+
+Envoy also offers active health checking, meaning it can probe the service itself instead of just observing its reactions to incoming traffic.
+
+Throughout this chapter, we'll show a few other usages for the sidecar pattern in general, and Envoy in particular. Let's now discuss the next mechanism of fault detection.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Heartbeat mechanism}
+
+One of the most common ways of fault detection is through the \textbf{heartbeat mechanism}. A \textbf{heartbeat} is a signal or a message that is sent on regular intervals (usually a few seconds) between two services.
+
+If a few consecutive heartbeats are missing, the receiving service can consider the sending service \textit{dead}. In the case of our primary-backup service pair from a few sections previously, this can cause a failover to happen.
+
+When implementing a heartbeat mechanism, be sure that it's reliable. False alarms can be troublesome, as the services may get confused, for example, about which one should be the new master. A good idea might be to provide a separate endpoint just for heartbeats, so it won't be as easily affected by the traffic on the regular endpoints.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Leaky bucket counter}
+
+Another way to detect faults is by adding a so-called \textbf{leaky bucket} counter. With each error, the counter would get incremented, and after a certain threshold is reached (the bucket is full), a fault would get signaled and handled. In regular time intervals, the counter would get decreased (hence, leaky bucket). This way, the situation would only be considered a fault if many errors occurred in a short time period.
+
+This pattern can be useful if in your case it's normal to sometimes have errors, for instance, if you're dealing with networking.
+
+Now that we know how to detect faults, let's learn what to do once they happen.
+
+\subsubsubsection{4.3.4\hspace{0.2cm}Minimizing the impact of faults}
+
+It takes time to detect an ongoing fault, and it takes even more of this precious resource to resolve it. This is why you should strive to minimize the impact of faults. Here are a few ways that can help.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Retrying the call}
+
+When your application calls another service, sometimes the call will fail. The simplest remedy for such a case is to just retry the call. If the fault was transient and you don't retry, that fault will likely get propagated through your system, making more damage than it should. Implementing an automated way to retry such calls can save you a lot of hassle.
+
+Remember our sidecar proxy, Envoy? Turns out it can perform the automatic retries on your behalf, saving you from doing any changes to your sources.
+
+For instance, see this example configuration of a retry policy that can be added to a route in Envoy:
+
+\begin{tcblisting}{commandshell={}}
+retry_policy:
+  retry_on: "5xx"
+  num_retries: 3
+  per_try_timeout: 2s
+\end{tcblisting}
+
+This will make Envoy retry calls if they return errors such as the 503 HTTP code or gRPC errors that map to 5XX codes. There will be three retries, each considered failed if not finished within 2 seconds.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Avoiding cascading failures}
+
+We mentioned that without retries the error will get propagated, causing a cascade of failures throughout the system. Let's now show more ways to prevent this from happening.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{Circuit breaker}
+
+The \textbf{circuit breaker pattern} is a very useful tool for this. It allows us to quickly notice that a service is unable to process requests, so the calls to it can be short-circuited. This can happen both close to the callee (Envoy provides such a capability), or on the caller side (with the additional benefit of shaving off time from the calls). In Envoy's case, it can be as simple as adding the following to your config:
+
+\begin{tcblisting}{commandshell={}}
+circuit_breakers:
+  thresholds:
+	- priority: DEFAULT
+	  max_connections: 1000
+	  max_requests: 1000
+	  max_pending_requests: 1000
+\end{tcblisting}
+
+In both cases, the load caused by the calls to the service may drop, which in some cases can help the service return to normal operation.
+
+How do we implement a circuit breaker on the caller side? Once you've made a few calls, and, say, your leaky bucket overflows, you can just stop making new calls for a specified period of time (for example, until the bucket no longer overflows). Simple and effective.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{Bulkhead}
+
+Another way to limit fault from spreading is taken straight from the stockyards. When building ships, you usually don't want the ship to get full of water if a hole breaks in the hull. To limit the damage of such holes, you would partition the hull into bulkheads, each of which would be easy to isolate. In this case, only the damaged bulkhead would get filled with water.
+
+The same principle applies to limiting the fault impact in software architecture. You can partition your instances into groups, and you can assign the resources they use into groups as well. Setting quotas can also be considered an example of this pattern.
+
+Separate bulkheads can be created for different groups of users, which can be useful if you need to prioritize them or provide a different level of service to your critical consumers.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Geodes}
+
+The last way we'll show is called \textbf{Geodes}. The name comes from geographical nodes. It can be used when your service is deployed in multiple regions.
+
+If a fault occurs in one region, you can just redirect the traffic to other, unaffected regions. This will of course make the latency much higher than if you'd made calls to other nodes in the same data center, but usually redirecting less critical users to remote regions is a much better choice than just failing their calls entirely.
+
+Now that you know how to provide availability and fault tolerance through your system's architecture, let's discuss how to integrate its components together.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

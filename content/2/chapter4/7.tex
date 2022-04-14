@@ -1,0 +1,58 @@
+
+Proper APIs are essential for the success of your development team and product. We can divide this topic into two smaller ones: system-level APIs and component-level APIs. In this section, we'll discuss handling APIs on the first of those levels, while the next chapter will present you with tips on the second.
+
+Aside from managing objects, you'll also want to manage your whole API. If you want to introduce policies regarding API usage, control access to said API, gather performance metrics and other analytical data, or just charge your customers based on their use of your interfaces, \textbf{API management (APIM)} is the solution you're looking for.
+
+Typically a set of APIM tools consists of these components:
+
+
+\begin{itemize}
+\item 
+\textbf{An API gateway}: A single entry point for all users of an API. More on this in the next section.
+
+
+\item 
+\textbf{Reporting and analytics}: To monitor the performance and latency of your APIs, resources consumed, or data sent. Such tools can be leveraged to detect trends in usage, know which parts of the API and which components behind them are performance bottlenecks, or what SLAs are reasonable to offer and how to improve them.
+
+\item 
+\textbf{A portal for developers}: To help them get up to speed with your API quickly, and to subscribe to your APIs at all.
+
+
+\item 
+\textbf{A portal for administrator}s: To manage policies, users, and package APIs into sellable products.
+
+
+\item 
+\textbf{Monetization}: To charge your customers based on how they use your APIs and to aid related business processes.
+\end{itemize}
+
+APIM tools are provided both by cloud providers and independent parties, for example, NGINX's Controller or Tyk. 
+
+When designing APIs for a given cloud, get to know the good practices the cloud provider usually documents. For instance, you can find common design patterns for Google Cloud Platform in the \textit{Further reading} section. In their case, lots of the practices revolve around using Protobufs.
+
+Choosing the right way to consume APIs can take you a long way. The most simple way to file requests to your servers is by connecting to the services directly. While easy to set up and okay for small apps, it can lead to performance issues down the road. An API consumer will likely need to call a few different services, leading to high latency. Proper scalability is also impossible to achieve using this approach.
+
+A better approach is to use an API gateway. Such gateways are often an essential part of an APIM solution, but can also be used on their own.
+
+\subsubsubsection{4.6.1\hspace{0.2cm}API gateways}
+
+An API gateway is an entry point for clients who want to use your API. It can then route the incoming requests into a specific instance or cluster of services. This can simplify your client code, as it no longer needs to know all the backend nodes, or how they cooperate with each other. All a client needs to know is the address of an API gateway — the gateway will handle the rest. Thanks to hiding the backend architecture from the client, it can be easily remodeled without even touching the client's code.
+
+The gateway can aggregate multiple parts of your system's API into one, and then use \textbf{layer-7 routing} (for example, based on the URL) to a proper part of your system. Layer-7 routing is offered by both cloud providers themselves, as well as tools such as Envoy.
+
+As with many patterns described in this chapter, always consider whether it's worth it to add more complexity by introducing another pattern to your architecture. Think about how adding it will affect your availability, fault tolerance, and performance if they matter to you. After all, a gateway usually is just a single node, so try to not make it a bottleneck or a single point of failure.
+
+The Backends for Frontends pattern we mentioned a few chapters earlier can be thought of as a variant of the API gateway pattern. In the Backends for Frontends case, each frontend connects to its own gateway.
+
+Now that you know how system design relates to API design, let's summarize what we've discussed in the last sections.
+
+
+
+
+
+
+
+
+
+
+

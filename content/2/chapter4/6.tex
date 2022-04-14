@@ -1,0 +1,330 @@
+
+
+Even though deploying services sounds easy, there's a lot of things to think about if you take a closer look. This section will describe how to perform efficient deployments, configure your services after installing them, check that they stay healthy after being deployed, and how to do it all while minimizing downtime.
+
+\subsubsubsection{4.6.1\hspace{0.2cm}The sidecar pattern}
+
+Remember Envoy from earlier in this chapter? It's a very useful tool for efficient application development. Instead of embedding infrastructure services such as logging, monitoring, or networking into your application, you can deploy the Envoy proxy along with your app, just like a sidecar would be deployed next to a motorbike. Together, they can do much more than the app without the sidekick (another name for this pattern).
+
+Using a sidecar can speed up development, as many of the functionality it brings would need to be developed independently by each of your microservices. Because it's separate from your application, a sidecar can be developed using any programming language you find best for the job. The sidecar, along with all the functionality it provides, can be maintained by an independent team of developers and updated independently from your main service.
+
+Because sidecars reside right next to the app they enhance, they can use local means of inter-process communication. Usually, it's fast enough and much faster than communicating from another host, but remember that it can sometimes be too big a burden.
+
+Even if you deploy a third-party service, deploying your selected sidecar next to it can still provide value: you can monitor the resource usage and the condition of both the host and the service, as well as tracing requests throughout your distributed system. Sometimes it's also possible to reconfigure the service dynamically based on its condition, via editing the config file or a web interface.
+
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Deploying a service with tracing and a reverse proxy using Envoy}
+
+Let's now use Envoy as a front proxy for our deployment. Start by creating Envoy's configuration file, in our case named \textit{envoy-front\_proxy.yaml}, with the address of our proxy:
+
+
+\begin{tcblisting}{commandshell={}}
+static_resources:
+  listeners:
+    - address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8080
+      traffic_direction: INBOUND
+\end{tcblisting}
+
+We've specified that Envoy is going to listen for incoming traffic on port 8080. Later in the config, we'll route it to our service. Now, let's specify that we'd like to handle HTTP requests using our set of service instances and adding some tracing capabilities on top. First, let's add an HTTP endpoint:
+
+
+\begin{tcblisting}{commandshell={}}
+filter_chains:
+  - filters:
+  - name: envoy.filters.network.http_connection_manager
+    typed_config:
+      "@type":
+type.googleapis.com/envoy.extensions.filters.network.
+http_connection_manager.v3.HttpConnectionManager
+\end{tcblisting}
+
+Now, let's specify that requests should have IDs assigned and be traced by a distributed tracing system, Jaeger:
+
+\begin{tcblisting}{commandshell={}}
+generate_request_id: true
+tracing:
+  provider:
+    name: envoy.tracers.dynamic_ot
+    typed_config:
+      "@type":
+type.googleapis.com/envoy.config.trace.v3.DynamicOtConfig
+     library: /usr/local/lib/libjaegertracing_plugin.so
+     config:
+       service_name: front_proxy
+       sampler:
+         type: const
+         param: 1
+       reporter:
+         localAgentHostPort: jaeger:6831
+       headers:
+         jaegerDebugHeader: jaeger-debug-id
+         jaegerBaggageHeader: jaeger-baggage
+         traceBaggageHeaderPrefix: uberctx-
+       baggage_restrictions:
+         denyBaggageOnInitializationFailure: false
+         hostPort: ""
+\end{tcblisting}
+
+We'll create IDs for requests and use the OpenTracing standard (\textit{DynamicOtConfig}) with the native Jaeger plugin. The plugin will report to a Jaeger instance running under the specified address and add the specified headers.
+
+We also need to specify that all traffic (see the match section) from all domains shall be routed into our service cluster:
+
+
+\begin{tcblisting}{commandshell={}}
+codec_type: auto
+stat_prefix: ingress_http
+route_config:
+  name: example_route
+  virtual_hosts:
+    - name: front_proxy
+      domains:
+        - "*"
+      routes:
+        - match:
+            prefix: "/"
+          route:
+            cluster: example_service
+          decorator:
+            operation: example_operation
+\end{tcblisting}
+
+We'll define our \textit{example\_service} cluster in a second. Note that each request coming to the cluster will be marked by a predefined operation decorator. We also need to specify what router address to use:
+
+\begin{tcblisting}{commandshell={}}
+http_filters:
+- name: envoy.filters.http.router
+  typed_config: {}
+use_remote_address: true
+\end{tcblisting}
+
+Now we know how to handle and trace the requests, so what's left is to define the clusters we used. Let's start with our service's cluster:
+
+\begin{tcblisting}{commandshell={}}
+clusters:
+  - name: example_service
+    connect_timeout: 0.250s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: example_service
+      endpoints:
+        - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: example_service
+                port_value: 5678
+\end{tcblisting}
+
+Each cluster can have multiple instances (endpoints) of our service. Here, if we decide to add more endpoints, the incoming requests will be load-balanced using the round-robin strategy.
+
+Let's also add an admin interface:
+
+
+\begin{tcblisting}{commandshell={}}
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+   socket_address:
+     address: 0.0.0.0
+     port_value: 9901
+\end{tcblisting}
+
+Let's now place the config inside a container that will run Envoy using a Dockerfile, which we named \textit{Dockerfile-front\_proxy}:
+
+\begin{tcblisting}{commandshell={}}
+FROM envoyproxy/envoy:v1.17-latest
+
+RUN apt-get update && \
+apt-get install -y curl && \
+rm -rf /var/lib/apt/lists/*
+RUN curl -Lo -
+https://github.com/tetratelabs/getenvoy-package/files/3518103/getenvoy-cent
+os-jaegertracing-plugin.tar.gz | tar -xz && mv libjaegertracing.so.0.4.2
+/usr/local/lib/libjaegertracing_plugin.so
+
+COPY envoy-front_proxy.yaml /etc/envoy/envoy.yaml
+
+\end{tcblisting}
+
+We also downloaded the Jaeger native plugin that we used in our Envoy config.
+
+Now let's specify how to run our code in several containers using Docker Compose. Create a \textit{docker-compose.yaml} file, starting with the front proxy service definition:
+
+
+\begin{tcblisting}{commandshell={}}
+version: "3.7"
+
+services:
+  front_proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile-front_proxy
+    networks:
+      - example_network
+    ports:
+      - 12345:12345
+      - 9901:9901
+\end{tcblisting}
+
+We use our Dockerfile here, a simple network, and we expose two ports from the container on the host: our service and the admin interface. Let's now add the service our proxy will direct to:
+
+
+\begin{tcblisting}{commandshell={}}
+example_service:
+  image: hashicorp/http-echo
+  networks:
+    - example_network
+  command: -text "It works!"
+
+\end{tcblisting}
+
+In our case, the service will just display a predefined string in a simple web server.
+
+Now, let's run Jaeger in another container, exposing its port to the outside world:
+
+
+\begin{tcblisting}{commandshell={}}
+jaeger:
+  image: jaegertracing/all-in-one
+  environment:
+    - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+  networks:
+    - example_network
+  ports:
+    - 16686:16686
+
+\end{tcblisting}
+
+The last step will be to define our network:
+
+\begin{tcblisting}{commandshell={}}
+  networks:
+    example_network: {}
+
+\end{tcblisting}
+
+And we're done. You can now run the service using \textit{docker-compose up --build} and point your browser to the endpoints we specified.
+
+Using a sidecar proxy has one more benefit: even if your service will die, the sidecar is usually still alive and can respond to external requests while the main service is down. The same applies when your service is redeployed, for example, because of an update. Speaking of which, let's learn how to minimize the related downtime.
+
+
+\subsubsubsection{4.5.2\hspace{0.2cm}Zero-downtime deployments}
+
+There are two common ways to minimize the risk of downtime during deployments: \textbf{bluegreen deployments} and \textbf{canary releases}. You can use the Envoy sidecar when introducing any of those two.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Blue-green deployments}
+
+\textbf{Blue-green deployments} can help you minimize both the downtime and the risk related to deploying your app. To do so, you'll need two identical production environments, called blue and green. While green serves the customers, you can perform the update in the blue one. Once the update was made, the services were tested, and all looks stable, you can switch the traffic so it now flows to the updated (blue) environment.
+
+If any issues are spotted in the blue environment after the switch, the green one is still there – you can just switch them back. The users probably won't even notice any changes, and because both the environments are up and running, no downtime should be visible during the switch. Just make sure you won't lose any data during the switch (for example, transactions made in the new environment).
+
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Canary releases}
+
+The simplest way to not have all your service instances fail after an update is often, well, not updating all of them at once. That's the key idea behind the incremental variant of bluegreen deployments, also called a \textbf{canary release}.
+
+In Envoy, you could put the following in the \textit{routes} section of your config:
+
+
+\begin{tcblisting}{commandshell={}}
+- match:
+    prefix: "/"
+  route:
+    weighted_clusters:
+      clusters:
+      - name: new_version
+        weight: 5
+      - name: old_version
+        weight: 95
+
+\end{tcblisting}
+
+You should also remember to define the two clusters from the preceding snippet, the first one with the old version of your service:
+
+
+\begin{tcblisting}{commandshell={}}
+clusters:
+  - name: old_version
+    connect_timeout: 0.250s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: old_version
+      endpoints:
+        - lb_endpoints:
+          - endpoint:
+            address:
+              socket_address:
+                address: old_version
+                port_value: 5678
+
+\end{tcblisting}
+
+The second cluster will run the new version:
+
+\begin{tcblisting}{commandshell={}}
+- name: new_version
+  connect_timeout: 0.250s
+  type: strict_dns
+  lb_policy: round_robin
+  load_assignment:
+    cluster_name: new_version
+    endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: new_version
+                port_value: 5678
+
+\end{tcblisting}
+
+When an update gets deployed, the new version of a service will only be seen and used by a small fraction (here: 5\%) of your users. If the updated instances remain stable and no checks and verifications fail, you can gradually update more and more hosts in several steps, until all of them are switched to a new version. You can do it either by updating the config files by hand or by using the admin endpoint. Voila!
+
+Let's now move on to the last deployment pattern that we'll cover here.
+
+
+\subsubsubsection{4.5.3\hspace{0.2cm}External configuration store}
+
+If you're deploying a simple application, it can be okay to just deploy its configuration along with it. However, when you want to have a more complex deployment with many application instances, it can quickly become a burden to redeploy a new version of the app just to reconfigure it. At the same time, manual configuration changes are a no-go if you want to treat your services like cattle, not pets. Introducing an external configuration store can be an elegant way to overcome such hurdles.
+
+In essence, your apps can grab their configuration from said store instead of just relying on their local config files. This allows you to provide common settings for multiple instances and tune parameters for some of them, while having an easy and centralized way to monitor all your configs. If you want an arbiter to decide which nodes will be master nodes and which will serve as backup ones, an external config store can provide the instances with such information. It's also useful to implement a configuration update procedure so that your instances can be easily reconfigured during operation. You can use ready solutions such as Firebase Remote Config, leverage the Java-based Netflix Archaius, or write a configuration store on your own leveraging cloud storage and change notifications. 
+
+Now that we've learned some useful deployment patterns, let's move to another important topic when it comes to high-level design: APIs.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

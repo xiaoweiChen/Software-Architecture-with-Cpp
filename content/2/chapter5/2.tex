@@ -1,0 +1,303 @@
+
+Although C++ allows you to use the well-known object-oriented APIs that you may be familiar with if you write code in so-called coffee-based languages, it has some other tricks up its sleeves. We'll mention a few of them in this section.
+
+
+\subsubsubsection{5.2.1\hspace{0.2cm}Leveraging RAII}
+
+What's the main difference between a C API and a C++ one? Usually, it's not about polymorphism or having classes per se, but about an idiom called RAII.
+
+\textbf{RAII} stands for \textbf{Resource Acquisition Is Initialization}, but it's actually more about releasing resources than acquiring them. Let's take a look at a similar API written in C and C++ to show this feature in action:
+
+
+\begin{lstlisting}[style=styleCXX]
+struct Resource;
+
+// C API
+Resource* acquireResource();
+void releaseResource(Resource *resource);
+
+// C++ API
+using ResourceRaii = std::unique_ptr<Resource, decltype(&releaseResource)>;
+ResourceRaii acquireResourceRaii();
+
+\end{lstlisting}
+
+The C++ API is based on the C one, but this doesn't always need to be the case. What's important here is that in the C++ API, there's no need for a separate function to free our precious resource. Thanks to the RAII idiom, it's done automatically once a ResourceRaii object goes out of scope. This takes the burden of manual resource management away from the user, and the best part is that it comes at no extra cost.
+
+What's more, we didn't need to write any class of our own – we just reused the standard library's \textit{unique\_ptr}, which is a lightweight pointer. It ensures that the object it manages will always be freed, and it will always be freed exactly once.
+
+Since we're managing some special kinds of resources and not memory, we had to use a custom deleter type. Our \textit{acquireResourceRaii} function would need to pass the actual pointer to the \textit{releaseResource} function. The C API itself doesn't need to be exposed to the user if you only want to consume it from C++.
+
+An important thing to note here is that RAII is not just for managing memory: you can use it to easily handle ownership of any resource, such as locks, file handles, database connections, and anything else that should be released once its RAII wrappers go out of scope.
+
+\subsubsubsection{5.2.2\hspace{0.2cm}Specifying the interfaces of containers in C++}
+
+Implementations of the standard library are great places to search for idiomatic and performant C++ code. For instance, if you want to read some really interesting template code, you should give \textit{std::chrono} a shot, as it demonstrates some useful techniques and has a fresh approach to this. A link to libstdc++'s implementation can be found in the Further reading section.
+
+When it comes to other places of the library, even a quick peek at its containers shows that their interfaces tend to differ from their counterparts in other programming languages. To show this, let's take a look at a pretty straightforward class from the standard library, \textit{std::array}, and analyze it bit by bit:
+
+
+\begin{lstlisting}[style=styleCXX]
+template <class T, size_t N>
+struct array {
+	// types:
+	typedef T& reference;
+	typedef const T& const_reference;
+	typedef /*implementation-defined*/ iterator;
+	typedef /*implementation-defined*/ const_iterator;
+	typedef size_t size_type;
+	typedef ptrdiff_t difference_type;
+	typedef T value_type;
+	typedef T* pointer;
+	typedef const T* const_pointer;
+	typedef reverse_iterator<iterator> reverse_iterator;
+	typedef reverse_iterator<const_iterator> const_reverse_iterator;
+\end{lstlisting}
+
+The first thing you can see when you start reading the class definition is that it creates aliases for some types. This is common across the standard containers, and the names of those aliases are the same in many of them. This happens for a few reasons. One of them is the rule of least surprise – having it this way reduces the time developers spend scratching their heads and trying to understand what you meant and how a specific alias was named. Another reason is that the users of your class and library writers will often depend on such type traits when they're writing their own code. If your container won't provide such aliases, it will make using it with some standard utilities or type traits harder, so the users of your APIs will have to work around this or even use a completely different class.
+
+Having such type aliases can be useful even if you're not using them in your templates. It's not uncommon to rely on those types for function parameters and class member fields, so always remember to provide them if you're writing a class that other people could use. For instance, if you're writing an allocator, many of its consumers will rely on specific type aliases being present.
+
+Let's see what the array class will bring us:
+
+
+\begin{lstlisting}[style=styleCXX]
+// no explicit construct/copy/destroy for aggregate type
+\end{lstlisting}
+
+So, the next interesting thing about \textit{std::array} is that it has no definition of a constructor, including copy/move constructors; assign operators; or destructors. It's simply because having those wouldn't add any value. Often, adding such members when it's not necessary is actually harmful to performance. With a non-defaulted constructor (and \textit{T() \{\} }is already non-defaulted, as opposed to \textit{T() = default;}), your class is no longer trivial nor trivially constructible, which prevents the compiler from making optimizations to it.
+
+Let's see what other declarations our class has:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr void fill(const T& u);
+constexpr void swap(array<T, N>&) noexcept(is_nothrow_swappable_v<T&>);
+
+\end{lstlisting}
+
+Now, we can see two member functions, including a member swap. Often, it's profitable to not rely on the default behavior of \textit{std::swap} and to provide our own. For instance, in the case of \textit{std::vector}, the underlying storage is swapped as a whole instead of each element being swapped. When you're writing a member \textit{swap} function, be sure to also introduce a free function named swap so that it can be detected via \textbf{argument-dependent lookup (ADL)}. It could just call your member's \textit{swap} function.+
+
+One more thing regarding the swap function that's worth mentioning is that it's  conditionally \textit{noexcept}. If the stored type can be swapped without throwing exceptions, the array's swap will be \textit{noexcept} as well. Having a non-throwing swap can help you achieve strong exception safety guarantees in copy operations for classes that are storing our type as a member.
+
+As shown in the following code block, now comes a big set of functions that show us another important aspect of many classes – their iterators:
+
+
+\begin{lstlisting}[style=styleCXX]
+	 // iterators:
+	constexpr iterator begin() noexcept;
+	constexpr const_iterator begin() const noexcept;
+	constexpr iterator end() noexcept;
+	constexpr const_iterator end() const noexcept;
+	
+	constexpr reverse_iterator rbegin() noexcept;
+	constexpr const_reverse_iterator rbegin() const noexcept;
+	constexpr reverse_iterator rend() noexcept;
+	constexpr const_reverse_iterator rend() const noexcept;
+	
+	constexpr const_iterator cbegin() const noexcept;
+	constexpr const_iterator cend() const noexcept;
+	constexpr const_reverse_iterator crbegin() const noexcept;
+	constexpr const_reverse_iterator crend() const noexcept;
+
+\end{lstlisting}
+
+Iterators are vital for every container. If you don't provide iterator access for your class, you won't be able to use it in range-based for loops and it won't be compatible with all the useful algorithms from the standard library. This doesn't mean that you need to write your own iterator types – you could just use a simple pointer if your storage is contiguous. Providing \textit{const} iterators can help you use your class in an immutable manner, and providing reverse iterators can help with enabling more use cases for your container.
+
+Let's see what comes next:
+
+\begin{lstlisting}[style=styleCXX]
+	// capacity:
+	constexpr size_type size() const noexcept;
+	constexpr size_type max_size() const noexcept;
+	constexpr bool empty() const noexcept;
+	
+	// element access:
+	constexpr reference operator[](size_type n);
+	constexpr const_reference operator[](size_type n) const;
+	constexpr const_reference at(size_type n) const;
+	constexpr reference at(size_type n);
+	constexpr reference front();
+	constexpr const_reference front() const;
+	constexpr reference back();
+	constexpr const_reference back() const;
+	constexpr T * data() noexcept;
+	constexpr const T * data() const noexcept;
+private:
+	// the actual storage, like T elements[N];
+};
+
+\end{lstlisting}
+
+Following the iterators, we have a few ways to inspect and modify the container's data. In the case of \textit{array}, all of them are \textit{constexpr}. This means that if we were to write some compile-time code, we could use our array class. We'll look at this in more detail later in this chapter, in the \textit{Moving computations at compile time} section.
+
+Finally, we made it through the whole definition of our \textit{array}. Its interface doesn't end there, however. Starting with C++17, after a type definition, you can spot lines similar to the following:
+
+\begin{lstlisting}[style=styleCXX]
+template<class T, class... U>
+	array(T, U...) -> array<T, 1 + sizeof...(U)>;
+\end{lstlisting}
+
+Such statements are called \textbf{deduction guides}. They're part of a feature called \textbf{Class Template Argument Deduction (CTAD)}, which was introduced in C++17. It allows you to omit the template parameters when you're declaring a variable. It's handy for \textit{array} because now, you can just write the following:
+
+
+\begin{lstlisting}[style=styleCXX]
+auto ints = std::array{1, 2, 3};
+
+\end{lstlisting}
+
+However, it could be even handier for more complex types, such as maps, as follows:
+
+\begin{lstlisting}[style=styleCXX]
+auto legCount = std::unordered_map{ std::pair{"cat", 4}, {"human", 2}, {"mushroom", 1} };
+
+\end{lstlisting}
+
+There is, however, a catch here: we needed to specify that we're passing the key-value pair when we passed the first argument (note that we also used a deduction guide for it).
+
+Since we're on the topic of interfaces, let's point to some other aspects of them.
+
+\subsubsubsection{5.2.3\hspace{0.2cm}Using pointers in interfaces}
+
+The types that you use in your interfaces matter a lot. Even if there's documentation, a good API should still be intuitive at a glance. Let's see how different approaches to passing resource parameters to a function can suggest different things to the API consumer.
+
+Consider the following function declarations:
+
+\begin{lstlisting}[style=styleCXX]
+void A(Resource*);
+void B(Resource&);
+void C(std::unique_ptr<Resource>);
+void D(std::unique_ptr<Resource>&);
+void E(std::shared_ptr<Resource>);
+void F(std::shared_ptr<Resource>&);
+\end{lstlisting}
+
+When should you use which of those functions?
+
+Since smart pointers are now the standard way to deal with resources, \textit{A} and \textit{B} should be left for simple parameter passing and shouldn't be used if you don't do anything with the ownership of the passed objects. A should only be used for a single resource. For example, if you want to pass multiple instances, you could use a container, such as \textit{std::span}. If you know the object you want to pass is not null, it's best to pass it by using a reference, such as a const reference. You can also consider passing by value if the object is not too big.
+
+A good rule of thumb regarding functions \textit{C} to \textit{F} is that you should only pass smart pointers as arguments if you want to manipulate the pointers themselves; for example, for transferring ownership.
+
+The \textit{C} function takes a \textit{unique\_ptr} by value. This means it's a resource sink. In other words, it consumes and then frees the resource. Note that just by selecting a specific type, the interface expresses its intent clearly.
+
+The \textit{D} function should only be used if you want to pass in a \textit{unique\_ptr} containing one resource and receive another resource in the same \textit{unique\_ptr} as an out parameter. It's not a good idea to have such a function for simply passing a resource since it requires that the caller stores it specifically in a \textit{unique\_ptr}. In other words, if you think about passing a const \textit{unique\_ptr<Resource>\&}, just pass a \textit{Resource*} (or \textit{Resource\&}) instead.
+
+The \textit{E} function is meant for sharing resource ownership with the callee. Passing a \textit{shared\_ptr} by value can be relatively costly, as it is required to increment its reference counters. However, in this case, passing \textit{shared\_ptr} by value is okay, since a copy must be made somewhere if the callee really wants to become a shared owner.
+
+The \textit{F} function is similar to \textit{D} and should only be used when you want to manipulate the \textit{shared\_ptr} instance and propagate the change through this in/out parameter. If you're unsure if the function should take ownership or not, consider passing a \textit{const shared\_ptr\&}.
+
+\subsubsubsection{5.2.4\hspace{0.2cm}Specifying preconditions and postconditions}
+
+It's not uncommon for a function to have some requirements regarding its parameters. Each requirement should be stated as a precondition. If a function guarantees that its result has some properties – for example, it is non-negative – the function should make that clear as well. Some developers resort to placing comments to inform others about this, but it doesn't really enforce the requirement in any way. Placing if statements is better, but hides the reason for the check. Currently, the C++ standard still doesn't offer a way to deal with this (contracts were first voted into the C++20 standard, just to be removed later on). Fortunately, libraries such as Microsoft's \textbf{Guideline Support Library (GSL)} provide their own checks.
+
+Let's assume that, for whatever reason, we're writing our own queue implementation. The push member function could look like this:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+T& Queue::push(T&& val) {
+	gsl::Expects(!this->full());
+	// push the element
+	gsl::Ensures(!this->empty());
+}
+\end{lstlisting}
+
+Note that the user doesn't even need access to the implementation to be sure that some checks are in place. The code is also self-documenting as it's clear what the function requires and what the result will be.
+
+\subsubsubsection{5.2.5\hspace{0.2cm}Leveraging inline namespaces}
+
+In systems programming, oftentimes, you're not always just writing code against an API; often, you need to care about ABI compatibility as well. A famous ABI break happened when GCC released its fifth version, with one of the major changes being the change of the class layout of \textit{std::string}. This meant that libraries working with older GCC versions (or still using the new ABI in newer versions, which is still a thing in recent GCC releases) would not work with code written using a later ABI. In the case of an ABI break, if you receive a linker error, you can consider yourself lucky. In some cases, such as mixing \textit{NDEBUG} code with debug code, you'll likely get memory corruption if a class only has members available in one such configuration' for instance, special members being added for better debugging.
+
+Some memory corruptions, which are often hard to debug, can easily be turned into linker errors with the use of C++11's inline namespaces. Consider the following code:
+
+\begin{lstlisting}[style=styleCXX]
+#ifdef NDEBUG
+inline namespace release {
+#else
+inline namespace debug {
+#endif
+
+struct EasilyDebuggable {
+// ...
+#ifndef NDEBUG
+// fields helping with debugging
+#endif
+};
+
+} // end namespace
+\end{lstlisting}
+
+Because the preceding code uses inline namespaces, the users won't see a difference between the two build types when you're declaring objects of this class: all declarations from an inline namespace are visible in the surrounding scope. The linker, however, will end up with different symbol names, which will cause the linker to fail if it tries to link incompatible libraries, giving us the ABI safety we're looking for and a nice error message mentioning the inline namespace.
+
+For more tips on providing safe and elegant ABIs, please see Arvid Norberg's The ABI Challenge talk from C++Now 2019, which is linked in the Further reading section.
+
+\subsubsubsection{5.2.6\hspace{0.2cm}Leveraging std::optional}
+
+Going back from ABIs to APIs, let's mention one more type that we omitted when we were designing great APIs earlier in this book. The hero of this section can save the day when it comes to optional parameters for functions as it can help your types have components that may or may not hold value, and it can also be used for designing clean interfaces or as a replacement for pointers. This hero is called std::optional and was standardized in C++17. If you can't use C++17, you can still find it in Abseil (absl::optional), or find a very similar version from Boost (boost::optional). A big plus of using those classes is that they express the intent very clearly, which helps with writing clean and selfdocumenting interfaces. Let's see it in action.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Optional function parameters}
+
+We'll start by passing arguments to functions that can, but may not, hold value. Have you ever stumbled upon a function signature similar to the following?
+
+\begin{lstlisting}[style=styleCXX]
+void calculate(int param); // If param equals -1 it means "no value"
+void calculate(int param = -1);
+\end{lstlisting}
+
+Sometimes, it's just too easy to pass a -1 by mistake when you didn't want to if param was calculated somewhere else in code – perhaps where it was even a valid value. How about the following signature?
+
+\begin{lstlisting}[style=styleCXX]
+void calculate(std::optional<int> param);
+\end{lstlisting}
+
+This time, it's much clearer what to do if you don't want to pass a value: just pass an empty optional. The intent is clear, and -1 can still be used as a valid value instead of you having to give it any special meaning in a type-unsafe manner.
+
+That's just one usage of our optional template. Let's see some others.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Optional function return values}
+
+Just like with accepting special values to signify the no value of a parameter, a function can sometimes return no value. Which of the following would you prefer?
+
+\begin{lstlisting}[style=styleCXX]
+int try_parse(std::string_view maybe_number);
+bool try_parse(std::string_view maybe_number, int &parsed_number);
+int *try_parse(std::string_view maybe_number);
+std::optional<int> try_parse(std::string_view maybe_number);
+\end{lstlisting}
+
+How can you tell what value the first function will return in case of errors? Or will it throw an exception instead of returning a magic value? Moving on to the second signature, it looks like false will be returned if there is an error, but it's still easy to just forget to check it and read parsed\_number directly, potentially causing trouble. In the third case, while it's relatively safe to assume a nullptr will be returned on errors and an integer in case of success, it's now unclear if the returned int should be freed.
+
+With the last signature, it's clear by just looking at it that an empty value will be returned in case of errors and that there's nothing else that needs to be done. It's simple, understandable, and elegant.
+
+Optional return values can also be used to just mark a no value being returned, not necessarily that an error had occurred. Having said that, let's move on to our last use case for optionals.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Optional class members}
+
+Achieving coherence in a class state is not always an easy task. For instance, sometimes, you want to have a member or two that can simply not be set. Instead of creating another class for such a case (which increases code complexity) or reserving a special value (which is easy to pass unnoticed), you can use an optional class member. Consider the following type:
+
+\begin{lstlisting}[style=styleCXX]
+struct UserProfile {
+	std::string nickname;
+	std::optional <std::string> full_name;
+	std::optional <std::string> address;
+	std::optional <PhoneNumber> phone;
+};
+\end{lstlisting}
+
+Here, we can see which fields are necessary and which ones don't need to be filled. The same data could be stored using empty strings, but this wouldn't be clearly visible just from the struct's definition. Another alternative would be to use std::unique\_ptr's, but then we would lose data locality, which is often essential for performance. For such cases, std::optional can be of great value. It should definitely be a part of your toolbox when you want to design clean and intuitive APIs.
+
+This knowledge can help you provide high-quality and intuitive APIs. There's one more thing you can do to improve them further that will also help you write less buggy code by default. We will discuss this in the next section.
+
+
+
+
+
+
+
+
+
+
