@@ -1,0 +1,73 @@
+
+Starting with the advent of modern C++ in the early 2000s, C++ programming became more about computing things during compilation instead of deferring them to runtime. It's much cheaper to detect errors during compilation than to debug them later on. Similarly, it's much faster to have the result ready before the program is started instead of calculating it later on.
+
+At first, there was template metaprogramming, but with C++11 onward, each new standard brought additional features for compile-time compute: be it type traits, constructs such as std::enable\_if or std::void\_t, or C++20's consteval for computing stuff only at compile time.
+
+One feature that improved over the years was the constexpr keyword and its related code. C++20 really improved and extended constexpr. Now, you can not only write regular simple constexpr functions thanks to the previous standards (quite an improvement from C++11's single-expression ones), but you can also use dynamic allocations and exceptions inside them, not to mention std::vector and std::string!
+
+There's more: even virtual functions can now be constexpr: overload resolution happens as usual, but if a given one is constexpr, it can get called at compile time.
+
+Yet another improvement was made to standard algorithms. Their non-parallel versions are all ready for you to use in your compile-time code. Consider the following example, which can be used to check if a given merchant is present in a container:
+
+\begin{lstlisting}[style=styleCXX]
+#include <algorithm>
+#include <array>
+
+struct Merchant { int id; };
+
+bool has_merchant(const Merchant &selected) {
+	auto merchants = std::array{Merchant{1}, Merchant{2}, Merchant{3},
+		Merchant{4}, Merchant{5}};
+	return std::binary_search(merchants.begin(), merchants.end(), selected,
+			[](auto a, auto b) { return a.id < b.id; });
+}
+\end{lstlisting}
+
+As you can see, we're doing a binary search for an array of merchants, sorted by their IDs.
+
+To gain insight into the code and its performance, we recommend that you take a quick look at the assembly that this code generates. Along with the advent of compile-time computations and chasing performance, one of the invaluable tools that was developed was the \url{https://godbolt.org} site. It can be used to quickly play with code to see how different architectures, compilers, flags, library versions, and implementations influence the generated assembly.
+
+We tested the preceding code using GCC trunk (before GCC 11 was officially released) with -O3 and --std=c++2a. In our case, we checked the generated assembly with the following code:
+
+\begin{lstlisting}[style=styleCXX]
+int main() { return has_merchant({4}); }
+\end{lstlisting}
+
+You can see the few dozens of assembly lines using the following Godbolt: \url{https://godbolt.org/z/PYMTYx}.
+
+But wait – you could say that there's a function call in the assembly, so maybe we could inline it so it can be optimized better? That would be a valid point. Often, this helps a lot, although now, we just get the assembly inlined (see: \url{https://godbolt.org/z/hPadxd}).
+
+So, now, try changing the signature to the following:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr bool has_merchant(const Merchant &selected)
+\end{lstlisting}
+
+constexpr functions are implicitly inline, so we removed that keyword. If we look into the assembly, we will see that some magic happened: the search was optimized away! As you can see at https://godbolt.org/z/v3hj3E, all the assembly that was left was as follows:
+
+\begin{tcblisting}{commandshell={}}
+main:
+    mov eax, 1
+    ret
+\end{tcblisting}
+
+The compiler optimized our code so that the only thing left is our pre-computed result being returned. That's pretty impressive, isn't it?
+
+\subsubsubsection{5.4.1\hspace{0.2cm}Helping the compiler help you by using const}
+
+Compilers can optimize pretty well, even if you don't give them inline or constexpr keywords, as in the preceding example. One thing that helps them achieve performance for you is marking variables and functions as const. Perhaps even more importantly, it also helps you avoid making mistakes in your code. Many languages have immutable variables by default, which can lead to fewer bugs, code that's easier to reason about, and often faster multi-threaded performance.
+
+Even though C++ has mutable variables by default and you need to explicitly type const, we encourage you to do so. It can really help you stop making tricky typos related to modifying a variable that you shouldn't.
+
+Using const (or constexpr) code is part of a bigger philosophy called type safety. Let's say a few words about it.
+
+
+
+
+
+
+
+
+
+
+

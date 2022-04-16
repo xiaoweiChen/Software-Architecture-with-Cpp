@@ -1,0 +1,165 @@
+
+C++ relies heavily on mechanisms that help you write type-safe code. Language constructs such as explicit constructors and conversion operators have been baked into the language for a long time. More and more safe types are being introduced to the standard library. There's optional to help you avoid referencing empty values, string\_view to help you avoid going out of a range, and any as a safe wrapper for any type, just to name a few. Moreover, with its zero-cost abstractions, it's recommended that you create your own types that are useful and hard or impossible to misuse.
+
+Often, using C-style constructs can lead to type-unsafe code. One example would be C-style casts. They can resolve to a const\_cast, static\_cast, reinterpret\_cast, or one of these two combined with a const\_cast. Accidentally writing to a const object that was const\_cast is undefined behavior. So is reading memory returned from a reinterpret\_cast<T>, if T was not the original type of the object (C++20's std::bit\_cast can help here). Both of those cases are much easier avoided if C++ casts are used.
+
+C was perhaps too permissive when it came to types. Fortunately, C++ introduces many type-safe alternatives to problematic C constructs. There are streams and std::format instead of printf et al., and there's std::copy and other similar algorithms instead of the unsafe memcpy. Finally, there are templates instead of functions taking a void * (and paying a price in terms of performance). With C++, templates get even more type safety through a feature called concepts. Let's see how we can improve our code by using them.
+
+\subsubsubsection{5.5.1\hspace{0.2cm}Constraining template parameters}
+
+The first way concepts can improve your code is by making it more generic. Do you remember the cases where you needed to change the container type in one place, which caused a cascade of changes in other places too? If you weren't changing the container to one with totally different semantics and that you had to use in a different way, that means your code may not have been generic enough. 
+
+On the other hand, have you ever written a template or sprinkled auto over your code and later wondered if your code would break if someone changed the underlying type?
+
+Concepts are all about putting the right level of constraints onto the types you're operating on. They constrain what types your template can match, and are checked at compile time. For instance, let's say you write the following:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void foo(T& t) {...}
+\end{lstlisting}
+
+Now, you can write the following instead:
+
+\begin{lstlisting}[style=styleCXX]
+void foo(std::swappable auto& t) {...}
+\end{lstlisting}
+
+Here, foo() must be passed a type that supports std::swap to work. Do you recall some templates that matched just too many types? Previously, you could use std::enable\_if, std::void\_t, or if constexpr to constrain them. However, writing enable\_if statements was a bit cumbersome and could slow down your compilation times. Here, concepts come to the rescue once more due to their conciseness and how they express their intent clearly.
+
+There are a few dozen standard concepts in C++20. Most of them live in the <concepts> header and can be divided into four categories:
+
+\begin{itemize}
+\item 
+Core language concepts, such as derived\_from, integral, swappable, and move\_constructible
+
+\item 
+Comparison concepts, such as boolean-testable, equality\_comparable\_with, and totally\_ordered
+
+\item 
+Object concepts, such as movable, copyable, semiregular, and regular
+
+\item 
+Callable concepts, such as invokable, predicate, and strict\_weak\_order
+\end{itemize}
+
+Additional ones are defined in the <iterator> header. These can be divided into the following categories:
+
+\begin{itemize}
+\item 
+Indirect callable concepts, such as indirect\_binary\_predicate and indirectly\_unary\_invocable
+
+\item 
+Common algorithm requirements, such as indirectly\_swappable, permutable, mergeable, and sortable
+\end{itemize}
+
+Finally, a dozen can be found in the <ranges> header. Examples include range (duh), contiguous\_range, and view.
+
+If that's not enough for your needs, you can declare your own concepts similarly to how the standard defines the ones we just covered. For instance, the movable concept is implemented like so:
+
+\begin{lstlisting}[style=styleCXX]
+template <class T>
+concept movable = std::is_object_v<T> && std::move_constructible<T> &&
+std::assignable_from<T&, T> && std::swappable<T>;
+\end{lstlisting}
+
+Furthermore, if you look at std::swappable, you'll see the following:
+
+\begin{lstlisting}[style=styleCXX]
+template<class T>
+concept swappable = requires(T& a, T& b) { ranges::swap(a, b); };
+\end{lstlisting}
+
+This means a type, T, will be swappable if ranges::swap(a, b) compiles for two references of this type.
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
+\hspace*{0.7cm}When defining your own concepts, be sure that you cover the semantic requirements for them. Specifying and using a concept when defining an interface is a promise that's made to the consumers of that interface.
+\end{tcolorbox}
+
+Often, you can go with the so-called shorthand notation in declarations for brevity:
+
+\begin{lstlisting}[style=styleCXX]
+void sink(std::movable auto& resource);
+\end{lstlisting}
+
+For readability and type safety, it's recommended that you use auto together with a concept to constrain the type and let your readers know the kind of object they're dealing with. Code written in this manner will retain the perks of auto-like genericity. You can use this in both regular functions and lambdas.
+
+A great bonus of using concepts is shorter error messages. It's not uncommon to cut a few dozens and dozens of lines about one compilation error down to just a few lines. Yet another bonus is that you can overload on concepts.
+
+Now, let's go back to our Dominican Fair example. This time, we'll add some concepts to see how they can improve our implementation.
+
+First, let's make get\_all\_featured\_items return just a range of items. We can do so by adding the concept to the return type, like so:
+
+\begin{lstlisting}[style=styleCXX]
+range auto get_all_featured_items(const Stores &stores);
+\end{lstlisting}
+
+So far, so good. Now, let's add yet another requirement to this type that will be enforced when we call order\_items\_by\_date\_added: our range must be sortable.
+
+std::sortable has already been defined for a range iterator, but for our convenience, let's define a new concept called sortable\_range:
+
+
+\begin{lstlisting}[style=styleCXX]
+template <typename Range, typename Comp, typename Proj>
+concept sortable_range =
+	random_access_range<Range> &&std::sortable<iterator_t<Range>, Comp,
+Proj>;
+\end{lstlisting}
+
+Similar to its standard library counterpart, we can accept a comparator and a projection (which we introduced with ranges). Our concept is satisfied by (will be matched by) types that satisfy the random\_access\_range concept, as well as having an iterator that satisfies the aforementioned sortable concept. It's as simple as that.
+
+When defining concepts, you can also use the requires clause to specify additional constraints. For instance, if you want our range to store elements with a date\_added member only, you could write the following:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename Range, typename Comp>
+concept sortable_indirectly_dated_range =
+	random_access_range<Range> &&std::sortable<iterator_t<Range>, Comp> &&
+requires(range_value_t<Range> v) { { v->date_added }; };
+\end{lstlisting}
+
+However, in our case, we don't need to constrain the type that much, as you should leave some flexibility when you're using concepts and define them so that it will make sense to reuse them.
+
+What's important here is that you can use the requires clause to specify what code should be valid to call on your type when it meets the requirements for a concept. If you want, you can specify constraints on the type that's returned by each subexpression; for instance, to define something incrementable, you could use the following:
+
+\begin{lstlisting}[style=styleCXX]
+requires(I i) {
+	{ i++ } -> std::same_as<I>;
+}
+\end{lstlisting}
+
+Now that we have our concept, let's redefine the order\_items\_by\_date\_added function:
+
+\begin{lstlisting}[style=styleCXX]
+void order_items_by_date_added(
+sortable_range<greater, decltype(&Item::date_added)> auto &items) {
+	sort(items, greater{}, &Item::date_added);
+}
+\end{lstlisting}
+
+Now, our compiler will check if any range we pass to it is a sortable one and contains a date\_added member that can be sorted using std::ranges::greater\{\}.
+
+If we were to use the more constrained concept here, the function would look like this:
+
+\begin{lstlisting}[style=styleCXX]
+void order_items_by_date_added(
+sortable_indirectly_dated_range<greater> auto &items) {
+	sort(items, greater{}, &Item::date_added);
+}
+\end{lstlisting}
+
+Finally, let's redo our rendering function:
+
+\begin{lstlisting}[style=styleCXX]
+template <input_range Container>
+requires std::is_same_v<typename Container::value_type,
+		gsl::not_null<const Item *>> void
+render_item_gallery(const Container &items) {
+	copy(items,
+	std::ostream_iterator<typename Container::value_type>(std::cout,
+	"\n"));
+}
+\end{lstlisting}
+
+Here, you can see that a concept name can be used instead of the typename keyword in a template declaration. One line below this, you can see that the requires keyword can also be used to further constrain the appropriate types based on their traits. This can be handy if you don't want to specify a new concept.
+
+That's it for concepts. Now, let's write some modular C++ code.
+

@@ -1,0 +1,400 @@
+
+Are you familiar with imperative versus declarative coding styles? The former is when your code tells the machine how to achieve what you want step by step. The latter is when you tell the machine just what you want to achieve. Certain programming languages favor one over the other. For instance, C is imperative, while SQL is declarative, just like many functional languages. Some languages allow you to mix the styles – think of LINQ in C\#.
+
+C++ is a flexible beast that allows you to write code in both ways. Is there one you should prefer? It turns out that when you're writing declarative code, usually a higher level of abstraction is kept, which leads to fewer bugs and easier-to-spot errors. So, how can we write C++ declaratively? There are two main tactics to apply.
+
+The first one is to write functional-style C++, which is where you prefer a pure-functional style (no side effects of functions) if possible. Instead of writing loops by hand, you should try using standard library algorithms. Consider the following code:
+
+\begin{lstlisting}[style=styleCXX]
+auto temperatures = std::vector<double>{ -3., 2., 0., 8., -10., -7. };
+// ...
+for (std::size_t i = 0; i < temperatures.size() - 1; ++i) {
+	for (std::size_t j = i + 1; j < temperatures.size(); ++j) {
+		if (std::abs(temperatures[i] - temperatures[j]) > 5)
+		return std::optional{i};
+	}
+}
+return std::nullopt;
+\end{lstlisting}
+
+Now, compare the preceding code with the following snippet, which does the same:
+
+\begin{lstlisting}[style=styleCXX]
+auto it = std::ranges::adjacent_find(temperatures,
+							[](double first, double second) {
+	return std::abs(first - second) > 5);
+});
+if (it != std::end(temperatures))
+	return std::optional{std::distance(std::begin(temperatures), it)};
+return std::nullopt);
+\end{lstlisting}
+
+Both snippets return the last day that had a relatively stable temperature. Which one of those would you rather read? Which one is easier to understand? Even if you're not that familiar with C++ algorithms now, after encountering them a few times in code, they just feel simpler, safer, and cleaner than hand-crafted loops. That's because they often are.
+
+The second tactic for writing declarative code in C++ is already somewhat present in the previous snippet. You should prefer using declarative APIs, such as the one from the ranges library. And although no range views were used in our snippet, they can make a lot of difference. Consider the following snippet:
+
+\begin{lstlisting}[style=styleCXX]
+using namespace std::ranges;
+auto is_even = [](auto x) { return x % 2 == 0; };
+auto to_string = [](auto x) { return std::to_string(x); };
+auto my_range = views::iota(1)
+	| views::filter(is_even)
+	| views::take(2)
+	| views::reverse
+	| views::transform(to_string);
+std::cout << std::accumulate(begin(my_range), end(my_range), ""s) << '\n';
+\end{lstlisting}
+
+This is a great example of declarative coding: you just specify what should happen, not how. The preceding code takes the first two even numbers, reverses their order, and prints them as a string, thus printing the famous answer to life, the universe, and everything: 42. All of this is done in an intuitive and easily modifiable way.
+
+\subsubsubsection{5.3.1\hspace{0.2cm}Showcasing a featured items gallery}
+
+Enough with the toy examples, though. Remember our Dominican Fair application from Chapter 3, Functional and Nonfunctional Requirements? Let's write a component that will select and display a few featured items from the stores that a customer saved as their favorites. This can be pretty handy when we're writing a mobile app, for example.
+
+Let's start with a mostly C++17 implementation, which we'll update to C++20 throughout this chapter. This will include adding support for ranges.
+
+First, let's start with some code for obtaining information about the current user:
+
+\begin{lstlisting}[style=styleCXX]
+using CustomerId = int;
+
+CustomerId get_current_customer_id() { return 42; }
+\end{lstlisting}
+
+Now, let's add the store owners:
+
+\begin{lstlisting}[style=styleCXX]
+struct Merchant {
+	int id;
+};
+\end{lstlisting}
+
+The stores also need to have items in them:
+
+\begin{lstlisting}[style=styleCXX]
+struct Item {
+	std::string name;
+	std::optional<std::string> photo_url;
+	std::string description;
+	std::optional<float> price;
+	time_point<system_clock> date_added{};
+	bool featured{};
+};
+\end{lstlisting}
+
+Some items may not have photos or prices, which is why we used std::optional for those fields.
+
+Next, let's add some code that describes our items:
+
+\begin{lstlisting}[style=styleCXX]
+std::ostream &operator<<(std::ostream &os, const Item &item) {
+	auto stringify_optional = [](const auto &optional) {
+		using optional_value_type =
+		typename std::remove_cvref_t<decltype(optional)>::value_type;
+		if constexpr (std::is_same_v<optional_value_type, std::string>) {
+			return optional ? *optional : "missing";
+		} else {
+			return optional ? std::to_string(*optional) : "missing";
+		}
+	};
+
+	auto time_added = system_clock::to_time_t(item.date_added);
+	
+	os << "name: " << item.name
+	<< ", photo_url: " << stringify_optional(item.photo_url)
+	<< ", description: " << item.description
+	<< ", price: " << std::setprecision(2)
+	<< stringify_optional(item.price)
+	<< ", date_added: "
+	<< std::put_time(std::localtime(&time_added), "%c %Z")
+	<< ", featured: " << item.featured;
+	return os;
+}
+\end{lstlisting}
+
+First, we created a helper lambda for converting our optionals into strings. Since we only want to use it in our << operator, we defined it inside it.
+
+Note how we used C++14's generic lambdas (the auto parameter), along with C++17's constexpr and the is\_same\_v type trait, so that we have a different implementation when we're dealing with an optional <string> versus other cases. Achieving the same preC++17 would require writing templates with overloads, resulting in more complicated code:
+
+\begin{lstlisting}[style=styleCXX]
+enum class Category {
+	Food,
+	Antiques,
+	Books,
+	Music,
+	Photography,
+	Handicraft,
+	Artist,
+};
+\end{lstlisting}
+
+Finally, we can define the store itself:
+
+\begin{lstlisting}[style=styleCXX]
+struct Store {
+	gsl::not_null<const Merchant *> owner;
+	std::vector<Item> items;
+	std::vector<Category> categories;
+};
+\end{lstlisting}
+
+What's worth noting here is the use of the gsl::not\_null template from the Guidelines Support Library, which signals that the owner will always be set. Why not use just a plain old reference? That's because we may want our store to be moveable and copyable. Using a reference would hinder that.
+
+Now that we have those building blocks, let's define how to get a customer's favorite stores. For simplicity, let's assume we're dealing with hardcoded stores and merchants instead of creating code to deal with external data stores.
+
+First, let's define a type alias for the stores and begin our function definition:
+
+\begin{lstlisting}[style=styleCXX]
+using Stores = std::vector<gsl::not_null<const Store *>>;
+Stores get_favorite_stores_for(const CustomerId &customer_id) {
+\end{lstlisting}
+
+Next, let's hardcode some merchants, as follows:
+
+\begin{lstlisting}[style=styleCXX]
+	static const auto merchants = std::vector<Merchant>{{17}, {29}};
+\end{lstlisting}
+
+
+\begin{lstlisting}[style=styleCXX]
+	static const auto stores = std::vector<Store>{
+		{.owner = &merchants[0],
+			.items =
+			{
+				{.name = "Honey",
+					.photo_url = {},
+					.description = "Straight outta Compton's apiary",
+					.price = 9.99f,
+					.date_added = system_clock::now(),
+					.featured = false},
+				{.name = "Oscypek",
+					.photo_url = {},
+					.description = "Tasty smoked cheese from the Tatra
+					mountains",
+					.price = 1.23f,
+					.date_added = system_clock::now() - 1h,
+					.featured = true},
+			},
+			.categories = {Category::Food}},
+			// more stores can be found in the complete code on GitHub
+		};
+\end{lstlisting}
+
+Here, we introduced our first C++20 feature. You might not be familiar with the .field = value; syntax unless you've coded in C99 or newer. Starting from C++20, you can use this notation (officially called designated initializers) to initialize aggregate types. It's more constrained than in C99 because the order is important, although it has some other minor differences. Without those initializers, it can be hard to understand which value initializes which field. With them, the code is more verbose but easier to comprehend, even for people unfamiliar with programming.
+
+Once we've defined our stores, we can write the last part of our function, which will do the actual lookup:
+
+\begin{lstlisting}[style=styleCXX]
+static auto favorite_stores_by_customer =
+std::unordered_map<CustomerId, Stores>{{42, {&stores[0],
+			&stores[1]}}};
+return favorite_stores_by_customer[customer_id];
+}
+\end{lstlisting}
+
+Now that we have our stores, let's write some code to obtain the featured items for those stores:
+
+\begin{lstlisting}[style=styleCXX]
+using Items = std::vector<gsl::not_null<const Item *>>;
+Items get_featured_items_for_store(const Store &store) {
+	auto featured = Items{};
+	const auto &items = store.items;
+	for (const auto &item : items) {
+		if (item.featured) {
+			featured.emplace_back(&item);
+		}
+	}
+	return featured;
+}
+\end{lstlisting}
+
+The preceding code was for obtaining items from one store. Let's also write a function that will obtain items from all the given stores:
+
+\begin{lstlisting}[style=styleCXX]
+Items get_all_featured_items(const Stores &stores) {
+	auto all_featured = Items{};
+	for (const auto &store : stores) {
+		const auto featured_in_store = get_featured_items_for_store(*store);
+		all_featured.reserve(all_featured.size() + featured_in_store.size());
+		std::copy(std::begin(featured_in_store), std::end(featured_in_store),
+		std::back_inserter(all_featured));
+	}
+	return all_featured;
+}
+\end{lstlisting}
+
+The preceding code uses std::copy to insert elements into a vector, with memory preallocated by the reserve call.
+
+Now that we have a way to obtain interesting items, let's sort them by "freshness" so that the most recently added ones will appear first:
+
+\begin{lstlisting}[style=styleCXX]
+void order_items_by_date_added(Items &items) {
+	auto date_comparator = [](const auto &left, const auto &right) {
+		return left->date_added > right->date_added;
+	};
+	std::sort(std::begin(items), std::end(items), date_comparator);
+}
+\end{lstlisting}
+
+As you can see, we leveraged std::sort with a custom comparator. If you like, you could also force the same type for both left and right. To do so in a generic manner, let's use another C++20 feature: template lambdas. Let's apply them to the preceding code:
+
+\begin{lstlisting}[style=styleCXX]
+void order_items_by_date_added(Items &items) {
+	auto date_comparator = []<typename T>(const T &left, const T &right) {
+		return left->date_added > right->date_added;
+	};
+	std::sort(std::begin(items), std::end(items), date_comparator);
+}
+\end{lstlisting}
+
+The T type for the lambda will be deduced just like it would for any other template. The last two parts that are missing are the actual rendering code and the main function to glue it all together. In our example case, rendering will be as simple as printing to an ostream:
+
+\begin{lstlisting}[style=styleCXX]
+void render_item_gallery(const Items &items) {
+	std::copy(
+		std::begin(items), std::end(items),
+		std::ostream_iterator<gsl::not_null<const Item *>>(std::cout, "\n"));
+}
+\end{lstlisting}
+
+In our case, we just copy each element to the standard output and insert a newline between the elements. Using copy and an ostream\_iterator allows you to handle the element's separators for yourself. This can be handy in some cases; for instance, if you don't want a comma (or a newline, in our case) after the last element.
+
+Finally, our main function will look like this:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	auto fav_stores = get_favorite_stores_for(get_current_customer_id());
+	
+	auto selected_items = get_all_featured_items(fav_stores);
+	
+	order_items_by_date_added(selected_items);
+	
+	render_item_gallery(selected_items);
+}
+\end{lstlisting}
+
+Voila! Feel free to run the code to see how it prints our featured items:
+
+\begin{tcblisting}{commandshell={}}
+name: Handmade painted ceramic bowls, photo_url:
+http://example.com/beautiful_bowl.png, description: Hand-crafted and hand-
+decorated bowls made of fired clay, price: missing, date_added: Sun Jan 3
+12:54:38 2021 CET, featured: 1
+name: Oscypek, photo_url: missing, description: Tasty smoked cheese from
+the Tatra mountains, price: 1.230000, date_added: Sun Jan 3 12:06:38 2021
+CET, featured: 1
+\end{tcblisting}
+
+Now that we're done with our base implementation, let's see how we can improve it by using some new language features from C++20.
+
+\subsubsubsection{5.3.2\hspace{0.2cm}Introducing standard ranges}
+
+Our first addition will be the ranges library. As you may recall, it can help us achieve elegant, simple, and declarative code. For brevity, first, we will pull in the ranges namespace:
+
+\begin{lstlisting}[style=styleCXX]
+#include <ranges>
+
+using namespace std::ranges;
+\end{lstlisting}
+
+We'll leave the code-defining merchants, items, and stores as-is. Let's start our modifications by using the get\_featured\_items\_for\_store function:
+
+\begin{lstlisting}[style=styleCXX]
+Items get_featured_items_for_store(const Store &store) {
+	auto items = store.items | views::filter(&Item::featured) |
+			views::transform([](const auto &item) {
+				return gsl::not_null<const Item *>(&item);
+			});
+	return Items(std::begin(items), std::end(items));
+}
+\end{lstlisting}
+
+As you can see, making a range out of a container is straightforward: just pass it to a pipe operator. Instead of our hand-crafted loop to filter featured elements, we can use the views::filter expression, passing it a member pointer as the predicate. Due to the magic of std::invoke under the hood, this will correctly filter out all items that have our Boolean data member set to false.
+
+Next, we need to convert each item into a gsl::not\_null pointer so that we can avoid unnecessary item copies. Finally, we return a vector of such pointers, the same as in our base code.
+
+Now, let's see how we can use the preceding function to obtain all the featured items from all our stores:
+
+\begin{lstlisting}[style=styleCXX]
+Items get_all_featured_items(const Stores &stores) {
+	auto all_featured = stores | views::transform([](auto elem) {
+				return get_featured_items_for_store(*elem);
+			});
+	auto ret = Items{};
+	for_each(all_featured, [&](auto elem) {
+		ret.reserve(ret.size() + elem.size());
+		copy(elem, std::back_inserter(ret));
+	});
+	return ret;
+}
+\end{lstlisting}
+
+Here, we created a range from all the stores and transformed them using the function we created in the previous step. Because we needed to dereference each element first, we used a helper lambda. Views are lazily evaluated, so each transform will be done only when it is about to be consumed. This can sometimes save you lots of time and computations: assuming you would only want the first N items, you can skip the unnecessary calls to get\_featured\_items\_for\_store.
+
+Once we have our lazy view, similar to our base implementation, we can reserve space in the vector and copy items there from each nested vector in the all\_featured view. Range algorithms are more concise to use if you take the whole container. Look how copy doesn't require us to write std::begin(elem) and std::end(elem).
+
+Now that we have our items, let's simplify our sorting code by using ranges to process them:
+
+\begin{lstlisting}[style=styleCXX]
+void order_items_by_date_added(Items &items) {
+	sort(items, greater{}, &Item::date_added);
+}
+\end{lstlisting}
+
+Again, you can see how ranges can help you write more concise code. The preceding copy and the sort here are both range algorithms, as opposed to views. They are eager and allow you to use projections. In our case, we just passed another member of our item class so that it can be used for comparison when sorting. Effectively, each item will be projected as just its date\_added, which will then be compared using greater\{\}.
+
+But wait – our items are actually gsl::not\_null pointers to Item. How does this work? It turns out that our projection will dereference the gsl::not\_null pointer first because of the cleverness of std::invoke. Neat!
+
+The last change that we can make is in our "rendering" code:
+
+\begin{lstlisting}[style=styleCXX]
+void render_item_gallery([[maybe_unused]] const Items &items) {
+	copy(items,
+	std::ostream_iterator<gsl::not_null<const Item *>>(std::cout,
+	"\n"));
+}
+\end{lstlisting}
+
+Here, ranges just help us remove some boilerplate code. When you run our updated version of the code, you should get the same output as in the base case.
+
+If you were expecting more from ranges than just concise code, there's good news: they can be used even more efficiently in our case.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Reducing memory overhead and increasing performance using ranges}
+
+You already know that using lazy evaluation in std::ranges::views can help with performance by eliminating unnecessary compute. It turns out we can also use ranges to reduce the memory overhead in our example. Let's revisit our code for obtaining featured items from a store. It can be shortened down to the following:
+
+\begin{lstlisting}[style=styleCXX]
+auto get_featured_items_for_store(const Store &store) {
+	return store.items | views::filter(&Item::featured) |
+		views::transform(
+			[](const auto &item) { return gsl::not_null(&item); });
+}
+\end{lstlisting}
+
+Note that our function no longer returns items, instead relying on C++14's auto return type deduction. In our case, instead of returning a vector, our code will return a lazy view.
+
+Let's learn how to consume this for all stores:
+
+\begin{lstlisting}[style=styleCXX]
+Items get_all_featured_items(const Stores &stores) {
+	auto all_featured = stores | views::transform([](auto elem) {
+				return get_featured_items_for_store(*elem);
+			}) |
+	views::join;
+	auto as_items = Items{};
+	as_items.reserve(distance(all_featured));
+	copy(all_featured, std::back_inserter(as_items));
+	return as_items;
+}
+\end{lstlisting}
+
+Now, because our preceding function returns a view instead of the vector, we end up with a view of views after calling transform. This means we can use yet another standard view called join to join our nested views into just one that's unified.
+
+Next, we use std::ranges::distance to preallocate space in our destination vector, after which we make our copy. Some ranges are sized, in which case you could call std::ranges::size instead. The resulting code has just one call to reserve, which should give us a nice performance boost.
+
+This concludes introducing ranges to our code. Since we ended this section on a performance-related note, let's talk about one more topic that's important for this aspect of C++ programming.
+
+
+

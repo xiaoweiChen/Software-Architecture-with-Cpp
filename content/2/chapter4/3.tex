@@ -1,11 +1,13 @@
 
-Availability and fault tolerance are software qualities that are at least somewhat important for every architecture. What's the point of creating a software system if the system can't be reached? In this section, we'll learn what exactly those terms mean and a few techniques to provide them in your solutions.
+Availability and fault tolerance are software qualities that are at least somewhat important for every architecture. What's the point of creating a software system if the system can't be reached? In this section, we'll learn what exactly those terms mean and a few techniques to provide them in your solutions.
+
 
 \subsubsubsection{4.3.1\hspace{0.2cm}Calculating your system's availability}
 
 Availability is the percentage of the time that a system is up, functional, and reachable. Crashes, network failures, or extremely high load (for example, from a DDoS attack) that prevents the system from responding can all affect its availability.
 
-Usually, it's a good idea to strive for as high a level of availability as possible. You may stumble upon the term counting the nines, as  availability is often specified as 99\% (two nines), 99.9\% (three), and so on. Each additional nine is much harder to obtain, so be careful when making promises. Take a look at the following table to see how much downtime you could afford if you specified it on a monthly basis:
+Usually, it's a good idea to strive for as high a level of availability as possible. You may stumble upon the term counting the nines, as  availability is often specified as 99\% (two nines), 99.9\% (three), and so on. Each additional nine is much harder to obtain, so be careful when making promises. Take a look at the following table to see how much downtime you could afford if you specified it on a monthly basis:
+
 
 \begin{table}[H]
 	\begin{tabular}{|l|l|}
@@ -46,7 +48,8 @@ To make the switch faster, you can send all the messages that are going into the
 
 The preceding mechanism is called an \textbf{active-passive} (or \textbf{master-slave}) failover, as the backup server doesn't handle incoming traffic. If it did, we would have an \textbf{active-active} (or \textbf{master-master}) failover. For more on active-active architectures, refer to the last link in the \textit{Further reading} section.
 
-Be sure you don't lose any data when the failover happens. Using a message queue with backing storage may help with this.
+Be sure you don't lose any data when the failover happens. Using a message queue with backing storage may help with this.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -54,7 +57,8 @@ Be sure you don't lose any data when the failover happens. Using a message queue
 
 It's also important for both the servers to know which one is which – if both start behaving as primary instances, you'll likely be in trouble. Choosing the primary server is called the leader election pattern. There are a few ways to do so, for example, by introducing a thirdparty arbiter, by racing to take exclusive ownership of a shared resource, by choosing the instance with the lowest rank, or by using algorithms such as bully election or token ring election.
 
-Leader election is also an essential part of the next related concept: achieving consensus.
+Leader election is also an essential part of the next related concept: achieving consensus.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -62,7 +66,8 @@ Leader election is also an essential part of the next related concept: achieving
 
 If you want your system to operate even when network partitions happen or some instances of your service experience faults, you need a way for your instances to reach consensus. They must agree what values to commit and often in what order. A simple approach is by allowing each instance to vote on the correct state. However, in some cases this is not enough to reach a consensus correctly or at all. Another approach would be to elect a leader and let it propagate its value. Because it's not easy to implement such algorithms by hand, we'd recommend using popular industry-proven consensus protocols such as Paxos and Raft. The latter is growing in popularity as it is simpler and easier to understand.
 
-Let's now discuss another way to prevent your system from faulting.
+Let's now discuss another way to prevent your system from faulting.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -90,7 +95,8 @@ You can also have a system with multiple master servers. If there are two server
 
 Examples of such replication include Microsoft's Active Directory, OpenLDAP, Apache's CouchDB, or Postgres-XL.
 
-Let's now discuss two ways to prevent faults caused by too high a load.
+Let's now discuss two ways to prevent faults caused by too high a load.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -108,7 +114,8 @@ Also, if your service isn't available, the requests will still get added into th
 
 If the requests come infrequently, consider implementing your service as a function that runs only when there are items in the queue to save costs.
 
-Keep in mind that when using this pattern, the overall latency will increase by the addition of the queue. Apache Kafka and ZeroMQ should yield low latency, but if that's a dealbreaker, there's yet another way to deal with increased load.
+Keep in mind that when using this pattern, the overall latency will increase by the addition of the queue. Apache Kafka and ZeroMQ should yield low latency, but if that's a dealbreaker, there's yet another way to deal with increased load.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -128,7 +135,8 @@ Now that we know how to prevent faults, let's learn how to detect them once they
 
 \subsubsubsection{4.3.3\hspace{0.2cm}Detecting faults}
 
-Proper and fast fault detection can save you a lot of trouble, and often money. There are many ways to detect faults tailored to different needs. Let's go over a selection of them.
+Proper and fast fault detection can save you a lot of trouble, and often money. There are many ways to detect faults tailored to different needs. Let's go over a selection of them.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -142,7 +150,8 @@ How can a sidecar be helpful in detecting faults? First of all, by providing hea
 
 Envoy also offers active health checking, meaning it can probe the service itself instead of just observing its reactions to incoming traffic.
 
-Throughout this chapter, we'll show a few other usages for the sidecar pattern in general, and Envoy in particular. Let's now discuss the next mechanism of fault detection.
+Throughout this chapter, we'll show a few other usages for the sidecar pattern in general, and Envoy in particular. Let's now discuss the next mechanism of fault detection.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -166,7 +175,8 @@ Now that we know how to detect faults, let's learn what to do once they happen.
 
 \subsubsubsection{4.3.4\hspace{0.2cm}Minimizing the impact of faults}
 
-It takes time to detect an ongoing fault, and it takes even more of this precious resource to resolve it. This is why you should strive to minimize the impact of faults. Here are a few ways that can help.
+It takes time to detect an ongoing fault, and it takes even more of this precious resource to resolve it. This is why you should strive to minimize the impact of faults. Here are a few ways that can help.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -176,13 +186,15 @@ When your application calls another service, sometimes the call will fail. The s
 
 Remember our sidecar proxy, Envoy? Turns out it can perform the automatic retries on your behalf, saving you from doing any changes to your sources.
 
-For instance, see this example configuration of a retry policy that can be added to a route in Envoy:
+For instance, see this example configuration of a retry policy that can be added to a route in Envoy:
+
 
 \begin{tcblisting}{commandshell={}}
 retry_policy:
   retry_on: "5xx"
   num_retries: 3
-  per_try_timeout: 2s
+  per_try_timeout: 2s
+
 \end{tcblisting}
 
 This will make Envoy retry calls if they return errors such as the 503 HTTP code or gRPC errors that map to 5XX codes. There will be three retries, each considered failed if not finished within 2 seconds.
@@ -197,20 +209,22 @@ We mentioned that without retries the error will get propagated, causing a casca
 \noindent
 \textit{Circuit breaker}
 
-The \textbf{circuit breaker pattern} is a very useful tool for this. It allows us to quickly notice that a service is unable to process requests, so the calls to it can be short-circuited. This can happen both close to the callee (Envoy provides such a capability), or on the caller side (with the additional benefit of shaving off time from the calls). In Envoy's case, it can be as simple as adding the following to your config:
+The \textbf{circuit breaker pattern} is a very useful tool for this. It allows us to quickly notice that a service is unable to process requests, so the calls to it can be short-circuited. This can happen both close to the callee (Envoy provides such a capability), or on the caller side (with the additional benefit of shaving off time from the calls). In Envoy's case, it can be as simple as adding the following to your config:
+
 
 \begin{tcblisting}{commandshell={}}
 circuit_breakers:
   thresholds:
-	- priority: DEFAULT
-	  max_connections: 1000
-	  max_requests: 1000
-	  max_pending_requests: 1000
+    - priority: DEFAULT
+      max_connections: 1000
+      max_requests: 1000
+      max_pending_requests: 1000
 \end{tcblisting}
 
 In both cases, the load caused by the calls to the service may drop, which in some cases can help the service return to normal operation.
 
-How do we implement a circuit breaker on the caller side? Once you've made a few calls, and, say, your leaky bucket overflows, you can just stop making new calls for a specified period of time (for example, until the bucket no longer overflows). Simple and effective.
+How do we implement a circuit breaker on the caller side? Once you've made a few calls, and, say, your leaky bucket overflows, you can just stop making new calls for a specified period of time (for example, until the bucket no longer overflows). Simple and effective.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent

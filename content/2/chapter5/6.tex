@@ -1,0 +1,117 @@
+The last big feature of C++ we'll discuss in this chapter is modules. They are yet one more addition to C++20 that has a great impact on building and partitioning code.
+
+C++ has used \#include for a really long time now. However, this textual form of dependency inclusion has its flaws, as listed here:
+
+\begin{itemize}
+\item 
+Due to the need to process lots of text (even a Hello World after preprocessing is around half a million lines of code), it's slow. This leads to one-definition rule (ODR) violations.
+
+\item 
+The order of your includes matters, but it shouldn't. This one is twice as bad as
+the preceding one as it also leads to cyclic dependencies.
+
+\item 
+Finally, it's hard to encapsulate stuff that just needs to be in header files. Even if you put some stuff in a detailed namespace, someone will use it, as Hyrum's law predicts.
+\end{itemize}
+
+Fortunately, this is when modules enter the game. They should solve the aforementioned flaws, bringing a great speedup to build times and better C++ scalability when it comes to building. With modules, you only export what you want to export, which results in good encapsulation. Having a specific order of dependency inclusion is no longer an issue too, as the order of imports doesn't matter.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}Unfortunately, at the time of writing, compiler support for modules is still only partially done. This is why we decided to just showcase what was already available in GCC 11. Sadly, this means that stuff such as module partitions won't be covered here.
+\end{tcolorbox}
+
+Each module, after compilation, will be compiled to not only the object file but also a module interface file. This means that instead of parsing a file with all of its dependencies, compilers can quickly know what types and functions a given module contains. All you need to do is to type the following:
+
+\begin{lstlisting}[style=styleCXX]
+import my_module;
+\end{lstlisting}
+
+You can use it once my\_module has been compiled and available. The module itself should be defined in a .cppm file, but those are still not supported by CMake. You might be better off just naming them .cpp for the time being.
+
+Without further ado, let's return to our Dominican Fair example and show how to use them in practice.
+
+First, let's create our first module for the customer code, starting with the following directive:
+
+\begin{lstlisting}[style=styleCXX]
+module;
+\end{lstlisting}
+
+This statement marks that from this point on, everything will be private in this module. This marks a good place to put your includes and other content that won't be exported.
+
+Next, we must specify the name of the exported module:
+
+\begin{lstlisting}[style=styleCXX]
+export module customer;
+\end{lstlisting}
+
+This will be the name we'll use to import the module later. This line must come before the exported contents. Now, let's specify what our module will actually export, prefixing the definitions with the export keyword:
+
+\begin{lstlisting}[style=styleCXX]
+export using CustomerId = int;
+
+export CustomerId get_current_customer_id() { return 42; }
+\end{lstlisting}
+
+And done! Our first module is ready to be used. Let's create another one for the merchant:
+
+\begin{lstlisting}[style=styleCXX]
+module;
+export module merchant;
+export struct Merchant {
+	int id;
+};
+\end{lstlisting}
+
+Pretty similar to our first module, here, we specified the name and the type to be exported (as opposed to a type alias and a function for the first one). You can export other definitions, such as templates, too. It gets tricky with macros, though, as you need to import <header\_file> for them to be visible.
+
+By the way, a good advantage of modules is that they don't allow macros to propagate to imported modules. This means that when you write code such as the following, the module won't have MY\_MACRO defined:
+
+\begin{lstlisting}[style=styleCXX]
+#define MY_MACRO
+import my_module;
+\end{lstlisting}
+
+It helps to have determinism in modules as it protects you from breaking code in other modules.
+
+Now, let's define a third module for our stores and items. We won't discuss exporting other functions, enums, and other types as it won't differ from the previous two modules. What's interesting is how the module file starts. First, let's include what we need in our private module section:
+
+\begin{lstlisting}[style=styleCXX]
+module;
+
+#include <chrono>
+#include <iomanip>
+#include <optional>
+#include <string>
+#include <vector>
+\end{lstlisting}
+
+In C++20, standard library headers are not modules yet, but this will likely change in the near future.
+
+Now, let's see what happens next:
+
+\begin{lstlisting}[style=styleCXX]
+export module store;
+export import merchant;
+\end{lstlisting}
+
+This is the interesting part. Our store module imports the merchant module we defined previously and then reexports it as part of the store's interface. This can be handy if your module is a facade for other ones, such as in module partitions in the near future (also part of C++20). When available, you will be able to split your module across multiple files. One of them could contain the following:
+
+\begin{lstlisting}[style=styleCXX]
+export module my_module:foo;
+export template<typename T> foo() {}
+\end{lstlisting}
+
+As we discussed previously, it would then be exported by the main file of your module as follows:
+
+\begin{lstlisting}[style=styleCXX]
+export module my_module;
+export import :foo;
+\end{lstlisting}
+
+This concludes modules and the big C++ features that we planned for this chapter. Let's summarize what we've learned.
+
+
+
+
+
+
