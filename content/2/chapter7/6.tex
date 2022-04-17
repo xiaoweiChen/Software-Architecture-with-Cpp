@@ -1,0 +1,255 @@
+
+We already showed how to install our dependencies using Conan. Now, let's dive into creating our own Conan packages.
+
+Let's create a new top-level directory in our project, simply named conan, where we will store the files needed for packaging using this tool: a script for building our package and an environment to test it.
+
+\subsubsubsection{7.6.1\hspace{0.2cm}Creating the conanfile.py script}
+
+The most important file required for all Conan packages is conanfile.py. In our case, we'll want to fill in some of its details using CMake variables, so let's create a conanfile.py.in file instead. We'll use it to create the former file by adding the following to our CMakeLists.txt files:
+
+\begin{lstlisting}[style=styleCMake]
+configure_file(${PROJECT_SOURCE_DIR}/conan/conanfile.py.in
+	${CMAKE_CURRENT_BINARY_DIR}/conan/conanfile.py @ONLY)
+\end{lstlisting}
+
+Our file will begin with some boring Python imports, such as those required by Conan for CMake projects:
+
+\begin{lstlisting}[style=stylePython]
+import os
+from conans import ConanFile, CMake
+\end{lstlisting}
+
+Now we need to create a class that defines our package:
+
+\begin{lstlisting}[style=stylePython]
+class CustomerConan(ConanFile):
+	name = "customer"
+	version = "@PROJECT_VERSION@"
+	license = "MIT"
+	author = "Authors"
+	description = "Library and app for the Customer microservice"
+	topics = ("Customer", "domifair")
+\end{lstlisting}
+
+First, we start with a bunch of generic variables, taking the project version from our CMake code. Usually, the description will be a multi-line string. The topics are useful for finding our library on sites such as JFrog's Artifactory and can tell the readers what our package is about. Let's now go through other variables:
+
+\begin{lstlisting}[style=stylePython]
+	homepage = "https://example.com"
+	url =
+	"https://github.com/PacktPublishing/Hands-On-Software-Architecture-with-Cpp
+	/"
+\end{lstlisting}
+
+homepage should point to, well, the home page of your project: where the docs, tutorials, FAQs, and similar stuff are placed. The url one, on the other hand, is where the package repository is placed. Many open source libraries have their code in one repo and the packaging code in another. A common case is when the package is being built by the central Conan package server. In this case, url should point to \url{https://github.com/conan-io/conan-center-index}.
+
+Going forward, we can now specify how our package is being built:
+
+\begin{lstlisting}[style=stylePython]
+	settings = "os", "compiler", "build_type", "arch"
+	options = {"shared": [True, False], "fPIC": [True, False]}
+	default_options = {"shared": False, "fPIC": True}
+	generators = "CMakeDeps"
+	keep_imports = True # useful for repackaging, e.g. of licenses
+\end{lstlisting}
+
+settings will determine whether the package needs to be built or an already-built version can be downloaded. 
+
+options and the default\_options values can be whatever you like. shared and fPIC are the two that most packages provide, so let's follow this convention.
+
+Now that we have defined our variables, let's start writing methods that Conan will use to package our software. First, we specify our libraries that consumers of our package should link against:
+
+\begin{lstlisting}[style=stylePython]
+	def package_info(self):
+		self.cpp_info.libs = ["customer"]
+\end{lstlisting}
+
+The self.cpp\_info object allows setting much more than that, but this is the bare minimum. Feel free to take a look at other properties in Conan's documentation.
+
+Next, let's specify what other packages requires:
+
+\begin{lstlisting}[style=stylePython]
+	def requirements(self):
+		self.requires.add('cpprestsdk/2.10.18')
+\end{lstlisting}
+
+This time, we grab the C++ REST SDK directly from Conan instead of specifying what packages the OS's package manager should depend on. Now, let's specify how (and where) CMake should generate our build system:
+
+\begin{lstlisting}[style=stylePython]
+	def _configure_cmake(self):
+		cmake = CMake(self)
+		cmake.configure(source_folder="@CMAKE_SOURCE_DIR@")
+		return cmake
+\end{lstlisting}
+
+In our case, we simply point it to the source directory. Once the build system is configured, we will need to actually build our project:
+
+\begin{lstlisting}[style=stylePython]
+	def build(self):
+		cmake = self._configure_cmake()
+		cmake.build()
+\end{lstlisting}
+
+Conan also supports non-CMake-based build systems. After building our package, it's packaging time, which requires us to provide yet another method:
+
+\begin{lstlisting}[style=stylePython]
+	def package(self):
+		cmake = self._configure_cmake()
+		cmake.install()
+		self.copy("license*", ignore_case=True, keep_path=True)
+\end{lstlisting}
+
+Note how we're using the same \_configure\_cmake() function to both build and package our project. Aside from installing binaries, we also specify where the licenses should be deployed. Finally, let's tell Conan what it should copy when installing our package:
+
+\begin{lstlisting}[style=stylePython]
+	def imports(self):
+		self.copy("license*", dst="licenses", folder=True,
+		ignore_case=True)
+		# Use the following for the cmake_multi generator on Windows
+		and/or Mac OS to copy libs to the right directory.
+		# Invoke Conan like so:
+		# conan install . -e CONAN_IMPORT_PATH=Release -g cmake_multi
+		dest = os.getenv("CONAN_IMPORT_PATH", "bin")
+		self.copy("*.dll", dst=dest, src="bin")
+		self.copy("*.dylib*", dst=dest, src="lib")
+\end{lstlisting}
+
+The preceding code specifies where to unpack the license files, as well as libraries, and executables when installing the library. 
+
+Now that we know how to build a Conan package, let's also see how to test whether it works as desired.
+
+\subsubsubsection{7.6.2\hspace{0.2cm}Testing our Conan package}
+
+Once Conan builds our package, it should test whether it was properly built. In order to do so, let's start by creating a test\_package subdirectory in our conan directory. 
+
+It will also contain a conanfile.py script, but this time a shorter one. It should start as follows:
+
+\begin{lstlisting}[style=stylePython]
+import os
+from conans import ConanFile, CMake, tools
+
+class CustomerTestConan(ConanFile):
+	settings = "os", "compiler", "build_type", "arch"
+	generators = "CMakeDeps"
+\end{lstlisting}
+
+Nothing too fancy here. Now, we should provide the logic to build the test package:
+
+\begin{lstlisting}[style=stylePython]
+	def build(self):
+		cmake = CMake(self)
+		# Current dir is "test_package/build/<build_id>" and
+		# CMakeLists.txt is in "test_package"
+		cmake.configure()
+		cmake.build()
+\end{lstlisting}
+
+We'll write our CMakeLists.txt file in a sec. But first, let's write two more things: the imports method and the test method. The imports method can be written as follows:
+
+\begin{lstlisting}[style=stylePython]
+	def imports(self):
+		self.copy("*.dll", dst="bin", src="bin")
+		self.copy("*.dylib*", dst="bin", src="lib")
+		self.copy('*.so*', dst='bin', src='lib')
+\end{lstlisting}
+
+Then we have the heart of our package testing logic – the test method:
+
+\begin{lstlisting}[style=stylePython]
+	def test(self):
+		if not tools.cross_building(self.settings):
+			self.run(".%sexample" % os.sep)
+\end{lstlisting}
+
+We want to run it only if we're building for our native architecture. Otherwise, we would most probably be unable to run the compiled executable.
+
+Let's now define our CMakeLists.txt file:
+
+\begin{lstlisting}[style=styleCMake]
+cmake_minimum_required(VERSION 3.12)
+
+project(PackageTest CXX)
+
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
+
+find_package(customer CONFIG REQUIRED)
+
+add_executable(example example.cpp)
+target_link_libraries(example customer::customer)
+
+# CTest tests can be added here
+\end{lstlisting}
+
+Simple as that. We link to all the Conan libraries provided (in our case, just our Customer library).
+
+Finally, let's write our example.cpp file with just enough logic to check whether the package was successfully created:
+
+\begin{lstlisting}[style=styleCXX]
+#include <customer/customer.h>
+int main() { responder{}.prepare_response("Conan"); }
+\end{lstlisting}
+
+Before we start running all this, there are a few small changes that we need to make in our main tree of CMake lists. Let's now see how to export Conan targets from our CMake file properly. 
+
+\subsubsubsection{7.6.3\hspace{0.2cm}Adding Conan packaging code to our CMakeLists}
+
+Remember that installation logic we wrote in the Reusing quality code section? If you're relying on Conan for packaging, you probably don't need to run the bare CMake exporting and installation logic. Assuming you want to only export and install if Conan is not used, you need to modify the section of your CMakeLists described in the Installing subsection previously to look similar to this:
+
+\begin{lstlisting}[style=styleCMake]
+if(NOT CONAN_EXPORTED)
+	install(
+		EXPORT CustomerTargets
+		FILE CustomerTargets.cmake
+		NAMESPACE domifair::
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Customer)
+	
+	configure_file(${PROJECT_SOURCE_DIR}/cmake/CustomerConfig.cmake.in
+				   CustomerConfig.cmake @ONLY)
+	
+	include(CMakePackageConfigHelpers)
+	write_basic_package_version_file(
+		CustomerConfigVersion.cmake
+		VERSION ${PACKAGE_VERSION}
+		COMPATIBILITY AnyNewerVersion)
+	
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CustomerConfig.cmake
+				${CMAKE_CURRENT_BINARY_DIR}/CustomerConfigVersion.cmake
+			DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Customer)
+endif()
+
+install(
+	FILES ${PROJECT_SOURCE_DIR}/LICENSE
+	 	DESTINATION
+	$<IF:$<BOOL:${CONAN_EXPORTED}>,licenses,${CMAKE_INSTALL_DOCDIR}>)
+\end{lstlisting}
+
+Adding an if statement and a generator expression is a reasonable price for having clean packages, and that's all we needed to do.
+
+One last thing to make our lives easier – a target that we could build in order to create the Conan package. We can define it as follows:
+
+\begin{lstlisting}[style=styleCMake]
+add_custom_target(
+	conan
+	COMMAND
+		${CMAKE_COMMAND} -E copy_directory
+		${PROJECT_SOURCE_DIR}/conan/test_package/
+		${CMAKE_CURRENT_BINARY_DIR}/conan/test_package
+	COMMAND conan create . customer/testing -s build_type=$<CONFIG>
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/conan
+	VERBATIM)
+\end{lstlisting}
+
+Now, when we run cmake -\,-build . -\,-target conan (or ninja conan if we're using that generator and want a short invocation), CMake will copy our test\_package directory to the build folder, build our Conan package, and test it using the copied files.
+
+All done!
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}One last remark: what we described here is just the tip of the iceberg when it comes to creating Conan packages. For more information, please refer to Conan's documentation. You can find a link in the Further reading section.
+\end{tcolorbox}
+
+
+
+
+
+
+
+

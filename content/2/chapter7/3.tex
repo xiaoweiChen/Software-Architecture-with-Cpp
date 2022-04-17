@@ -1,0 +1,222 @@
+
+In this section, we'll delve into CMake scripts, the de facto standard build system generator used for C++ projects worldwide.
+
+\subsubsubsection{7.3.1\hspace{0.2cm}Introducing CMake}
+
+What does it mean that CMake is a build system generator and not a build system per se? Simply that CMake can be used to generate various types of build systems. You can use it to generate Visual Studio projects, Makefile projects, Ninja-based ones, Sublime, Eclipse, and a few others.
+
+CMake comes with a set of other tools, such as CTest for executing tests and CPack for packaging and creating setup programs. CMake itself allows exporting and installing targets too.
+
+CMake's generators can be either single-configuration, such as Make or NMAKE, or multiconfiguration, such as Visual Studio. For single-configuration ones, you should pass the CMAKE\_BUILD\_TYPE flag when running the generation for the first time in a folder. For instance, to configure a debug build, you could run cmake <project\_directory> -DCMAKE\_BUILD\_TYPE=Debug. Other predefined configurations are Release, RelWithDebInfo (release with debug symbols), and MinSizeRel (release optimized for minimum binary size). To keep your source directories clean, always create a separate build folder and run CMake generation from there.
+
+Although it's possible to add your own build type, you should really strive not to do so, as this makes using some IDEs much harder and doesn't scale. A much better option is to use, well, option.
+
+CMake files can be written in two styles: an obsolete one, based on variables, and a targetbased Modern CMake style. We'll focus just on the latter here. Try to avoid setting things through global variables, as this causes issues when you want to reuse your targets.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Creating CMake projects}
+
+Each CMake project should have the following lines in their top-level CMakeLists.txt file:
+
+\begin{lstlisting}[style=styleCMake]
+cmake_minimum_required(VERSION 3.15...3.19)
+
+project(
+	Customer
+	VERSION 0.0.1
+	LANGUAGES CXX)
+\end{lstlisting}
+
+Setting a minimum and a maximum supported version is important as it influences how CMake will behave by setting policies. You can also set them manually if needed.
+
+The definition of our project specifies its name, version (which will be used to populate a few variables), and the programming languages that CMake will use to build the project (which populates many more variables and finds the required tools).
+
+A typical C++ project has the following directories:
+
+\begin{itemize}
+\item 
+cmake: For CMake scripts
+
+\item 
+include: For public headers, usually with a subfolder named after the project
+
+\item 
+src: For source files and private headers
+
+\item 
+test: For tests
+\end{itemize}
+
+You can use the CMake directory to store your custom CMake modules. To have easy access to scripts from this directory, you can add it to CMake's include() search path like so:
+
+\begin{lstlisting}[style=styleCMake]
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake"
+\end{lstlisting}
+
+When including CMake modules, you can omit the .cmake suffix. This means include(CommonCompileFlags.cmake) is equal to just
+include(CommonCompileFlags).
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Distinguishing between CMake directory variables}
+
+Navigating through the directories in CMake has a common pitfall that not everyone is aware of. When writing CMake scripts, try to distinguish between the following built-in variables:
+
+\begin{itemize}
+\item 
+PROJECT\_SOURCE\_DIR: The directory where the project command was last called from a CMake script.
+
+\item 
+PROJECT\_BINARY\_DIR: Like the preceding one, but for the build directory tree.
+
+\item 
+CMAKE\_SOURCE\_DIR: Top-level source directory (this may be in another project that just adds ours as a dependency/subdirectory).
+
+\item 
+CMAKE\_BINARY\_DIR: Like CMAKE\_SOURCE\_DIR, but for the build directory tree.
+
+\item 
+CMAKE\_CURRENT\_SOURCE\_DIR: The source directory corresponding to the currently processed CMakeLists.txt file.
+
+\item 
+CMAKE\_CURRENT\_BINARY\_DIR: The binary (build) directory
+matching CMAKE\_CURRENT\_SOURCE\_DIR.
+
+\item 
+CMAKE\_CURRENT\_LIST\_DIR: The directory of CMAKE\_CURRENT\_LIST\_FILE. It can be different from the current source directory if the current CMake script was included from another one (common for CMake modules that are included).
+\end{itemize}
+
+Having cleared that up, let's now start navigating through those directories.
+
+In your top-level CMakeLists.txt file, you will probably want to call add\_subdirectory(src) so that CMake will process that directory.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Specifying CMake targets}
+
+In the src directory, you should have another CMakeLists.txt file, this time probably defining a target or two. Let's add an executable for a customer microservice for the Dominican Fair system we mentioned earlier in the book:
+
+\begin{lstlisting}[style=styleCMake]
+add_executable(customer main.cpp)
+\end{lstlisting}
+
+Source files can be specified as in the preceding code line or added later using target\_sources.
+
+A common CMake antipattern is the use of globs to specify source files. A big drawback of using them is that CMake will not know if a file was added until it reruns generation. A common consequence of that is that if you pull changes from a repository and simply build, you can miss compiling and running new unit tests or other code. Even if you used globs with CONFIGURE\_DEPENDS, the build time will get longer because globs must be checked as part of each build. Besides, the flag may not work reliably with all generators. Even the CMake authors discourage using it in favor of just explicitly stating the source files.
+
+Okay, so we defined our sources. Let's now specify that our target requires C++17 support from the compiler:
+
+\begin{lstlisting}[style=styleCMake]
+target_compile_features(customer PRIVATE cxx_std_17)
+\end{lstlisting}
+
+The PRIVATE keyword specifies that this is an internal requirement, that is, just visible to this specific target and not to any targets that will depend on it. If you were writing a library that provided a user with a C++17 API, you could use the INTERFACE keyword. To specify both the interface and internal requirements, you could use the PUBLIC keyword. When the consumer links to our target, CMake will then automatically require C++17 support for it as well. If you were writing a target that is not built (that is, a header-only library or an imported target), using the INTERFACE keyword is usually enough.
+
+You should also note that specifying that our target wants to use C++17 features doesn't enforce the C++ standard or disallow compiler extensions for our target. To do so, you should instead call the following:
+
+\begin{lstlisting}[style=styleCMake]
+set_target_properties(customer PROPERTIES
+	CXX_STANDARD 17
+	CXX_STANDARD_REQUIRED YES
+	CXX_EXTENSIONS NO
+)
+\end{lstlisting}
+
+If you want to have a set of compiler flags to pass to each target, you can store them in a variable and call the following if you want to create a target that has those flags set as INTERFACE and doesn't have any source and uses this target in target\_link\_libraries:
+
+\begin{lstlisting}[style=styleCMake]
+target_compile_options(customer PRIVATE ${BASE_COMPILE_FLAGS})
+\end{lstlisting}
+
+The command automatically propagates include directories, options, macros, and other properties, aside from just adding a linker flag. Speaking of linking, let's create a library that we shall link with:
+
+\begin{lstlisting}[style=styleCMake]
+add_library(libcustomer lib.cpp)
+add_library(domifair::libcustomer ALIAS libcustomer)
+set_target_properties(libcustomer PROPERTIES OUTPUT_NAME customer)
+# ...
+target_link_libraries(customer PRIVATE libcustomer)
+\end{lstlisting}
+
+add\_library can be used to create static, shared, object, and interface (think header-only) libraries, as well as defining any imported libraries.
+
+The ALIAS version of it creates a namespaced target, which helps debug many CMake issues and is a recommended Modern CMake practice.
+
+Because we gave our target a lib prefix already, we set the output name to have libcustomer.a instead of liblibcustomer.a.
+
+Finally, we link our executable with the added library. Try to always specify the PUBLIC, PRIVATE, or INTERFACE keyword for the target\_link\_libraries command as this is crucial for CMake to effectively manage the transitivity of the target dependencies.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Specifying the output directories}
+
+Once you build your code using commands such as cmake --build ., you might want to know where to find the build artifacts. By default, CMake will create them in a directory matching the source directory they were defined in. For instance, if you have a src/CMakeLists.txt file with an add\_executable directive, then the binary will land in your build directory's src subdirectory by default. We can override this using code such as the following: 
+
+\begin{lstlisting}[style=styleCMake]
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+\end{lstlisting}
+
+This way, the binaries and DLL files will land in the bin subdirectory of your project's build directory, while static and shared Linux libraries will be placed in the lib subdirectory.
+
+\subsubsubsection{7.3.2\hspace{0.2cm}Using generator expressions}
+
+Setting compile flags in a way to support both single- and multi-configuration generators can be tricky, as CMake executes if statements and many other constructs at configure time, not at build/install time.
+
+This means that the following is a CMake antipattern:
+
+\begin{lstlisting}[style=styleCMake]
+if(CMAKE_BUILD_TYPE STREQUAL Release)
+	target_compile_definitions(libcustomer PRIVATE RUN_FAST)
+endif()
+\end{lstlisting}
+
+Instead, generator expressions are the proper way to achieve the same goal, as they're being processed at a later time. Let's see an example of their use in practice. Assuming you want to add a preprocessor definition just for your Release configuration, you could write the following:
+
+\begin{lstlisting}[style=styleCMake]
+target_compile_definitions(libcustomer PRIVATE
+"$<$<CONFIG:Release>:RUN_FAST>")
+\end{lstlisting}
+
+This will resolve to RUN\_FAST only when building that one selected configuration. For others, it will resolve to an empty value. It works for both single- and multi-configuration generators. That's not the only use case for generator expressions, though.
+
+Some aspects of our targets may vary when used by our project during builds and by other projects when the target is installed. A good example is include directories. A common way to deal with this in CMake is as follows:
+
+\begin{lstlisting}[style=styleCMake]
+target_include_directories(
+	libcustomer PUBLIC $<INSTALL_INTERFACE:include>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+\end{lstlisting}
+
+In this case, we have two generator expressions. The first one tells us that when installed, the include files can be found in the include directory, relative to the install prefix (the root of the installation). If we're not installing, this expression will become an empty one. This is why we have another expression for building. This one will resolve as the include subdirectory of the directory where the last used project() was found.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}Don't use target\_include\_directories with a path outside of your module. If you do, you're stealing someone's headers instead of explicitly declaring a library/target dependency. This is a CMake antipattern.
+\end{tcolorbox}
+
+CMake defines many generator expressions that you can use to query the compiler and platform, as well as the targets (such as full name, the list of object files, any property values, and so on). Aside from these, there are expressions that run Boolean operations, if statements, string comparisons, and more.
+
+Now, for a more complex example, assuming you'd like to have a set of compile flags that you use across your targets and that depend on the compiler used, you could define it as follows:
+
+\begin{lstlisting}[style=styleCMake]
+list(
+		APPEND
+		BASE_COMPILE_FLAGS
+	"$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPIL
+	ER_ID:GNU>>:-Wall;-Wextra;-pedantic;-Werror>"
+		"$<$<CXX_COMPILER_ID:MSVC>:/W4;/WX>")
+\end{lstlisting}
+
+This will append one set of flags if the compiler is Clang or AppleClang or GCC and another one if MSVC is being used instead. Note that we separate the flags with a semicolon because that's how CMake separates elements on a list.
+
+Let's now see how we could add external code for our projects to use.
+
+
+
+
+
+
+
+

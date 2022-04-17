@@ -1,0 +1,365 @@
+
+There are several ways for you to fetch the external projects you depend on. For instance, you could add them as a Conan dependency, use CMake's find\_package to look for a version provided by the OS or installed in another way, or fetch and compile the dependency yourself.
+
+The key message of this section is: if you can, you should use Conan. This way, you'll end up using one version of the dependency that matches your project's and its dependencies' requirements.
+
+If you're aiming to support multiple platforms, or even multiple versions of the same distribution, using Conan or compiling everything yourself are the ways to go. This way, you'll use the same dependency version regardless of the OS you compile on.
+
+Let's discuss a few ways of grabbing your dependencies offered by CMake itself, and then jump to using the multi-platform package manager named Conan.
+
+\subsubsubsection{7.4.1\hspace{0.2cm}Fetching dependencies}
+
+One of the possible ways to prepare your dependencies from the source is to use CMake's built-in FetchContent module. It will download your dependencies and then build them for you as a regular target.
+
+The feature arrived in CMake 3.11. It's a replacement for the ExternalProject module, which had many flaws. One of them was that it cloned the external repository during build time, so CMake couldn't reason about the targets that the external project defined, as well as about their dependencies. This made many projects resort to manually defining the include directories and library paths of such external targets and ignoring their required  interface compilation flags and dependencies completely. Ouch. FetchContent doesn't have such issues, so it's recommended you use it instead.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}Before we show how to use it, you must know that both FetchContent and ExternalProject (as well as using Git submodules and similar methods) have one important flaw. If you have many dependencies using the same third-party library themselves, you might end up with having multiple versions of the same project, such as a few versions of Boost. Using package managers such as Conan can help you avoid such issues.
+\end{tcolorbox}
+
+For the sake of an example, let's demonstrate how to integrate GTest into your project using the aforementioned FetchContent feature. First, create a FetchGTest.cmake file and put it in the cmake directory in our source tree. Our FetchGTest script will be defined as follows:
+
+\begin{lstlisting}[style=styleCMake]
+include(FetchContent)
+
+FetchContent_Declare(
+	googletest
+	GIT_REPOSITORY https://github.com/google/googletest.git
+	GIT_TAG dcc92d0ab6c4ce022162a23566d44f673251eee4)
+
+FetchContent_GetProperties(googletest)
+if(NOT googletest_POPULATED)
+	FetchContent_Populate(googletest)
+	add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR}
+		EXCLUDE_FROM_ALL)
+endif()
+
+message(STATUS "GTest binaries are present at ${googletest_BINARY_DIR}")
+\end{lstlisting}
+
+First, we include the built-in FetchContent module. Once the module is loaded, we declare the dependency using FetchContent\_Declare. Now, let's name our dependency and specify the repository that CMake will clone, along with the revision that it will check out.
+
+Now, we can read the properties of our external library and populate (that is, check it out) it if that wasn't done already. Once we have the sources, we can process them using add\_subdirectory. The EXCLUDE\_FROM\_ALL option will tell CMake to not build those targets if they're not needed by other targets when we run a command such as make all. After successfully processing the directory, our script will print a message denoting the directory in which GTests libraries will land after being built.
+
+If you're not fond of building your dependencies together with your project, perhaps the next way of integrating your dependencies will be more suitable for you.
+
+\subsubsubsection{7.4.2\hspace{0.2cm}Using find scriptse}
+
+Assuming your dependency is available somewhere on your host, you can just call find\_package to try to search for it. If your dependency provides a config or targets files (more on those later), then just writing this one simple command is all you need. That is, of course, assuming that the dependencies are already available on your machine. If not, it's your responsibility to install them before running CMake for your project.
+
+To create the preceding files, your dependency would need to use CMake, which is not always the case. How could you deal with those libraries that don't use CMake? If the library is popular, chances are someone already created a find script for you to use. The Boost libraries in versions older than 1.70 were a common example of this approach. CMake comes with a FindBoost module that you can execute by just running find\_package(Boost).
+
+To find Boost using the preceding module, you would first need to install it on your system. After that, in your CMake lists, you should set any options that you find reasonable. For instance, to use dynamic and multi-threaded Boost libraries, not linked statically to the C++ runtime, specify the following:
+
+\begin{lstlisting}[style=styleCMake]
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+\end{lstlisting}
+
+Then, you need to actually search for the library, as shown next:
+
+\begin{lstlisting}[style=styleCMake]
+find_package(Boost 1.69 EXACT REQUIRED COMPONENTS Beast)
+\end{lstlisting}
+
+Here, we specified that we want to just use Beast, a great networking library that comes as part of Boost. Once found, you could link it to your target as follows:
+
+\begin{lstlisting}[style=styleCMake]
+target_link_libraries(MyTarget PUBLIC Boost::Beast)
+\end{lstlisting}
+
+Now that you know how to properly use a find script, let's learn how to write one on your own.
+
+\subsubsubsection{7.4.3\hspace{0.2cm}Writing find scripts}
+
+If your dependency is neither providing config and target files nor has anyone written a find module for it, you can always write such a module yourself.
+
+This is not something you'll do very often, so we'll try to just skim the topic. For an in-depth description, you should also read the guidelines in the official CMake documentation (linked in the Further reading section) or just look at a few find modules installed with CMake (usually in a directory such as /usr/share/cmake-3.17/Modules on Unix systems). For simplicity, we assume there's just one configuration of your dependency that you'd like to find, but it's possible to find Release and Debug binaries separately. This will result in different targets with different associated variables being set.
+
+The script name determines the argument you'll pass to find\_package; for example, if you wish to end up with find\_package(Foo), then your script should be named FindFoo.cmake.
+
+A good practice is to start your script with a reStructuredText section describing what your script will actually do, which variables it will set, and so on. An example of such a description could be as follows:
+
+\begin{tcblisting}{commandshell={}}
+ #.rst:
+# FindMyDep
+# ----------
+#
+# Find my favourite external dependency (MyDep).
+#
+# Imported targets
+# ^^^^^^^^^^^^^^^^
+#
+# This module defines the following :prop_tgt:`IMPORTED` target:
+#
+# ``MyDep::MyDep``
+# The MyDep library, if found.
+#
+\end{tcblisting}
+
+Usually, you'll also want to describe the variables your script will set:
+
+\begin{tcblisting}{commandshell={}}
+# Result variables
+# ^^^^^^^^^^^^^^^^
+#
+# This module will set the following variables in your project:
+#
+# ``MyDep_FOUND``
+# whether MyDep was found or not
+# ``MyDep_VERSION_STRING``
+# the found version of MyDep
+\end{tcblisting}
+
+If MyDep has any dependencies itself, now is the time to find them:
+
+\begin{lstlisting}[style=styleCMake]
+find_package(Boost REQUIRED)
+\end{lstlisting}
+
+Now we can start our search for the library. A common way to do so is to use pkg-config:
+
+\begin{lstlisting}[style=styleCMake]
+find_package(PkgConfig)
+pkg_check_modules(PC_MyDep QUIET MyDep)
+\end{lstlisting}
+
+If pkg-config has information on our dependency, it will set some variables we can use to find it. A good idea might be to have a variable that the user of our script can set to point us to the location of the library. As per CMake conventions, it should be named MyDep\_ROOT\_DIR.
+
+To provide CMake with this variable, the user can either invoke CMake with -DMyDep\_ROOT\_DIR=some/path, modify the variable in CMakeCache.txt in their build directory, or use the ccmake or cmake-gui programs.
+
+Now, we can actually search for the headers and libraries of our dependency using the aforementioned paths:
+
+\begin{lstlisting}[style=styleCMake]
+find_path(MyDep_INCLUDE_DIR
+	NAMES MyDep.h
+	PATHS "${MyDep_ROOT_DIR}/include" "${PC_MyDep_INCLUDE_DIRS}"
+	PATH_SUFFIXES MyDep
+)
+
+find_library(MyDep_LIBRARY
+	NAMES mydep
+	PATHS "${MyDep_ROOT_DIR}/lib" "${PC_MyDep_LIBRARY_DIRS}"
+)
+\end{lstlisting}
+
+Then, we need to also set the found version, as we promised in the header of our script. To use the one found from pkg-config, we could write the following:
+
+\begin{lstlisting}[style=styleCMake]
+set(MyDep_VERSION ${PC_MyDep_VERSION})
+\end{lstlisting}
+
+Alternatively, we can just manually extract the version either from the contents of the header file, from components of the library path, or using any other means. Once this is done, let's leverage CMake's built-in scripts to decide whether the library was successfully found while handling all the possible parameters to the find\_package invocation:
+
+\begin{lstlisting}[style=styleCMake]
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(MyDep
+	FOUND_VAR MyDep_FOUND
+	REQUIRED_VARS
+	MyDep_LIBRARY
+	MyDep_INCLUDE_DIR
+	VERSION_VAR MyDep_VERSION
+	)
+\end{lstlisting}
+
+As we decided to provide a target and not just a bunch of variables, now it's time to define it:
+
+\begin{lstlisting}[style=styleCMake]
+if(MyDep_FOUND AND NOT TARGET MyDep::MyDep)
+	add_library(MyDep::MyDep UNKNOWN IMPORTED)
+	set_target_properties(MyDep::MyDep PROPERTIES
+		IMPORTED_LOCATION "${MyDep_LIBRARY}"
+		INTERFACE_COMPILE_OPTIONS "${PC_MyDep_CFLAGS_OTHER}"
+		INTERFACE_INCLUDE_DIRECTORIES "${MyDep_INCLUDE_DIR}"
+		INTERFACE_LINK_LIBRARIES Boost::boost
+		)
+endif()
+\end{lstlisting}
+
+Finally, let's hide our internally used variables with users who don't want to deal with them:
+
+\begin{lstlisting}[style=styleCMake]
+mark_as_advanced(
+	MyDep_INCLUDE_DIR
+	MyDep_LIBRARY
+)
+\end{lstlisting}
+
+Now, we have a complete find module that we can use in the following way:
+
+\begin{lstlisting}[style=styleCMake]
+find_package(MyDep REQUIRED)
+target_link_libraries(MyTarget PRIVATE MyDep::MyDep)
+\end{lstlisting}
+
+This is how you can write the find module yourself.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}Don't write Find\*.cmake modules for your own packages. Those are meant for packages that don't support CMake. Instead, write a Config\*.cmake module (as described later in this chapter).
+\end{tcolorbox}
+
+Let's now show how to use a proper package manager instead of doing the heavy lifting yourself.
+
+\subsubsubsection{7.4.4\hspace{0.2cm}Using the Conan package manager}
+
+Conan is an open source, decentralized package manager for native packages. It supports multiple platforms and compilers. It can also integrate with multiple build systems.
+
+If a package has not already been built for your environment, Conan will handle building it on your machine instead of downloading the already-built version. Once built, you can upload it to either the public repositories, your own conan\_server instance, or an Artifactory server.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Preparing Conan profiles}
+
+If this is the first time you're running Conan, it will create a default profile based on your environment. You might want to modify some of its settings either by creating a new profile or by updating the default one. Assuming we're using Linux and want to compile everything using GCC 9.x, we could run the following:
+
+\begin{tcblisting}{commandshell={}}
+conan profile new hosacpp
+conan profile update settings.compiler=gcc hosacpp
+conan profile update settings.compiler.libcxx=libstdc++11 hosacpp
+conan profile update settings.compiler.version=10 hosacpp
+conan profile update settings.arch=x86_64 hosacpp
+conan profile update settings.os=Linux hosacpp
+\end{tcblisting}
+
+If our dependencies come from other repositories than the default ones, we can add those using conan remote add <repo> <repo\_url>. You might want to use this to configure your company's one, for instance.
+
+Now that we've set Conan up, let's show how to grab our dependencies using Conan and integrate all of this into our CMake scripts.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Specifying Conan dependencies}
+
+Our project relies on the C++ REST SDK. To tell this to Conan, we need to create a file called conanfile.txt. In our case, it will contain the following:
+
+\begin{tcblisting}{commandshell={}}
+[requires]
+cpprestsdk/2.10.18
+
+[generators]
+CMakeDeps
+\end{tcblisting}
+
+You can specify as many dependencies as you want here. Each of them can have either a fixed version, a range of the fixed versions, or a tag such as latest. After the @ sign, you can find the company that owns the package and the channel that allows you to select a specific variant of the package (usually stable and testing).
+
+The generators section is where you specify what build systems you want to use. For CMake projects, you should use CMakeDeps. You can also generate lots of others, including ones for generating compiler arguments, CMake toolchain files, Python virtual environments, and many more.
+
+In our case, we don't specify any additional options, but you could easily add this section and configure variables for your packages and for their dependencies. For instance, to compile our dependency as a static library, we could write the following:
+
+\begin{tcblisting}{commandshell={}}
+[options]
+cpprestsdk:shared=False
+\end{tcblisting}
+
+Once we have conanfile.txt in place, let's tell Conan to use it.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Installing Conan dependencies}
+
+To use our Conan packages in CMake code, we must first install them. In Conan, this means downloading the sources and building them or downloading prebuilt binaries, as well as creating configuration files that we'll use in CMake. To make Conan handle this for us after we have created our build directory, we should cd into it and simply run the following:
+
+\begin{tcblisting}{commandshell={}}
+conan install path/to/directory/containing/conanfile.txt --build=missing -s
+build_type=Release -pr=hosacpp
+\end{tcblisting}
+
+By default, Conan wants to download all the dependencies as prebuilt binaries. If the server doesn't have them prebuilt, Conan will build them instead of bailing out as we passed the -\,-build=missing flag. We tell it to grab the release versions built using the same compiler and environment as we have in our profile. You can install packages for more than one build type by simply invoking another commands with build\_type set to other CMake build types. This can help you quickly switch between them if needed. If you want to use the default profile (the one Conan can detect for you automatically), just don't pass the -pr flag.
+
+If the CMake generator we plan to use was not specified in conanfile.txt, we can append it to the preceding command. For instance, to use the compiler\_args generator, we should append -\,-generator compiler\_args. Later you could use what it produced by passing @conanbuildinfo.args to your compiler invocation.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using Conan targets from CMake}
+
+Once Conan finishes downloading, building, and configuring our dependencies, we need to tell CMake to use them. 
+
+If you're using Conan with the CMakeDeps generator, be sure to specify a CMAKE\_BUILD\_TYPE value. In other cases, CMake will be unable to use the packages configured by Conan. An example invocation (from the same directory you ran Conan) could be as follows:
+
+\begin{tcblisting}{commandshell={}}
+cmake path/to/directory/containing/CMakeLists.txt -
+DCMAKE_BUILD_TYPE=Release
+\end{tcblisting}
+
+This way, we would build our project in release mode; we must use one of the types we installed using Conan. To find our dependencies, we can just use CMake's find\_package:
+
+\begin{lstlisting}[style=styleCMake]
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
+find_package(cpprestsdk CONFIG REQUIRED)
+\end{lstlisting}
+
+First, we add the root build directory to the path CMake will try to find package config files in. Then, we find the package config files generated by Conan.
+
+To pass Conan-defined targets as our targets' dependencies, it's best to use the namespaced target name:
+
+\begin{lstlisting}[style=styleCMake]
+target_link_libraries(libcustomer PUBLIC cpprestsdk::cpprest)
+\end{lstlisting}
+
+This way, we'll get an error during CMake's configuration when the package is not found. Without the alias, we'd get an error when trying to link.
+
+Now that we have compiled and linked our targets just the way we wanted, it's time to put them to the test.
+
+\subsubsubsection{7.4.5\hspace{0.2cm}Adding tests}
+
+CMake has its own test driver program named CTest. It's easy to add new test suites to it from your CMakeLists either on your own or using the many integrations provided by testing frameworks. Later in the book, we'll discuss testing in depth, but let's first show how to quickly and cleanly add unit tests based on the GoogleTest, or GTest, testing framework.
+
+Usually, to define your tests in CMake, you'll want to write the following:
+
+\begin{lstlisting}[style=styleCMake]
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+	include(CTest)
+	if(BUILD_TESTING)
+		add_subdirectory(test)
+	endif()
+endif()
+\end{lstlisting}
+
+The preceding snippet will first check whether we are the main project that's being built or not. Usually, you just want to run tests for your project and omit even building the tests for any third-party components you use. This is why the project name is checked.
+
+If we are to run our tests, we include the CTest module. This loads the whole testing infrastructure CTest offers, defines its additional targets, and calls a CMake function called enable\_testing, which will, among other things, enable the BUILD\_TESTING flag. This flag is cached, so you can disable all testing when building your project by simply passing a -DBUILD\_TESTING=OFF argument to CMake when generating the build system.
+
+All such cached variables are actually stored in a text file named CMakeCache.txt in your build directory. Feel free to modify the variables there to change what CMake does; it won't overwrite the settings there until you remove the file. You can do so using ccmake, cmakegui, or just by hand.
+
+If BUILD\_TESTING is true, we simply process the CMakeLists.txt file in our test directory. It could look like so:
+
+\begin{lstlisting}[style=styleCMake]
+include(FetchGTest)
+include(GoogleTest)
+
+add_subdirectory(customer)
+\end{lstlisting}
+
+The first include calls the script for providing us GTest that we described previously. After fetching GTest, our current CMakeLists.txt loads some helper function defined in the GoogleTest CMake module by invoking include(GoogleTest). This will enable us to integrate our tests into CTest more easily. Finally, let's  tell CMake to dive into a directory that contains some tests by calling  add\_subdirectory(customer).
+
+The test/customer/CMakeLists.txt file will simply add an executable with tests that is compiled with our predefined set of flags and links to the tested module and GTest. Then, we call the CTest helper function that discovers the defined tests. All of this is just four lines of CMake code:
+
+\begin{lstlisting}[style=styleCMake]
+add_executable(unittests unit.cpp)
+target_compile_options(unittests PRIVATE ${BASE_COMPILE_FLAGS})
+target_link_libraries(unittests PRIVATE domifair::libcustomer gtest_main)
+gtest_discover_tests(unittests)
+\end{lstlisting}
+
+Voilà!
+
+You can now build and execute your tests by simply going to the build directory and calling the following:
+
+\begin{tcblisting}{commandshell={}}
+cmake --build . --target unittests
+ctest # or cmake --build . --target test
+\end{tcblisting}
+
+You can pass a -j flag for CTest. It works just like with Make or Ninja invocations –parallelizes the test execution. If you want to have a shorter command for building, just run your build system, that is, by invoking make.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}In scripts, it's usually better to use the longer form of the command; this will make your scripts independent of the build system used.
+\end{tcolorbox}
+
+Once your tests have passed, we can now think about providing them to a wider audience.
+
+
+
+
+
+

@@ -1,0 +1,243 @@
+
+CMake has built-in utilities that can come a long way when it comes to distributing the results of your builds. This section will describe installing and exporting utilities and the differences between them. Later sections will show you how to package your code using CPack, and how to do it using Conan. 
+
+Installing and exporting is not that important for microservices per se, but it's very useful if you're delivering libraries for others to reuse.
+
+\subsubsubsection{7.5.1\hspace{0.2cm}Installing}
+
+If you have written or used Makefiles, you've most probably invoked make install at one point and seen how the deliverables of a project were installed either in the OS directories or in another directory of your choosing. If you're using make with CMake, using the steps from this section will allow you to install the deliverables in the same way. If not, you'll still be able to call the install target, of course. Aside from that, in both cases, you will then have an easy way to leverage CPack for creating packages based on your installation commands.
+
+If you're on Linux, it's probably a good idea to preset some installation directories based on the conventions of the OS by calling the following:
+
+\begin{lstlisting}[style=styleCMake]
+include(GNUInstallDirs)
+\end{lstlisting}
+
+This will make the installer use a directory structure made of bin, lib, and similar other directories. Such directories can be also set manually using a few CMake variables.
+
+Creating an install target consists of a few more steps. First and foremost is to define the targets we want to install, which in our case will be the following:
+
+\begin{lstlisting}[style=styleCMake]
+install(
+	TARGETS libcustomer customer
+	EXPORT CustomerTargets
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+\end{lstlisting}
+
+This tells CMake to expose our library and executable defined earlier in this chapter as CustomerTargets, using the directories we set earlier.
+
+If you plan to install different configurations of your library to different folders, you could use a few invocations of the preceding command, like so:
+
+\begin{lstlisting}[style=styleCMake]
+install(TARGETS libcustomer customer
+	CONFIGURATIONS Debug
+	# destinations for other components go here...
+	RUNTIME DESTINATION Debug/bin)
+	
+install(TARGETS libcustomer customer
+	CONFIGURATIONS Release
+	# destinations for other components go here...
+	RUNTIME DESTINATION Release/bin)
+\end{lstlisting}
+
+You can notice that we specify the directories for executables and libraries, but not for include files. We need to provide them in another command, like so:
+
+\begin{lstlisting}[style=styleCMake]
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+	DESTINATION include)
+\end{lstlisting}
+
+This means that the top-level include directory's contents will be installed in the include directory under the installation root. The slash after the first path fixes some path issues, so take note to use it.
+
+So, we have our set of targets; now we need to generate a file that another CMake project could read to understand our targets. This can be done in the following way:
+
+\begin{lstlisting}[style=styleCMake]
+install(
+	EXPORT CustomerTargets
+	FILE CustomerTargets.cmake
+	NAMESPACE domifair::
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Customer)
+\end{lstlisting}
+
+This command takes our target set and creates a CustomerTargets.cmake file that will contain all the info about our targets and their requirements. Each of our targets will get prefixed with a namespace; for example, customer will become domifair::customer. The generated file will get installed in a subdirectory of the library folder in our installation tree.
+
+To allow dependant projects to find our targets using CMake's find\_package command, we need to provide a CustomerConfig.cmake file. If your target doesn't have any dependencies, you can just export the preceding targets directly to that file instead of the targets file. Otherwise, you should write your own config file that will include the preceding targets file.
+
+In our case, we want to reuse some CMake variables, so we need to create a template and use the configure\_file command to fill it in:
+
+\begin{lstlisting}[style=styleCMake]
+configure_file(${PROJECT_SOURCE_DIR}/cmake/CustomerConfig.cmake.in
+	CustomerConfig.cmake @ONLY)
+\end{lstlisting}
+
+Our CustomerConfig.cmake.in file will begin by dealing with our dependencies:
+
+\begin{lstlisting}[style=styleCMake]
+include(CMakeFindDependencyMacro)
+find_dependency(cpprestsdk 2.10.18 REQUIRED)
+\end{lstlisting}
+
+The find\_dependency macro is a wrapper for find\_package that is meant to be used in config files. Although we relied on Conan to provide us with the C++ REST SDK 2.10.18 as defined in conanfile.txt, here we need to specify the dependency once more. Our package can be used on another machine, so we require that our dependency is installed there too. If you want to use Conan on the target machine, you can install the C++ REST SDK as follows:
+
+\begin{tcblisting}{commandshell={}}
+conan install cpprestsdk/2.10.18
+\end{tcblisting}
+
+After dealing with the dependencies, our config file template will include the targets file that we created earlier:
+
+\begin{lstlisting}[style=styleCMake]
+if(NOT TARGET domifair::@PROJECT_NAME@)
+	include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+endif()
+\end{lstlisting}
+
+When configure\_file executes, it will replace all those @VARIABLES@ with the contents of their matching \$\{VARIABLES\} defined in our project. This way, based on our CustomerConfig.cmake.in file template, CMake will create a CustomerConfig.cmake file.
+
+When finding a dependency using find\_package, you'll often want to specify a version of the package to find. To support that in our package, we must create a CustomerConfigVersion.cmake file. CMake offers us a helper function that will create this file for us. Let's use it as follows:
+
+\begin{lstlisting}[style=styleCMake]
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+CustomerConfigVersion.cmake
+VERSION ${PACKAGE_VERSION}
+COMPATIBILITY AnyNewerVersion)
+\end{lstlisting}
+
+The PACKAGE\_VERSION variable will get populated according to the VERSION argument we passed when calling project at the top of our top-level CMakeLists.txt file.
+
+AnyNewerVersion COMPATIBILITY means our package will be accepted by any package search if it is newer or the same as the requested version. Other options include SameMajorVersion, SameMinorVersion, and ExactVersion.
+
+Once we have created our config and config version files, let's tell CMake that they should be installed along with the binaries and our target file:
+
+\begin{lstlisting}[style=styleCMake]
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CustomerConfig.cmake
+		${CMAKE_CURRENT_BINARY_DIR}/CustomerConfigVersion.cmake
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Customer)
+\end{lstlisting}
+
+One last thing we should install is the license for our project. We'll leverage CMake's command for installing files to put them in our documentation directory:
+
+\begin{lstlisting}[style=styleCMake]
+install(
+	FILES ${PROJECT_SOURCE_DIR}/LICENSE
+	DESTINATION ${CMAKE_INSTALL_DOCDIR})
+\end{lstlisting}
+
+That's all you need to know to successfully create an install target in the root of your OS. You may ask how to install the package into another directory, such as just for the current user. To do so, you would need to set the CMAKE\_INSTALL\_PREFIX variable, for example, when generating the build system.
+
+Note that if we don't install into the root of our Unix tree, we'll have to provide the dependent project with a path to the installation directory, such as by setting CMAKE\_PREFIX\_PATH.
+
+Let's now look at yet another way you could reuse what you just built.
+
+\subsubsubsection{7.5.2\hspace{0.2cm}Exporting}
+
+Exporting is a technique to add information about a package that you built locally to CMake's package registry. This is useful when you want your targets to be visible right from their build directories, even without installation. A common use for exporting is when you have several projects checked out on your development machine and you build them locally.
+
+It's quite easy to add support for this mechanism from your CMakeLists.txt files. In our case, it can be done in this way:
+
+\begin{lstlisting}[style=styleCMake]
+export(
+	TARGETS libcustomer customer
+	NAMESPACE domifair::
+	FILE CustomerTargets.cmake)
+
+set(CMAKE_EXPORT_PACKAGE_REGISTRY ON)
+export(PACKAGE domifair)
+\end{lstlisting}
+
+This way, CMake will create a targets file similar to the one from the Installing section, defining our library and executable targets in the namespace we provided. From CMake 3.15, the package registry is disabled by default, so we need to enable it by setting the appropriate preceding variable. Then, we can put the information about our targets right into the registry by exporting our package.
+
+Note that we now have a targets file without a matching config file. This means that if our targets depend on any external libraries, they must be found before our package is found. In our case, the calls must be ordered in the following way:
+
+\begin{lstlisting}[style=styleCMake]
+find_package(cpprestsdk 2.10.18)
+find_package(domifair)
+\end{lstlisting}
+
+First, we find the C++ REST SDK, and only afterward do we look for our package that depends on it. That's all you need to know to start exporting your targets. Much easier than installing them, isn't it?
+
+Let's now move on to a third way of exposing your targets to the external world.
+
+\subsubsubsection{7.5.3\hspace{0.2cm}Using CPack}
+
+In this section, we'll describe how to use CPack, the packaging tool that comes with CMake. CPack allows you to easily create packages in various formats, ranging from ZIP and TGZ archives through to DEB and RPM packages, and even installation wizards such as NSIS or a few OS X-specific ones. Once you have your installation logic in place, it's not hard to integrate the tool. Let's show how to use CPack to package our project.
+
+First, we need to specify variables that CPack will use when creating the packages:
+
+\begin{lstlisting}[style=styleCMake]
+set(CPACK_PACKAGE_VENDOR "Authors")
+set(CPACK_PACKAGE_CONTACT "author@example.com")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+	"Library and app for the Customer microservice")
+\end{lstlisting}
+
+We need to give some information by hand, but some variables can be filled based on our project version specified when we defined our project. There are many more CPack variables and you can read about all of them in the CPack link in the Further reading section at the end of the chapter. Some of them are common for all package generators, while some are specific to a few of them. For instance, if you plan to use the installers, you could set the following two:
+
+\begin{lstlisting}[style=styleCMake]
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
+\end{lstlisting}
+
+Once you've set all the interesting variables, it's time to choose the generators for CPack to use. Let's start with putting some basic ones in CPACK\_GENERATOR, a variable CPack relies on:
+
+\begin{lstlisting}[style=styleCMake]
+list(APPEND CPACK_GENERATOR TGZ ZIP)
+\end{lstlisting}
+
+This will cause CPack to generate those two types of archives based on the installation steps we defined earlier in the chapter.
+
+You can select different package generators based on many things, for example, the tools available on the machine you're running on. An example would be to create Windows installers when building on Windows and a DEB or RPM package if building on Linux with the appropriate tools installed. For instance, if you're running Linux, you could check whether dpkg is installed and if so, create DEB packages:
+
+\begin{lstlisting}[style=styleCMake]
+if(UNIX)
+	find_program(DPKG_PROGRAM dpkg)
+	if(DPKG_PROGRAM)
+		list(APPEND CPACK_GENERATOR DEB)
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}
+		libcpprest2.10 (>= 2.10.2-6)")
+		set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+	else()
+		message(STATUS "dpkg not found - won't be able to create DEB
+		packages")
+	endif()
+\end{lstlisting}
+
+We used the CPACK\_DEBIAN\_PACKAGE\_DEPENDS variable to make the DEB package require the C++ REST SDK to be installed first.
+
+For RPM packages, you could manually check for rpmbuild:
+
+\begin{lstlisting}[style=styleCMake]
+	find_program(RPMBUILD_PROGRAM rpmbuild)
+	if(RPMBUILD_PROGRAM)
+		list(APPEND CPACK_GENERATOR RPM)
+		set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES} cpprest
+		>= 2.10.2-6")
+	else()
+		message(STATUS "rpmbuild not found - won't be able to create RPM packages")
+	endif()
+endif()
+\end{lstlisting}
+
+Nifty, right?
+
+These generators offer a plethora of other useful variables, so feel free to look at CMake's documentation if you need anything more than those basic needs described here.
+
+One last thing when it comes variables – you can also use them to avoid accidentally packaging undesired files. This can be done by using the following:
+
+\begin{lstlisting}[style=styleCMake]
+set(CPACK_SOURCE_IGNORE_FILES /.git /dist /.*build.* /\\\\.DS_Store)
+\end{lstlisting}
+
+Once we have all that in place, we can include CPack itself from our CMake lists:
+
+\begin{lstlisting}[style=styleCMake]
+include(CPack)
+\end{lstlisting}
+
+Remember to always do this as the last step, as CMake won't propagate any variables you used later to CPack. 
+
+To run it, directly invoke either just cpack or the longer form that will also check whether anything needs rebuilding first: cmake -\,-build . -\,-target package. You can easily override the generators if you just need to rebuild one type of package using the -G flag, for example, -G DEB to build just the DEB package, -G WIX -C Release to pack a release MSI executable, or -G DragNDrop to obtain a DMG installer.
+
+Let's now discuss a more barbaric way of building packages.

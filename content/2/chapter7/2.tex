@@ -107,8 +107,77 @@ Let's now take a look at what tools and their features you can use to keep compi
 \noindent
 \textbf{Leveraging tools}
 
+A common technique that can make your builds faster is to use a single compilation unit build, or unity build. It won't speed up every project, but it may be worth a shot if there's plenty of code in your header files. Unity builds work by just including all your .cpp files in one translation unit. Another similar idea is to use pre-compiled headers. Plugins such as Cotire for CMake will handle both of these techniques for you. CMake 3.16 also adds native support for unity builds, which you can enable either for one target, set\_target\_properties(<target> PROPERTIES UNITY\_BUILD ON), or globally by setting CMAKE\_UNITY\_BUILD to true. If you just want PCHs, you might want to take a look into CMake 3.16's target\_precompile\_headers.
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
+\hspace*{0.7cm}If you feel like you are including too much in your C++ files, consider using a tool named include-what-you-use to tidy them up. Preferring forward declaring types and functions to including header files can also go a long way in reducing the compilation times.
+\end{tcolorbox}
+
+If your project takes forever to link, there are some ways to deal with this as well. Using a different linker, such as LLVM's LLD or GNU's Gold, can help a lot, especially since they allow multi-threaded linking. If you can't afford to use a different linker, you can always experiment with flags such as -fvisibility-hidden or -fvisibility-inlineshidden and mark only the functions you want to have visible in your shared library with an appropriate annotation in the source code. This way, the linker will have less work to perform. If you're using link-time optimization, try to only do that for the builds that are performance-critical: those that you plan to profile and those meant for production. Otherwise, you'll probably just waste your developers' time.
+
+If you're using CMake and aren't tied to a specific generator (for example, CLion requires using the Code::Blocks generator), you can replace the default Make generator with a faster one. Ninja is a great one to start with as it was created specifically to reduce build times. To use it, just pass -G Ninja when invoking CMake.
+
+There are still two more great tools that will surely give you a boost. One of them is Ccache.It's a tool that runs its cache of C an d C++ compilation outputs. If you're trying to build the same thing twice, it will get the results from the cache instead of running the compilation. It keeps the statistics, such as cache hits and misses, can remember the warnings that it should emit when compiling a specific file, and has many configuration options that you can store in the ~/.ccache/ccache.conf file. To obtain its statistics, just run ccache -\,-show-stats.
+
+The second tool is IceCC (or Icecream). It's a fork of distcc, essentially a tool to distribute your builds across hosts. With IceCC, it's easier to use a custom toolchain. It runs the iceccd daemon on each host and an icecc-scheduler service that manages the whole cluster. The scheduler, unlike in distcc, makes sure to only use the idle cycles on each machine, so you won't end up overloading other people's workstations.
+
+To use both IceCC and Ccache for your CMake builds, just add -DCMAKE\_C\_COMPILER\_LAUNCHER="ccache;icecc" -DCMAKE\_CXX\_COMPILER\_LAUNCHER="ccache;icecc" to your CMake invocation. If you're compiling on Windows, instead of the last two tools, you could use clcache and Incredibuild or look for other alternatives.
+
+Now that you know how to build fast, let's move on to another important topic.
 
 \subsubsubsection{7.2.3\hspace{0.2cm}Finding potential code issues}
 
+Even the quickest builds aren't worth much if your code has bugs. There are dozens of flags to warn you of potential issues in your code. This section will try to answer which ones you should consider enabling.
+
+First, let's start with a slightly different matter: how not to get warned about issues with code from other libraries. Getting warned about issues that you can't really fix isn't useful. Fortunately, there are compiler switches to disable such warnings. In GCC, for instance, you have two types of include files: regular (passed using -I) and system ones (passed using -isystem). If you specify a directory using the latter, you won't get warnings from the headers it contains. MSVC has an equivalent for -isystem: /external:I.Additionally, it has other flags to handle external includes, such as /external:anglebrackets, which tells the compiler to treat all files included using angle brackets as external ones, thus disabling warnings for them. You can specify a warning level for external files. You can also keep warnings coming from template instantiations caused by your code using /external:templates-. If you're looking for a portable way to mark include paths as system/external ones, and you're using CMake, you can add the SYSTEM keyword to a target\_include\_directories directive.
+
+Speaking of portability, if you want to be conformant to a C++ standard (and you should), consider adding -pedantic to your compile options for GCC or Clang, or the /permissive- option for MSVC. This way, you'll get informed about every non-standard extension that you might be using. If you're using CMake, add the following line for each of your targets, set\_target\_properties(<target> PROPERTIES CXX\_EXTENSIONS OFF), to disable compiler-specific extensions.
+
+If you're using MSVC, strive to compile your code with /W4, since it enables most of the important warnings. For GCC and Clang, try to use -Wall -Wextra -Wconversion -Wsign-conversion. The first one, despite its name, enables only some common warnings. The second, however, adds another bunch of warnings. The third one is based on the tips from a great book by Scott Meyers, titled Effective C++ (it's a set of good warnings, but check that it's not too noisy for your needs). The last two are about type conversions and signedness conversions. All those flags together create a sane safety net, but you can, of course, look for more flags to enable. Clang has a -Weverything flag. Try to periodically run a build with it to discover new, potential warnings that could be worth enabling in your codebase. You might be surprised at how many messages you get with this flag, although enabling some of the warning flags might not be worth the hassle. An MSVC alternative is named /Wall. Take a look at the following tables to see some other interesting options that are not enabled by the preceding 9:
+
+GCC/Clang:
+\begin{table}[H]
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{Flag}         & \textbf{Meaning}                                                                                                                                    \\ \hline
+		-Wduplicated-cond     & \begin{tabular}[c]{@{}l@{}}Warn when the same condition is used in if and else-if\\ blocks.\end{tabular}                                            \\ \hline
+		-Wduplicated-branches & Warn if both branches contain the same source code.                                                                                                 \\ \hline
+		-Wlogical-op          & \begin{tabular}[c]{@{}l@{}}Warn when operands in logical operations are the same and\\ when a bitwise operator should be used instead.\end{tabular} \\ \hline
+		-Wnon-virtual-dtor    & \begin{tabular}[c]{@{}l@{}}Warn when a class has virtual functions but not a virtual\\ destructor.\end{tabular}                                     \\ \hline
+		-Wnull-dereference    & \begin{tabular}[c]{@{}l@{}}Warn about null dereferences. This check may be inactive in\\ unoptimized builds.\end{tabular}                           \\ \hline
+		-Wuseless-cast        & Warn when casting to the same type.                                                                                                                 \\ \hline
+		-Wshadow              & \begin{tabular}[c]{@{}l@{}}A whole family of warnings about declarations that shadow\\ other, previous declarations.\end{tabular}                   \\ \hline
+	\end{tabular}
+\end{table}
+
+MSVC:
+
+\begin{table}[H]
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{Flag} & \textbf{Meaning}                                      \\ \hline
+		/w44640       & Warn on non-thread-safe static member initialization. \\ \hline
+	\end{tabular}
+\end{table}
+
+One last thing worth mentioning is the question: to -Werror (or /WX on MSVC) or not to - Werror? This really depends on your personal preferences as issuing errors instead of warnings has its pros and cons. On the plus side, you won't let any of your enabled warnings slip by. Your CI build will fail and your code won't compile. When running multi-threaded builds, you won't lose any warnings in the quickly passing compilation messages. However, there are some minuses too. You won't be able to upgrade your compiler if it enables any new warnings or just detects more issues. The same goes for dependencies, which can deprecate some functions they provide. You won't be able to deprecate anything in your code if it's used by other parts of your project. Fortunately, you can always use a mixed solution: strive to compile with -Werror, but disable it when you need to do the things it inhibits. This requires discipline, as if any new warnings are to slip in, you may have a hard time eliminating them.
 
 \subsubsubsection{7.2.4\hspace{0.2cm}Using compiler-centric tools}
+
+Nowadays, compilers allow you to do much more with them than a few years back. This is owing to the introduction of LLVM and Clang. By providing APIs and a modular architecture allowing easy reuse, caused tools such as sanitizers, automatic refactoring, or code completion engines to flourish. You should consider taking advantage of what this compiler infrastructure offers you. Use clang-format to ensure all the code in your code base conforms to a given standard. Consider adding pre-commit hooks using the precommit tool to reformat new code before commit. You can also add Python and CMake formatters to the mix. Statically analyze the code using clang-tidy – a tool that actually understands your code instead of just reasoning about it. There's a ton of different checks this tool can perform for you, so be sure to customize the list and options to your specific needs. You can also run nightly or weekly tests of your software with sanitizers enabled. This way, you can detect threading issues, undefined behavior, memory access, management issues, and more. Running tests using debug builds can also be of value if your release builds have assertions disabled.
+
+If you think that more could be done, you can consider writing your own code refactorizations using Clang's infrastructure. There's already a clang-rename tool if you want to see how to create an LLVM-based tool of your own. Additional checks and fix-its for clang-tidy are also not that hard to create, and they can save you hours of manual labor.
+
+You can integrate many tools into your building process. Let's now discuss the heart of the process: the build system.
+
+
+
+
+
+
+
+
+
+
+
+
