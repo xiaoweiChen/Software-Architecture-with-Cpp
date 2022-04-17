@@ -1,0 +1,355 @@
+
+In this section, we'll discuss common solutions to problems related to object creation. We'll discuss various types of object factories, go through builders, and touch on composites and prototypes. However, we'll take a slightly different approach than the Gang of Four when describing their solutions. They proposed complex, dynamically polymorphic class hierarchies as proper implementations of their patterns. In the C++ world, many patterns can be applied to real-world problems without introducing as many classes and the overhead of dynamic dispatch. That's why in our case, the implementations will be different and in many cases simpler or more performant (although more specialized and less "generic" in the Gang of Four sense). Let's dive right in.
+
+\subsubsubsection{6.4.1\hspace{0.2cm}Using factories}
+
+The first type of creational patterns we'll discuss here are factories. They're useful when the object construction can be done in a single step (a pattern useful if it cannot be covered right after factories), but when the constructor just isn't good enough on its own. There are three types of factories – factory methods, factory functions, and factory classes. Let's introduce them one by one.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using factory methods}
+
+Factory methods, also called the named constructor idiom, are basically member functions that call a private constructor for you. When do we use them? Here are a few scenarios:
+
+\begin{itemize}
+\item 
+When there are many different ways to construct an object, which would make errors likely. For example, imagine constructing a class for storing different color channels for a given pixel; each channel is represented by a one-byte value. Using just a constructor would make it too easy to pass the wrong order of channels, or values meant for a different color palette entirely. Also, switching the pixel's internal representation of colors would get tricky pretty fast. You could argue that we should have different types representing colors in those different formats, but often, using a factory method is a valid approach as well.
+
+\item 
+When you want to force the object to be created on the heap or in another specific memory area. If your object takes up loads of space on the stack and you're afraid you'll run out of stack memory, using a factory method is a solution. The same if you require all instances to be created in some area of memory on a device, for instance.
+
+\item 
+When constructing your object can fail, but you cannot throw exceptions. You should use exceptions instead of other methods of error handling. When used properly, they can yield cleaner and better-performing code. However, some projects or environments require that exceptions are disabled. In such cases, using a factory method will allow you to report errors happening during construction.
+\end{itemize}
+
+A factory method for the first case we described could look as follows:
+
+\begin{lstlisting}[style=styleCXX]
+class Pixel {
+	public:
+	static Pixel fromRgba(char r, char b, char g, char a) {
+		return Pixel{r, g, b, a};
+	}
+	static Pixel fromBgra(char b, char g, char r, char a) {
+		return Pixel{r, g, b, a};
+    }
+	// other members
+	
+private:
+	Pixel(char r, char g, char b, char a) : r_(r), g_(g), b_(b), a_(a) {}
+	char r_, g_, b_, a_;
+}
+\end{lstlisting}
+
+This class has two factory methods (actually, the C++ standard doesn't recognize the term method, calling them member functions instead): fromRgba and fromBgra. Now it's harder to make a mistake and initialize the channels in the wrong order.
+
+Note that having a private constructor effectively inhibits any class from inheriting from your type, as without access to its constructor, no instances can be created. If that's your goal and not a side effect, however, you should prefer to just mark your class as final.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using factory functions}
+
+As opposed to using factory member functions, we can also implement them using nonmember ones. This way, we can provide better encapsulation, as described by Scott Meyers in his article linked in the Further reading section.
+
+In the case of our Pixel, we could also create a free function to fabricate its instances. This way, our type could have simpler code:
+
+\begin{lstlisting}[style=styleCXX]
+struct Pixel {
+	char r, g, b, a;
+};
+
+Pixel makePixelFromRgba(char r, char b, char g, char a) {
+	return Pixel{r, g, b, a};
+}
+
+Pixel makePixelFromBgra(char b, char g, char r, char a) {
+	return Pixel{r, g, b, a};
+}
+\end{lstlisting}
+
+Using this approach makes our design conform to the open-closed principle described in Chapter 1, Importance of Software Architecture and Principles of Great Design. It's easy to add more factory functions for other color palettes without the need to modify the Pixel struct itself.
+
+This implementation of Pixel allows the user to initialize it by hand instead of using one of our provided functions. If we want, we can inhibit this behavior by changing the class declaration. Here's how it could look after the fix:
+
+\begin{lstlisting}[style=styleCXX]
+struct Pixel {
+	char r, g, b, a;
+	
+private:
+	Pixel(char r, char g, char b, char a) : r(r), g(g), b(b), a(a) {}
+	friend Pixel makePixelFromRgba(char r, char g, char b, char a);
+	friend Pixel makePixelFromBgra(char b, char g, char r, char a);
+};
+\end{lstlisting}
+
+This time, our factory functions are friends of our class. However, the type is no longer an aggregate, so we can no longer use aggregate initialization (Pixel{}), including designated initializers. Also, we gave up on the open-closed principle. The two approaches offer different trade-offs, so choose wisely.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Choosing the return type of a factory}
+
+Yet another thing you should choose when implementing an object factory is the actual type it should return. Let's discuss the various approaches.
+
+In the case of Pixel, which is a value type and not a polymorphic one, the simplest approach works the best – we simply return by value. If you produce a polymorphic type, return it by a smart pointer (never use a naked pointer for this as this will yield memory leaks at some point). If the caller should own the created object, usually returning it in unique\_ptr to the base class is the best approach. In the not-so-common cases where your factory and the caller must both own the object, use shared\_ptr or another referencecounted alternative. Sometimes it's enough that the factory keeps track of the object but doesn't store it. In such cases, store weak\_ptr inside the factory and return shared\_ptr outside.
+
+Some C++ programmers would argue that you should return specific types using an out parameter, but that's not the best approach in most cases. In the case of performance, returning by value is usually the best choice, as compilers will not make extra copies of your object. If the issue is with the type being non-copyable, from C++17 onward, the standard specifies where copy elision is mandatory, so returning such types by value is usually not an issue. If your function returns multiple objects, use a pair, tuple, struct, or container.
+
+If something goes wrong during construction, you have several choices:
+
+\begin{itemize}
+\item 
+Return std::optional of your type if there's no need to provide error messages to the caller.
+
+\item 
+Throw an exception if errors during construction are rare and should be propagated.
+
+\item 
+Return absl::StatusOr of your type if errors during construction are common (see Abseil's documentation for this template in the Further reading section).
+\end{itemize}
+
+Now that you know what to return, let's discuss our last type of factories.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using factory classes}
+
+Factory classes are types that can fabricate objects for us. They can help decouple polymorphic object types from their callers. They can allow for using object pools (in which reusable objects are kept so that you don't need to constantly allocate and free them) or other allocation schemes. Those are just a few examples of how they can be useful. Let's take a closer look at yet another one. Imagine you need to create different polymorphic types based on input parameters. In some cases, a polymorphic factory function such as the one shown next is not enough:
+
+\begin{lstlisting}[style=styleCXX]
+std::unique_ptr<IDocument> open(std::string_view path) {
+	if (path.ends_with(".pdf")) return 	std::make_unique<PdfDocument>();
+	if (name == ".html") return 			std::make_unique<HtmlDocument>();
+	
+	return nullptr;
+}
+\end{lstlisting}
+
+What if we wanted to open other kinds of documents as well, such as OpenDocument text files? It may be ironic to discover that the preceding open factory is not open for extension. It might not be a big issue if we own the codebase, but if the consumers of our library need to register their own types, this can be an issue. To solve it, let's use a factory class that will allow registering functions to open different kinds of documents, as shown next:
+
+\begin{lstlisting}[style=styleCXX]
+class DocumentOpener {
+public:
+	using DocumentType = std::unique_ptr<IDocument>;
+	using ConcreteOpener = DocumentType (*)(std::string_view);
+
+private:
+	std::unordered_map<std::string_view, ConcreteOpener> openerByExtension;
+};
+\end{lstlisting}
+
+The class doesn't do much yet, but it has a map from extensions to functions that should be called to open files of given types. Now we'll add two public member functions. The first one will register new file types:
+
+\begin{lstlisting}[style=styleCXX]
+void Register(std::string_view extension, ConcreteOpener opener) {
+	openerByExtension.emplace(extension, opener);
+}
+\end{lstlisting}
+
+Now we have a way of filling the map. The second new public function will open the documents using an appropriate opener:
+
+\begin{lstlisting}[style=styleCXX]
+DocumentType open(std::string_view path) {
+	if (auto last_dot = path.find_last_of('.');
+	last_dot != std::string_view::npos) {
+		auto extension = path.substr(last_dot + 1);
+		return openerByExtension.at(extension)(path);
+	} else {
+		throw std::invalid_argument{"Trying to open a file with no
+			extension"};
+	}
+}
+\end{lstlisting}
+
+Basically, we extract the extension from the file path, throw an exception if it's empty, and if not, we look for an opener in our map. If found, we use it to open the given file, and if not, the map will throw another exception for us.
+
+Now we can instantiate our factory and register custom file types such as the OpenDocument text format:
+
+\begin{lstlisting}[style=styleCXX]
+auto document_opener = DocumentOpener{};
+
+document_opener.Register(
+	"odt", [](auto path) -> DocumentOpener::DocumentType {
+		return std::make_unique<OdtDocument>(path);
+	});
+\end{lstlisting}
+
+Notice that we're registering a lambda because it can be converted to our ConcreteOpener type, which is a function pointer. However, if our lambda had state, this wouldn't be the case. In such a situation, we would need to use something to wrap us up. One such thing could be std::function, but the drawback of this would be the need to pay the cost of type erasure each time we would want to run the function. In the case of opening files, that's probably okay. If you need better performance, however, consider using a type such as function\_ref.
+
+An example implementation of this utility proposed to the C++ standard (not yet accepted) can be found on Sy Brand's GitHub repo referred to in the Further reading section.
+
+Okay, now that we have our opener registered in the factory, let's use it to open a file and extract some text out of it:
+
+\begin{lstlisting}[style=styleCXX]
+auto document = document_opener.open("file.odt");
+std::cout << document->extract_text().front();
+\end{lstlisting}
+
+And that's all! If you want to provide the consumers of your library with a way to register their own types, they must have access to your map at runtime. You can either provide them with an API to reach it or make the factory static and allow them to register from anywhere in the code.
+
+That does it for factories and building objects in a single step. Let's discuss another popular pattern to be used if factorys aren't a good fit.
+
+\subsubsubsection{6.4.2\hspace{0.2cm}Using builders}
+
+Builders are similar to factories, a creational pattern coming from the Gang of Four. Unlike factories, they can help you build more complex objects: those that cannot be built in a single step, such as types assembled from many separate parts. They also provide you with a way to customize the construction of objects. In our case, we'll skip designing complex hierarchies of builders. Instead, we'll show how a builder can help. We'll leave implementing hierarchies to you, as an exercise.
+
+Builders are needed when an object cannot be produced in a single step, but having a fluent interface can just make them pleasant to use if the single step is not trivial. Let's demonstrate creating fluent builder hierarchies using CRTP.
+
+In our case, we'll create a CRTP, GenericItemBuilder, that we'll use as our base builder, and FetchingItemBuilder, which will be a more specialized one that can fetches data using a remote address if that's a supported feature. Such specializations can even live in different libraries, for instance, consuming different APIs that may or may not be available at build time.
+
+For demo purposes, we'll build instances of our Item struct from Chapter 5, Leveraging C++ Language Features:
+
+\begin{lstlisting}[style=styleCXX]
+struct Item {
+	std::string name;
+	std::optional<std::string> photo_url;
+	std::string description;
+	std::optional<float> price;
+	time_point<system_clock> date_added{};
+	bool featured{};
+};
+\end{lstlisting}
+
+If you want, you can enforce that Item instances are built using a builder by making the default constructor private and making the builders friends:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename ConcreteBuilder> friend class GenericItemBuilder;
+\end{lstlisting}
+
+Our builder's implementation can be started as follows:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename ConcreteBuilder> class GenericItemBuilder {
+public:
+	explicit GenericItemBuilder(std::string name)
+		: item_{.name = std::move(name)} {}
+protected:
+	Item item_;
+\end{lstlisting}
+
+Although it's generally not recommended to create protected members, we want our descendant builders to be able to reach our item. An alternative would be to use just the public methods of our base builder in derived ones.
+
+We take the name in the builder's constructor, as it's a single input coming from the user that needs to be set when we create our item. This way, we make sure that it will be set. An alternative would be to check whether it's okay at the final stage of building, when the object is being released to the user. In our case, the build step can be implemented as follows:
+
+\begin{lstlisting}[style=styleCXX]
+Item build() && {
+	item_.date_added = system_clock::now();
+	return std::move(item_);
+}
+\end{lstlisting}
+
+We enforce that the builder is "consumed" when this method is called; it must be an r-value. This means we can either use the builder in one line or move it in the last step to mark its end of work. We then set the creation time for our item and move it outside of the builder.
+
+Our builder's API could offer functions such as the following:
+
+\begin{lstlisting}[style=styleCXX]
+ConcreteBuilder &&with_description(std::string description) {
+	item_.description = std::move(description);
+	return static_cast<ConcreteBuilder &&>(*this);
+}
+
+ConcreteBuilder &&marked_as_featured() {
+	item_.featured = true;
+	return static_cast<ConcreteBuilder &&>(*this);
+}
+\end{lstlisting}
+
+Each of them returns the concrete (derived) builder object as an r-value reference. Perhaps counterintuitively, this time such a return type should be preferred to returning by value. This is to avoid unnecessary copies of item\_ when building. On the other hand, returning by an l-value reference could lead to dangling references and would make calling build() harder because the returned l-value reference wouldn't match the expected r-value one.
+
+The final builder type could look as follows:
+
+\begin{lstlisting}[style=styleCXX]
+class ItemBuilder final : public GenericItemBuilder<ItemBuilder> {
+	using GenericItemBuilder<ItemBuilder>::GenericItemBuilder;
+};
+\end{lstlisting}
+
+It's just a class that reuses the constructors from our generic builder. It can be used as follows:
+
+\begin{lstlisting}[style=styleCXX]
+auto directly_loaded_item = ItemBuilder{"Pot"}
+							.with_description("A decent one")
+							.with_price(100)
+							.build();
+\end{lstlisting}
+
+As you can see, the final interface can be called using function chaining and the method names make the whole invocation fluent to read, hence the name fluent interfaces.
+
+What if we were to not load each item directly, but rather use a more specialized builder that could load parts of the data from a remote endpoint? We could define it as follows:
+
+\begin{lstlisting}[style=styleCXX]
+class FetchingItemBuilder final
+: public GenericItemBuilder<FetchingItemBuilder> {
+public:
+	explicit FetchingItemBuilder(std::string name)
+		: GenericItemBuilder(std::move(name)) {}
+	
+	FetchingItemBuilder&& using_data_from(std::string_view url) && {
+		item_ = fetch_item(url);
+		return std::move(*this);
+    }
+};
+\end{lstlisting}
+
+We also use CRTP to inherit from our generic builder and also enforce giving us a name. This time, however, we extend the base builder with our own function to fetch the contents and put them in the item we're building. Thanks to CRTP, when we call a function from our base builder, we'll get the derived one returned, which makes the interface much easier to use. It can be called in the following manner:
+
+\begin{lstlisting}[style=styleCXX]
+auto fetched_item =
+	FetchingItemBuilder{"Linen blouse"}
+		.using_data_from("https://example.com/items/linen_blouse")
+		.marked_as_featured()
+		.build();
+\end{lstlisting}
+
+All nice and dandy!
+
+Builders can also come in handy if you need to always create immutable objects. As the builder has access to private members of the class, it can modify them, even if the class doesn't provide any setters for them. That's of course not the only case when you can benefit from using them.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Building with composites and prototypes}
+
+A case where you would need to use a builder is when creating a composite. A composite is a design pattern in which a group of objects is treated as one, all sharing the same interface (or the same base type). An example would be a graph, which you could compose out of subgraphs, or a document, which could nest other documents. When you would call print() on such an object, all its sub-objects would get their print() functions called in order to print the whole composite. The builder pattern can be useful for creating each subobject and composing them all together.
+
+Prototype is yet another pattern that can be used for object construction. If your type is very costly to create anew, or you just want to have a base object to build upon, you might want to use this pattern. It boils down to providing a way to clone your object, which you could later either use on its own or modify so it becomes what it should be. In the case of a polymorphic hierarchy, just add clone() like so:
+
+\begin{lstlisting}[style=styleCXX]
+class Map {
+	public:
+	virtual std::unique_ptr<Map> clone() const;
+	// ... other members ...
+};
+
+class MapWithPointsOfInterests {
+public:
+	std::unique_ptr<Map> clone() override const;
+	// ... other members ...
+private:
+	std::vector<PointOfInterest> pois_;
+};
+\end{lstlisting}
+
+Our MapWithPointsOfInterests object could clone the points too, so we don't need to re-add each of them manually. This way, we can have some default provided to the end user when they create their own map. Note also that in some cases, instead of using a prototype, a simple copy constructor would suffice.
+
+We have now covered object creation. We touched on variants along the way, so why not revisit them (pun intended) to see how else they can help us?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,114 @@
+
+Compilers are one of the most important tools in every programmer's workshop. That's why getting to know them well can help you out in many different ways, on countless occasions. In this section, we'll describe a few tips to use them effectively. This will only touch the tip of the iceberg as whole books can be written about these tools and their vast variety of available flags, optimizations, functionalities, and other specifics. GCC even has a wiki page with a list of books about compilers! You can find it in the Further reading section at the end of this chapter.
+
+\subsubsubsection{7.2.1\hspace{0.2cm}Using multiple compilers}
+
+One of the things you should consider in your build process is using multiple compilers instead of just one, the reason being the several benefits that come with it. One of them is that they can detect different issues with your code. For instance, MSVC has signedness checks enabled by default. Using several compilers can help with potential portability issues you may encounter in the future, especially when a decision is made to also compile your code on a different OS, such as moving from Linux to Windows or the other way. To make such efforts at no cost, you should strive to write portable, ISO C++-compliant code. One of the benefits of Clang is that it strives for compliance with the C++ standards more than GCC. If you're using MSVC, try adding the /permissive- option (available since Visual Studio 17; enabled by default for projects created using version 15.5+). For GCC, try not to use the GNU variants when choosing the C++ standard for your code (for example, prefer -std=c++17 to -std=gnu++17). If performance is your goal, being able to build your software with a wide range of compilers will also allow you to pick the one that will offer the fastest binaries for your specific use cases. 
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
+\hspace*{0.7cm}Regardless of which compiler you choose for your release builds, consider using Clang for development. It runs on macOS, Linux, and Windows, supports the same set of flags as GCC, and aims to provide the fastest build times and concise compilation errors.
+\end{tcolorbox}
+
+If you're using CMake, you have two common ways to add another compiler. One is to pass the appropriate compilers when invoking CMake, like so:
+
+\begin{tcblisting}{commandshell={}}
+mkdir build-release-gcc
+cd build-release-gcc
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/gcc -
+DCMAKE_CXX_COMPILER=/usr/bin/g++
+\end{tcblisting}
+
+It's also possible to just set CC and CXX before invoking CMake, but those variables are not honored on all platforms (such as macOS).
+
+Another approach is to use toolchain files. It's probably an overkill if you just need to use a different compiler, but it's the go-to solution when you want to cross-compile. To use a toolchain file, you should pass it as a CMake argument: -DCMAKE\_TOOLCHAIN\_FILE=toolchain.cmake. 
+
+\subsubsubsection{7.2.2\hspace{0.2cm}Reducing build times}
+
+Every year, programmers spend countless hours waiting for their builds to complete. Reducing build times is an easy way to improve the productivity of whole teams, so let's discuss a few approaches to doing it.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using a fast compiler}
+
+One of the simplest ways to have faster builds is sometimes to upgrade your compiler. For instance, by upgrading Clang to 7.0.0, you could shave up to 30\% off of build times using Precompiled Header (PCH) files. Since Clang 9, it has gained the -ftime-trace option, which can provide you with information on the compilation times of all the files it processes. Other compilers have similar switches, too: check out GCC's -ftime-report or MSVC's /Bt and /d2cgsummary. Often you can get faster compiles by switching the compiler, which is especially useful on your development machine; for example, Clang usually compiles code faster than GCC.
+
+Once you have a fast compiler, let's take a look at what it needs to compile.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Rethinking templates}
+
+Different parts of the compilation process take a different amount of time to complete. This is especially important for compile-time constructs. One of Odin Holmes' interns, Chiel Douwes, created the so-called Rule of Chiel based on benchmarking the compile-time costs of various template operations. This, and other type-based template metaprogramming tricks, can be seen in the Type Based Template Metaprogramming is Not Dead lecture by Odin Holmes. From fastest to slowest, they are as follows:
+
+\begin{itemize}
+\item 
+Looking up a memoized type (for example, a template instantiation)
+
+\item 
+Adding a parameter to an alias call
+
+\item 
+Adding a parameter to a type
+
+\item 
+Calling an alias
+
+\item 
+Instantiating a type
+
+\item 
+Instantiating a function template
+
+\item 
+Using SFINAE (Substitution Failure Is Not an Error)
+\end{itemize}
+
+To demonstrate this rule, consider the following code:
+
+\begin{lstlisting}[style=styleCXX]
+template<bool>
+struct conditional {
+	template<typename T, typename F>
+	using type = F;
+};
+
+template<>
+struct conditional<true> {
+	template<typename T, typename F>
+	using type = T;
+};
+
+template<bool B, typename T, typename F>
+using conditional_t = conditional<B>::template type<T, F>;
+\end{lstlisting}
+
+It defines a conditional template alias, which stores a type that resolves as T if condition B is true, and to F otherwise. The traditional way to write such a utility would be as follows:
+
+\begin{lstlisting}[style=styleCXX]
+template<bool B, class T, class F>
+struct conditional {
+	using type = T;
+};
+
+template<class T, class F>
+struct conditional<false, T, F> {
+	using type = F;
+};
+
+template<bool B, class T, class F>
+using conditional_t = conditional<B,T,F>::type;
+\end{lstlisting}
+
+However, this second way is slower to compile than the first because it relies on creating template instances instead of type aliases.
+
+Let's now take a look at what tools and their features you can use to keep compile times low.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Leveraging tools}
+
+
+\subsubsubsection{7.2.3\hspace{0.2cm}Finding potential code issues}
+
+
+\subsubsubsection{7.2.4\hspace{0.2cm}Using compiler-centric tools}

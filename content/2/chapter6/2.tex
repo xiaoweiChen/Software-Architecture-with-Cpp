@@ -1,0 +1,342 @@
+
+If you're familiar with object-oriented programming languages, you must have heard of the Gang of Four's design patterns. While they can be implemented in C++ (and often are), this multi-paradigm language often takes a different approach for achieving the same goals. If you want to beat the performance of the so-called coffee-based languages such as Java or C\#, sometimes paying the cost of virtual dispatch is too much. In many cases, you'll know upfront what types you'll deal with. If that happens, you can often write more performant code using the tools available both in the language and in the standard library. Out of many, there's a group that we will start this chapter with – the language idioms. Let's start our journey by looking at a few of them.
+
+By definition, an idiom is a construct that recurs in a given language, an expression that's specific to the language. "Native speakers" of C++ should know its idioms by intuition. We already mentioned smart pointers, which are one of the most common ones. Let's now discuss a similar one.
+
+\subsubsubsection{6.2.1\hspace{0.2cm}Automating scope exit actions using RAII guards}
+
+One of the most powerful expressions in C++ is the brace closing a scope. This is the place where destructors get called and the RAII magic happens. To tame this spell, you don't need to use smart pointers. All you need is an RAII guard – an object that, when constructed, will remember what it needs to do when destroyed. This way, regardless of whether the scope exits normally or by an exception, the work will happen automatically.
+
+The best part – you don't even need to write an RAII guard from scratch. Well-tested implementation already exists in various libraries. If you're using GSL, which we mentioned in the previous chapter, you can use gsl::finally(). Consider the following example:
+
+\begin{lstlisting}[style=styleCXX]
+using namespace std::chrono;
+void self_measuring_function() {
+	auto timestamp_begin = high_resolution_clock::now();
+	
+	auto cleanup = gsl::finally([timestamp_begin] {
+		auto timestamp_end = high_resolution_clock::now();
+		std::cout << "Execution took: " <<
+		duration_cast<microseconds>(timestamp_end - timestamp_begin).count() << "
+		us";
+	});
+
+	// perform work
+	// throw std::runtime_error{"Unexpected fault"};
+}
+\end{lstlisting}
+
+Here, we take a timestamp at the start of the function and another one at the end. Try running this example and see how uncommenting the throw statement affects the execution. In both cases, our RAII guard will properly print the execution time (assuming the exception is caught somewhere).
+
+Let's now discuss a few more popular C++ idioms.
+
+\subsubsubsection{6.2.2\hspace{0.2cm}Managing copyability and movability}
+
+When designing a new type in C++, it's important to decide whether it should be copyable and movable. Even more important is implementing those semantics for a class correctly. Let's discuss those issues now.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Implementing non-copyable types}
+
+There are cases when you don't want your class to be copied. Classes that are very expensive to copy are one example. Another would be those subject to error due to slicing. In the past, a common way to prevent such objects from copying was by using the noncopyable idiom:
+
+\begin{lstlisting}[style=styleCXX]
+struct Noncopyable {
+	Noncopyable() = default;
+	Noncopyable(const Noncopyable&) = delete;
+	Noncopyable& operator=(const Noncopyable&) = delete;
+};
+
+class MyType : NonCopyable {};
+\end{lstlisting}
+
+Note, however, that such a class is also not movable, although it's easy to not notice it when reading the class definition. A better approach would be to just add the two missing members (the move constructor and move assignment operator) explicitly. As a rule of thumb, when declaring such special member functions, always declare all of them. This means that from C++11 onward, the preferred way would be to write the following:
+
+\begin{lstlisting}[style=styleCXX]
+struct MyTypeV2 {
+	MyTypeV2() = default;
+	MyTypeV2(const MyTypeV2 &) = delete;
+	MyTypeV2 & operator=(const MyTypeV2 &) = delete;
+	MyTypeV2(MyTypeV2 &&) = delete;
+	MyTypeV2 & operator=(MyTypeV2 &&) = delete;
+};
+\end{lstlisting}
+
+This time, the members were defined directly in the target type without the helper NonCopyable type.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Adhering to the rules of three and five}
+
+There's one more thing to mention when discussing special member functions: if you don't delete them and are providing your own implementations, most probably you need to define all of them, including the destructor, too. This was called the rule of three in C++98 (due to the need to define three functions: the copy constructor, the copy assignment operator, and the destructor) and since C++11's move operations, it is now replaced by the  rule of five (the two additional ones being the move constructor and the move assignment operator). Applying these rules can help you avoid resource management issues.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Adhering to the rule of zero}
+
+If, on the other hand, you're good to go with just the default implementations of all special member functions, then just don't declare them at all. This is a clear sign that you want the default behavior. It's also the least confusing. Consider the following type:
+
+\begin{lstlisting}[style=styleCXX]
+class PotentiallyMisleading {
+public:
+	PotentiallyMisleading() = default;
+	PotentiallyMisleading(const PotentiallyMisleading &) = default;
+	PotentiallyMisleading &operator=(const PotentiallyMisleading &) =
+default;
+	PotentiallyMisleading(PotentiallyMisleading &&) = default;
+	PotentiallyMisleading &operator=(PotentiallyMisleading &&) = default;
+	~PotentiallyMisleading() = default;
+	
+private:
+	std::unique_ptr<int> int_;
+};
+\end{lstlisting}
+
+Even though we defaulted all the members, the class is still non-copyable. That's because it has a unique\_ptr member that is non-copyable itself. Fortunately, Clang will warn you about this, but GCC does not by default. A better approach would be to apply the rule of zero and instead write the following:
+
+\begin{lstlisting}[style=styleCXX]
+class RuleOfZero {
+	std::unique_ptr<int> int_;
+};
+\end{lstlisting}
+
+Now we have less boilerplate code and by looking at the members, it's easier to notice that it does not support copying.
+
+There's one more important idiom to know about when it comes to copying that you'll get to know in a minute. Before that happens, we shall touch on yet another idiom, which can (and should) be used to implement the first one.
+
+\subsubsubsection{6.2.3\hspace{0.2cm}Using hidden friends}
+
+In essence, hidden friends are non-member functions defined in the body of the type that declares them as a friend. This makes such functions impossible to call in ways other than by using Argument-Dependent Lookup (ADL), effectively making them hidden. Because they reduce the number of overloads a compiler considers, they also speed up compilation. A bonus of this is that they provide shorter error messages than their alternatives. Their last interesting property is that they cannot be called if an implicit conversion should happen first. This can help you avoid such accidental conversions.
+
+Although friends in C++ are generally not recommended, things look differently for hidden friends; if the advantages from the previous paragraph don't convince you, you should also know that they should be the preferred way of implementing customization points. Now, you're probably wondering what those customization points are. Briefly speaking, they are callables used by the library code that the user can specialize in for their types. The standard library reserves quite a lot of names for those, such as begin, end, and their reverse and const variations, swap, (s)size, (c)data, and many operators, among others. If you decide to provide your own implementation for any of those customization points, it had better behave as the standard library expects.
+
+Okay, enough theory for now. Let's see how to provide a customization point specialization using a hidden friend in practice. For example, let's create an oversimplified class to manage arrays of types:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T> class Array {
+public:
+	Array(T *array, int size) : array_{array}, size_{size} {}
+	
+	~Array() { delete[] array_; }
+	
+	T &operator[](int index) { return array_[index]; }
+	int size() const { return size_; }
+	
+	friend void swap(Array &left, Array &right) noexcept {
+		using std::swap;
+		swap(left.array_, right.array_);
+		swap(left.size_, right.size_);
+	}
+
+private:
+	T *array_;
+	int size_;
+};
+\end{lstlisting}
+
+As you can see, we defined a destructor, which means we should provide other special member functions too. We implement them in the next section, using our hidden friend swap. Note that despite being declared in the body of our Array class, this swap function is still a non-member function. It accepts two Array instances and doesn't have access to this.
+
+Using the std::swap line makes the compiler first look for swap functions in the namespaces of the swapped members. If not found, it will fall back to std::swap. This is called the two-step ADL and fallback idiom, or two-step for short, because we first make std::swap visible, and then call swap. The noexcept keyword tells the compiler that our swap function does not throw, which allows it to generate faster code in certain situations. Aside from swap, always mark your default and move constructors with this keyword too for the same reason.
+
+Now that we have a swap function, let's use it to apply another idiom to our Array class.
+
+\subsubsubsection{6.2.4\hspace{0.2cm}Providing exception safety using the copy-andswap idiom}
+
+As we mentioned in the previous section, because our Array class defines a destructor, according to the rule of five, it should also define other special member functions. In this section, you'll learn about an idiom that lets us do this without boilerplate, while also adding strong exception safety as a bonus.
+
+If you're not familiar with the exception safety levels, here's a quick recap of the levels your functions and types can offer:
+
+\begin{itemize}
+\item 
+No guarantee: This is the most basic level. No guarantees are made about the state of your object after an exception is thrown while it's being used.
+
+\item 
+Basic exception safety: Side effects are possible, but your object won't leak any resources, will be in a valid state, and will contain valid data (not necessarily the same as before the operation). Your types should always offer at least this level.
+
+\item 
+Strong exception safety: No side effects will happen. The object's state will be the same as before the operation.
+
+\item 
+No-throw guarantee: Operations will always succeed. If an exception is thrown during the operation, it will be caught and handled internally so the operation does not throw exceptions outside. Such operations can be marked as noexcept.
+\end{itemize}
+
+So, how can we kill these two birds with one stone and write no-boilerplate special members while also providing strong exception safety? It's pretty easy, actually. As we have our swap function, let's use it to implement the assignment operators:
+
+\begin{lstlisting}[style=styleCXX]
+Array &operator=(Array other) noexcept {
+	swap(*this, other);
+	return *this;
+}
+\end{lstlisting}
+
+In our case, a single operator suffices for both the copy and move assignments. In the copy case, we take the parameter by value, so this is where a temporary copy is being made. Then, all we need to do is swap the members. We have not only achieved strong exception safety but were also able to not throw from the assignment operator's body. However, an exception can still be thrown right before the function gets called, when the copy happens. In the case of the move assignment, no copy is made as taking by value will just take the moved object.
+
+Now, let's define the copy constructor:
+
+\begin{lstlisting}[style=styleCXX]
+Array(const Array &other) : array_{new T[other.size_]},
+size_{other.size_} {
+	std::copy_n(other.array_, size_, array_);
+}
+\end{lstlisting}
+
+This guy can throw depending on T and because it allocates memory. Now, let's define the move constructor too:
+
+\begin{lstlisting}[style=styleCXX]
+Array(Array &&other) noexcept
+	: array_{std::exchange(other.array_, nullptr)},
+size_{std::exchange(other.size_, 0)} {}
+\end{lstlisting}
+
+Here, we use std::exchange so that our members get initialized and other's members get cleaned up, all on the initialization list. The constructor is declared noexcept for performance reasons. For instance, std::vector can move their elements when they grow only if they're noexcept move-constructible, and will copy otherwise.
+
+That's it. We've created an array class providing strong exception safety with little effort and no code duplication.
+
+Let's now tackle yet another C++ idiom, which can be spotted in a few places in the standard library.
+
+\subsubsubsection{6.2.5\hspace{0.2cm}Writing niebloids}
+
+Niebloids, named after Eric Niebler, are a type of function object that the standard uses for customization points from C++17 onward. With the introduction of standard ranges described in Chapter 5, Leveraging C++ Language Features, their popularity started to grow, but they were first proposed by Niebler back in 2014. Their purpose is to disable ADL where it's not wanted so overloads from other namespaces are not considered by the compiler. Remember the two-step idiom from the previous sections? Because it's inconvenient and easy to forget, the notion of customization point objects was introduced. In essence, these are function objects performing the two-step for you.
+
+If your libraries should provide customization points, it's probably a good idea to implement them using niebloids. All the customization points in the standard library introduced in C++17 and later are implemented this way for a reason. Even if you just need to create a function object, still consider using niebloids. They offer all the good parts of ADL while reducing the drawbacks. They allow specialization and together with concepts they give you a way to customize the overload set of your callables. They also allow better customization of algorithms, all at the slight cost of writing a bit more verbose code than usual.
+
+In this section, we'll create a simple range algorithm that we'll implement as a niebloid. Let's call it contains as it will simply return a Boolean value denoting whether a given element is found in the range or not. First, let's create the function object itself, starting with the declaration of its iterator-based call operator:
+
+\begin{lstlisting}[style=styleCXX]
+namespace detail {
+	struct contains_fn final {
+		template <std::input_iterator It, std::sentinel_for<It> Sent, typename T,
+			typename Proj = std::identity>
+		requires std::indirect_binary_predicate<
+			std::ranges::equal_to, std::projected<It, Proj>, const T *> constexpr
+		bool
+			operator()(It first, Sent last, const T &value, Proj projection = {})
+		const {
+\end{lstlisting}
+
+It looks verbose, but all this code has a purpose. We make our struct final to aid the compiler in generating more efficient code. If you look at the template parameters, you'll see an iterator and a sentinel – the basic building blocks of each standard range. The sentinel is often an iterator, but it can be any semiregular type that can be compared with the iterator (a semiregular type is copyable and default-initializable). Next, T is the type of element to search for, while Proj denotes a projection – an operation to apply to each range element before comparison (the default of std::identity simply passes its input as output).
+
+After the template parameters, there come the requirements for them; the operator requires that we can compare the projected value and the searched-for value for equality. After those constraints, we simply specify the function parameters.
+
+Let's now see how it's implemented:
+
+\begin{lstlisting}[style=styleCXX]
+	while (first != last && std::invoke(projection, *first) != value)
+		++first;
+	return first != last;
+}
+\end{lstlisting}
+
+The preceding function would work even if we didn't use standard ranges; we also need an overload for ranges. Its declaration can be as follows:
+
+\begin{lstlisting}[style=styleCXX]
+template <std::ranges::input_range Range, typename T,
+	typename Proj = std::identity>
+requires std::indirect_binary_predicate<
+	std::ranges::equal_to,
+	std::projected<std::ranges::iterator_t<Range>, Proj>,
+	const T *> constexpr bool
+operator()(Range &&range, const T &value, Proj projection = {}) const {
+\end{lstlisting}
+
+This time, we take a type satisfying the input\_range concept, the element value, and the type of projection as template parameters. We require that the range's iterator after calling the projection can be compared for equality with objects of type T, similarly as before. Finally, we use the range, the value, and the projection as our overload's parameters.
+
+The body of this operator will be pretty straightforward, too:
+
+\begin{lstlisting}[style=styleCXX]
+		return (*this)(std::ranges::begin(range), std::ranges::end(range),
+		value,
+			std::move(projection));
+		}
+	};
+} // namespace detail
+\end{lstlisting}
+
+We simply call the previous overload using an iterator and sentinel from the given range, while passing the value and our projection unchanged. Now, for the last part, we need to provide a contains niebloid instead of just the contains\_fn callable:
+
+\begin{lstlisting}[style=styleCXX]
+inline constexpr detail::contains_fn contains{};
+\end{lstlisting}
+
+By declaring an inline variable named contains of type contains\_fn, we allow anyone to call our niebloid using the variable name. Now, let's call it ourselves to see whether it works:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	auto ints = std::ranges::views::iota(0) | std::ranges::views::take(5);
+	
+	return contains(ints, 42);
+}
+\end{lstlisting}
+
+And that's it. Our ADL-inhibiting functor works as intended.
+
+If you think all of this is a tad too verbose, then you might be interested in tag\_invoke, which might become part of the standard at some point in the future. Refer to the Further reading section for a paper on this topic and a YouTube video that explains ADL, niebloids, hidden friends, and tag\_invoke nicely.
+
+Let's now move on to yet another useful C++ idiom.
+
+\subsubsubsection{6.2.6\hspace{0.2cm}Policy-based design idiom}
+
+Policy-based design was first introduced by Andrei Alexandrescu in his excellent Modern C++ Design book. Although published in 2001, many ideas showed in it are still used today. We recommend reading it; you can find it linked in the Further reading section at the end of this chapter. The policy idiom is basically a compile-time equivalent of the Gang of Four's Strategy pattern. If you need to write a class with customizable behavior, you can make it a template with the appropriate policies as template parameters. A real-world example of this could be standard allocators, passed as a policy to many C++ containers as the last template parameter.
+
+Let's return to our Array class and add a policy for debug printing:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T, typename DebugPrintingPolicy = NullPrintingPolicy>
+class Array {
+\end{lstlisting}
+
+As you can see, we can use a default policy that won't print anything. NullPrintingPolicy can be implemented as follows:
+
+\begin{lstlisting}[style=styleCXX]
+struct NullPrintingPolicy {
+	template <typename... Args> void operator()(Args...) {}
+};
+\end{lstlisting}
+
+As you can see, regardless of the arguments given, it won't do anything. The compiler will completely optimize it out, so no overhead will be paid when the debug printing feature is not used.
+
+If we want our class to be a bit more verbose, we can use a different policy:
+
+\begin{lstlisting}[style=styleCXX]
+struct CoutPrintingPolicy {
+	void operator()(std::string_view text) { std::cout << text << std::endl;
+}
+};
+\end{lstlisting}
+
+This time, we'll simply print the text passed to the policy to cout. We also need to modify our class to actually use our policy:
+
+\begin{lstlisting}[style=styleCXX]
+Array(T *array, int size) : array_{array}, size_{size} {
+	DebugPrintingPolicy{}("constructor");
+}
+
+Array(const Array &other) : array_{new T[other.size_]},
+size_{other.size_} {
+	DebugPrintingPolicy{}("copy constructor");
+	std::copy_n(other.array_, size_, array_);
+}
+// ... other members ...
+\end{lstlisting}
+
+We simply call the policy's operator(), passing the text to be printed. Since our policies are stateless, we can instantiate it each time we need to use it without extra cost. An alternative could also be to just call a static function from it.
+
+Now, all we need to do is to instantiate our Array class with the desired policy and use it:
+
+\begin{lstlisting}[style=styleCXX]
+Array<T, CoutPrintingPolicy>(new T[size], size);
+\end{lstlisting}
+
+One drawback of using compile-timed policies is that the template instantiations using different policies are of different types. This means more work is required to, for instance, assign from a regular Array class to one with CoutPrintingPolicy. To do so, you would need to implement assignment operators as template functions with the policy as the template parameter.
+
+Sometimes an alternative to using policies is to use traits. As an example, take std::iterator\_traits, which can be used to use various information about iterators when writing algorithms that use them. An example could be std::iterator\_traits<T>::value\_type, which can work for both custom iterators defining a value\_type member, and simple ones such as pointers (in which case value\_type would refer to the pointed-to type).
+
+Enough about policy-based design. Next on our list is a powerful idiom that can be applied in multiple scenarios.
+
+
+
+
+
+
+
+

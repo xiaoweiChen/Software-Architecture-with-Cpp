@@ -1,0 +1,165 @@
+State is a design pattern meant to help change the behavior of an object when its internal state changes. The behavior for different states should be independent of each other so that adding new states doesn't affect the current ones. The simple approach of implementing all the behavior in the stateful object doesn't scale and is not open for extension. Using the state pattern, new behavior can be added by introducing new state classes and defining the transitions between them. In this section, we'll show a way to implement states and a state machine leveraging std::variant and statically polymorphic double dispatch. In other words, we'll build a finite state machine by joining the state and visitor patterns in a C++ way.
+
+First, let's define our states. In our example, let's model the states of a product in a store. They can be as follows:
+
+\begin{lstlisting}[style=styleCXX]
+namespace state {
+	
+	struct Depleted {};
+	
+	struct Available {
+		int count;
+	};
+
+	struct Discontinued {};
+} // namespace state
+\end{lstlisting}
+
+Our states can have properties of their own, such as the count of items left. Also, as opposed to dynamically polymorphic ones, they don't need to inherit from a common base. Instead, they are all stored in one variant, as shown next:
+
+\begin{lstlisting}[style=styleCXX]
+using State = std::variant<state::Depleted, state::Available,
+state::Discontinued>;
+\end{lstlisting}
+
+Aside from states, we also need events for state transitions. Check the following code:
+
+\begin{lstlisting}[style=styleCXX]
+namespace event {
+	
+	struct DeliveryArrived {
+		int count;
+	};
+
+	struct Purchased {
+		int count;
+	};
+
+	struct Discontinued {};
+	
+} // namespace event
+\end{lstlisting}
+
+As you can see, our events can also have properties and don't inherit from a common base. Now, we need to implement the transitions between the states. This can be done as follows:
+
+\begin{lstlisting}[style=styleCXX]
+State on_event(state::Available available, event::DeliveryArrived
+delivered) {
+	available.count += delivered.count;
+	return available;
+}
+
+State on_event(state::Available available, event::Purchased purchased) {
+	available.count -= purchased.count;
+	if (available.count > 0)
+	return available;
+	return state::Depleted{};
+}
+\end{lstlisting}
+
+If a purchase is made, the state can change, but it can also stay the same. We can also use templates to handle several states at once:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename S> State on_event(S, event::Discontinued) {
+	return state::Discontinued{};
+}
+\end{lstlisting}
+
+If an item gets discontinued, it doesn't matter what state it was in. Okay, let's now implement the last supported transition:
+
+\begin{lstlisting}[style=styleCXX]
+State on_event(state::Depleted depleted, event::DeliveryArrived delivered)
+{
+	return state::Available{delivered.count};
+}
+\end{lstlisting}
+
+The next piece of the puzzle we need is a way to define multiple call operators in one object generically so that the best matching overload can be called. We'll use it later to call the transitions we just defined. Our helper can look as follows:
+
+\begin{lstlisting}[style=styleCXX]
+template<class... Ts> struct overload : Ts... { using Ts::operator()...; };
+template<class... Ts> overload(Ts...) -> overload<Ts...>;
+\end{lstlisting}
+
+We create an overload struct that will provide all the call operators passed to it during construction, using variable templates, a fold expression, and a class template argument deduction guide. For a more in-depth explanation of this, along with an alternative way of implementing visitation, refer to Bartłomiej Filipek's blog post in the Further reading section.
+
+We can now start implementing the state machine itself:
+
+\begin{lstlisting}[style=styleCXX]
+class ItemStateMachine {
+public:
+	template <typename Event> void process_event(Event &&event) {
+		state_ = std::visit(overload{
+			[&](const auto &state) requires std::is_same_v<
+			decltype(on_event(state, std::forward<Event>(event))), State> {
+				return on_event(state, std::forward<Event>(event));
+			},
+			[](const auto &unsupported_state) -> State {
+				throw std::logic_error{"Unsupported state transition"};
+			}
+		},
+		state_);
+	}
+
+private:
+	State state_;
+};
+\end{lstlisting}
+
+Our process\_event function will accept any of our defined events. It will call an appropriate on\_event function using the current state and the passed event and switch to the new state. If an on\_event overload is found for the given state and event, the first lambda will get called. Otherwise, the constraint won't be satisfied and the second, more generic overload will get called. This means if there's an unsupported state transition, we'll just throw an exception.
+
+Now, let's provide a way to report the current state:
+
+\begin{lstlisting}[style=styleCXX]
+std::string report_current_state() {
+	return std::visit(
+	overload{[](const state::Available &state) -> std::string {
+			return std::to_string(state.count) +
+			" items available";
+		},
+		[](const state::Depleted) -> std::string {
+			return "Item is temporarily out of stock";
+		},
+		[](const state::Discontinued) -> std::string {
+			return "Item has been discontinued";
+	}},
+	state_);
+}
+\end{lstlisting}
+
+Here, we use our overload to pass three lambdas, each returning a report string generated by visiting our state object.
+
+We can now call our solution:
+
+\begin{lstlisting}[style=styleCXX]
+auto fsm = ItemStateMachine{};
+std::cout << fsm.report_current_state() << '\n';
+fsm.process_event(event::DeliveryArrived{3});
+std::cout << fsm.report_current_state() << '\n';
+fsm.process_event(event::Purchased{2});
+std::cout << fsm.report_current_state() << '\n';
+fsm.process_event(event::DeliveryArrived{2});
+std::cout << fsm.report_current_state() << '\n';
+fsm.process_event(event::Purchased{3});
+std::cout << fsm.report_current_state() << '\n';
+fsm.process_event(event::Discontinued{});
+std::cout << fsm.report_current_state() << '\n';
+// fsm.process_event(event::DeliveryArrived{1});
+\end{lstlisting}
+
+Upon running, this will yield the following output:
+
+\begin{tcblisting}{commandshell={}}
+Item is temporarily out of stock
+3 items available
+1 items available
+3 items available
+Item is temporarily out of stock
+Item has been discontinued
+\end{tcblisting}
+
+That is, unless you uncomment the last line with the unsupported transition, in which case an exception will be thrown at the end.
+
+Our solution is much more performant than dynamic polymorphism-based ones, although the list of supported states and events is constrained to those provided at compile time. For more information on states, variants, and the various ways of visitations, see Mateusz Pusz's talk from CppCon 2018, also listed in the Further reading section.
+
+Before we close this chapter, one last thing we'd like for you to learn about is handling memory. Let's begin our last section.

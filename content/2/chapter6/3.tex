@@ -1,0 +1,233 @@
+
+Despite having pattern in its name, the Curiously Recurring Template Pattern (CRTP) is an idiom in C++. It can be used to implement other idioms and design patterns and to apply  static polymorphism, to name a few areas. Let's start with this last one as we'll cover the others later on.
+
+\subsubsubsection{6.3.1\hspace{0.2cm}Knowing when to use dynamic versus static polymorphism}
+
+When mentioning polymorphism, many programmers will think of dynamic polymorphism, where the information needed to perform a function call is gathered at runtime. In contrast to this, static polymorphism is about determining the calls at compile time. An advantage of the former is that you can modify the list of types at runtime, allowing extending your class hierarchies through plugins and libraries. The big advantage of the second is that it can get better performance if you know the types upfront. Sure, in the first case you can sometimes expect your compiler to devirtualize your calls, but you cannot always count on it doing so. However, in the second case, you can get longer compilation times.
+
+Looks like you cannot win in all cases. Still, choosing the right type of polymorphism for your types can go a long way. If performance is at stake, we strongly suggest you consider static polymorphism. CRTP is an idiom that can be used to apply it.
+
+Many design patterns can be implemented in one way or another. As the cost of dynamic polymorphism is not always worth it, the Gang of Four design patterns are often not the best solution in C++. If your type hierarchy should be extended at runtime, or compile times are a much bigger issue than performance for you (and you don't plan on using modules any time soon), then the classical implementations of the Gang of Four patterns may be a good fit. Otherwise, you can try to implement them using static polymorphism or by applying simpler C++-focused solutions, some of which we describe in this chapter. It's all about choosing the best tool for the job.
+
+\subsubsubsection{6.3.2\hspace{0.2cm}Implementing static polymorphism}
+
+Let's now implement our statically polymorphic class hierarchy. We'll need a base template class:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename ConcreteItem> class GlamorousItem {
+	public:
+	 void appear_in_full_glory() {
+		static_cast<ConcreteItem *>(this)->appear_in_full_glory();
+	}
+};
+\end{lstlisting}
+
+The template parameter for the base class is the derived class. This may seem odd at first, but it allows us to static\_cast to the correct type in our interface function, in this case, named appear\_in\_full\_glory. We then call the implementation of this function in a derived class. Derived classes could be implemented like so:
+
+\begin{lstlisting}[style=styleCXX]
+class PinkHeels : public GlamorousItem<PinkHeels> {
+	public:
+	void appear_in_full_glory() {
+		std::cout << "Pink high heels suddenly appeared in all their beauty\n";
+	}
+};
+
+class GoldenWatch : public GlamorousItem<GoldenWatch> {
+	public:
+	void appear_in_full_glory() {
+		std::cout << "Everyone wanted to watch this watch\n";
+	}
+};
+\end{lstlisting}
+
+Each of these classes derives from our GlamorousItem base class using itself as the template argument. Each also implements the required function.
+
+Note that, as opposed to dynamic polymorphism, the base class in CRTP is a template, so you'll get a different base type for each of your derived classes. This means you can't easily create a container of your GlamorousItem base class. What you can do, however, is several things:
+
+\begin{itemize}
+\item 
+Store them in a tuple.
+
+\item 
+Create a std::variant of your derived classes.
+
+\item 
+Add one common class to wrap all instantiations of Base. You can use a variant for this one as well.
+\end{itemize}
+
+In the first case, we could use the class as follows. First, create the tuple of instances of base:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename... Args>
+using PreciousItems = std::tuple<GlamorousItem<Args>...>;
+
+auto glamorous_items = PreciousItems<PinkHeels, GoldenWatch>{};
+\end{lstlisting}
+
+Our type-aliased tuple will be able to store any glamorous items. Now, all we need to do is to call the interesting function:
+
+\begin{lstlisting}[style=styleCXX]
+std::apply(
+	[]<typename... T>(GlamorousItem<T>... items) {
+		(items.appear_in_full_glory(), ...); },
+	glamorous_items);
+\end{lstlisting}
+
+Because we're trying to iterate a tuple, the easiest way to do so is to call std::apply, which invokes the given callable on all the elements of the given tuple. In our case, the callable is a lambda that accepts only GlamorousItem base class. We use fold expressions, introduced in C++17, to ensure our function will be called for all elements.
+
+If we were to use a variant instead of a tuple, we'd need to use std::visit, like so:
+
+\begin{lstlisting}[style=styleCXX]
+	using GlamorousVariant = std::variant<PinkHeels, GoldenWatch>;
+	auto glamorous_items = std::array{GlamorousVariant{PinkHeels{}},
+		GlamorousVariant{GoldenWatch{}}};
+	for (auto& elem : glamorous_items) {
+		std::visit([]<typename T>(GlamorousItem<T> item){
+			item.appear_in_full_glory(); }, elem);
+}
+\end{lstlisting}
+
+The std::visit function basically takes the variant and calls the passed lambda on the object stored in it. Here, we create an array of our glamorous variants, so we can just iterate over it like over any other container, visiting each variant with the appropriate lambda.
+
+If you find it not intuitive to write from the interface user's perspective, consider this next approach, which wraps the variant into yet another class, in our case called CommonGlamorousItem:
+
+\begin{lstlisting}[style=styleCXX]
+class CommonGlamorousItem {
+public:
+	template <typename T> requires std::is_base_of_v<GlamorousItem<T>, T>
+	explicit CommonGlamorousItem(T &&item)
+		: item_{std::forward<T>(item)} {}
+private:
+	GlamorousVariant item_;
+};
+\end{lstlisting}
+
+To construct our wrapper, we use a forwarding constructor (templated T\&\& being its parameter). We then forward instead of moving to create the item\_ wrapped variant, as this way we only move r-value inputs. We also constrain the template parameters, so on one hand, we only wrap the GlamorousItem base class and on the other, our template is not used as a move or copy constructor.
+
+We also need to wrap our member function:
+
+\begin{lstlisting}[style=styleCXX]
+void appear_in_full_glory() {
+	std::visit(
+	[]<typename T>(GlamorousItem<T> item) {
+		item.appear_in_full_glory(); },
+	item_);
+}
+\end{lstlisting}
+
+This time, the std::visit call is an implementation detail. The user can use this wrapper class in the following way:
+
+\begin{lstlisting}[style=styleCXX]
+auto glamorous_items = std::array{CommonGlamorousItem{PinkHeels{}},
+		   CommonGlamorousItem{GoldenWatch{}}};
+	for (auto& elem : glamorous_items) {
+		elem.appear_in_full_glory();
+	}
+\end{lstlisting}
+
+This approach lets the user of the class write easy-to-understand code, but still keep the performance of static polymorphism.
+
+To offer a similar user experience, albeit with worse performance, you can also use a technique called type erasure, which we'll discuss next.
+
+\subsubsubsection{6.3.3\hspace{0.2cm}Interlude – using type erasure}
+
+Although type erasure isn't related to CRTP, it fits in nicely with our current example, which is why we're showing it here.
+
+The type erasure idiom is about hiding the concrete type under a polymorphic interface. A great example of this approach can be found in Sean Parent's talk Inheritance Is The Base Class of Evil from the GoingNative 2013 conference. We highly recommend you watch it in your spare time; you can find a link to it in the Further reading section. In the standard library, you can find it in std::function, std::shared\_ptr's deleter, or std::any, among others.
+
+The convenience of use and flexibility comes at a price – this idiom needs to use pointers and virtual dispatch, which makes the mentioned utilities from the standard library bad to use in performance-oriented use cases. Beware.
+
+To introduce type erasure to our example, we no longer need CRTP. This time, our GlamorousItem class will wrap dynamically polymorphic objects in a smart pointer:
+
+\begin{lstlisting}[style=styleCXX]
+class GlamorousItem {
+public:
+	template <typename T>
+	explicit GlamorousItem(T t)
+	: item_{std::make_unique<TypeErasedItem<T>>(std::move(t))} {}
+	
+	void appear_in_full_glory() { item_->appear_in_full_glory_impl(); }
+	
+private:
+	std::unique_ptr<TypeErasedItemBase> item_;
+};
+\end{lstlisting}
+
+This time, we store a pointer to base (TypeErasedItemBase), which will point to derived wrappers for our items (TypeErasedItem<T>s). The base class can be defined as follows:
+
+\begin{lstlisting}[style=styleCXX]
+struct TypeErasedItemBase {
+	virtual ~TypeErasedItemBase() = default;
+	virtual void appear_in_full_glory_impl() = 0;
+};
+\end{lstlisting}
+
+Each derived wrapper needs to implement this interface, too:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T> class TypeErasedItem final : public
+TypeErasedItemBase {
+public:
+	explicit TypeErasedItem(T t) : t_{std::move(t)} {}
+	void appear_in_full_glory_impl() override { t_.appear_in_full_glory();
+	}
+
+private:
+	T t_;
+};
+\end{lstlisting}
+
+The base class's interface is implemented by calling the function from the wrapped object. Note that the idiom is called "type erasure" because the GlamorousItem class doesn't know what T it is actually wrapping. The information type gets erased when the item gets constructed, but it all works because T implements the  required methods.
+
+The concrete items can be implemented in a simpler manner, as shown next:
+
+\begin{lstlisting}[style=styleCXX]
+class PinkHeels {
+	public:
+	void appear_in_full_glory() {
+		std::cout << "Pink high heels suddenly appeared in all their beauty\n";
+    }
+};
+
+class GoldenWatch {
+public:
+	void appear_in_full_glory() {
+		std::cout << "Everyone wanted to watch this watch\n";
+	}
+};
+\end{lstlisting}
+
+This time, they don't need to inherit from any base. All we need is duck typing – if it quacks like a duck, it's probably a duck. And if it can appear in full glory, it's probably glamorous.
+
+Our type-erased API can be used as follows:
+
+\begin{lstlisting}[style=styleCXX]
+auto glamorous_items =
+	std::array{GlamorousItem{PinkHeels{}}, GlamorousItem{GoldenWatch{}}};
+for (auto &item : glamorous_items) {
+	item.appear_in_full_glory();
+}
+\end{lstlisting}
+
+We just create an array of our wrappers and iterate over it, all using simple, value-based semantics. We find it the most pleasant to use, as the polymorphism is hidden from the caller as an implementation detail.
+
+However, a big drawback of this approach is, as we mentioned before, poor performance. Type erasure comes at a price, so it should be used sparingly and definitely not in the hot path.
+
+Now that we've described how to wrap and erase types, let's switch to discussing how to create them.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

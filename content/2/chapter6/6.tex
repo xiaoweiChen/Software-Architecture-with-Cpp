@@ -1,0 +1,196 @@
+
+
+Even if you don't have very limited memory, it's a good idea to look at how you use it. Usually, memory throughput is the performance bottleneck of modern-day systems, so it's always important to make good use of it. Performing too many dynamic allocations can slow down your program and lead to memory fragmentation. Let's learn a few ways to mitigate those issues.
+
+\subsubsubsection{6.6.1\hspace{0.2cm}Reducing dynamic allocations using SSO/SOO}
+
+Dynamic allocations can sometimes cause you other trouble than just throwing when you construct objects despite not having enough memory. They often cost you CPU cycles and can cause memory fragmentation. Fortunately, there is a way to protect against it. If you've ever used std::string (post GCC 5.0), you most probably used an optimization called Small String Optimization (SSO). This is one example of a more general optimization named Small Object Optimization (SSO), which can be spotted in types such as Abseil's InlinedVector. The main idea is pretty straightforward: if the dynamically allocated object is small enough, it should be stored inside the class that owns it instead of being dynamically allocated. In std::string's case, usually, there's a capacity, length, and the actual string to store. If the string is short enough (in GCC's case, on 64-bit platforms, it's 15 bytes), it will be stored in some of those members.
+
+Storing objects in place instead of allocating them somewhere else and storing just the pointer has one more benefit: less pointer chasing. Each time you need to reach to data stored behind a pointer, you increase the pressure on the CPU caches and risk needing to fetch data from the main memory. If this is a common pattern, it can influence the overall performance of your app, especially if the pointed-to addresses aren't guessed by the CPU's prefetcher. Using techniques such as SSO and SOO are invaluable in reducing those issues.
+
+\subsubsubsection{6.6.2\hspace{0.2cm}Saving memory by herding COWs}
+
+If you used GCC's std::string before GCC 5.0, you might have used a different optimization called Copy-On-Write (COW). The COW string implementation, when it had multiple instances created with the same underlying character array, was actually sharing the same memory address for it. When the string was written to, the underlying storage was copied — hence the name.
+
+This technique helped save memory and keep the caches hot, and often offered solid performance on a single thread. Beware of using it in multi-threaded contexts, though. The need for using locks can be a real performance killer. As with any performance-related topic, it's best to just measure whether in your case it's the best tool for the job.
+
+Let's now discuss a feature of C++17 that can help you achieve good performance with dynamic allocations.
+
+\subsubsubsection{6.6.3\hspace{0.2cm}Leveraging polymorphic allocators}
+
+The feature we're talking about is polymorphic allocators. To be specific, the std::pmr::polymorphic\_allocator and the polymorphic std::pmr::memory\_resource class that the allocator uses to allocate memory.
+
+In essence, it allows you to easily chain memory resources to make the best use of your memory. Chains can be as simple as one resource that reserves a big chunk and distributes it, falling back to another that simply calls new and delete if it depletes memory. They can also be much more complex: you can build a long chain of memory resources that handle pools of different sizes, offer thread-safety only when needed, bypass the heap and go for the system's memory directly, return you the last freed chunk of memory to provide cache hotness, and do other fancy stuff. Not all of these capabilities are offered by the standard polymorphic memory resources, but thanks to their design, it's easy to extend them.
+
+Let's first tackle the topic of memory arenas.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using memory arenas}
+
+A memory arena, also called a region, is just a large chunk of memory that exists for a limited time. You can use it to allocate smaller objects that you use for the lifetime of the arena. Objects in the arena can be either deallocated as usual or erased all at once in a process called winking out. We'll describe it later on.
+
+Arenas have several great advantages over the usual allocations and deallocations – they increase performance because they limit the memory allocations that need to grab upstream resources. They also reduce fragmentation of memory, because any fragmentation that would happen will happen inside the arena. Once an arena's memory is released, the fragmentation is no more as well. A great idea is to create separate arenas per thread. If only a single thread uses an arena, it doesn't need to use any locking or other thread-safety mechanisms, reducing thread contention and giving you a nice boost in performance.
+
+If your program is single-threaded, a low-cost solution to increase its performance could be as follows:
+
+\begin{lstlisting}[style=styleCXX]
+auto single_threaded_pool = std::pmr::unsynchronized_pool_resource();
+std::pmr::set_default_resource(&single_threaded_pool);
+\end{lstlisting}
+
+The default resource if you won't set any explicitly will be new\_delete\_resource, which calls new and delete each time just like regular std::allocator does, and with all the thread-safety it provides (and costs).
+
+If you use the preceding code snippet, all the allocations done using pmr allocators would be done with no locks. You still need to actually use the pmr types, though. To do so with standard containers, for instance, you need to simply pass std::pmr::polymorphic\_allocator<T> as the allocator template parameter. Many standard containers have pmr-enabled type aliases. The two variables created next are of the same type and both will use the default memory resource:
+
+\begin{lstlisting}[style=styleCXX]
+auto ints = std::vector<int,
+std::pmr::polymorphic_allocator<int>>(std::pmr::get_default_resource());
+auto also_ints = std::pmr::vector<int>{};
+\end{lstlisting}
+
+The first one gets the resource passed explicitly, though. Let's now go through the resources available in pmr.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using the monotonic memory resource}
+
+The first one we'll discuss is std::pmr::monotonic\_buffer\_resource. It's a resource that only allocates memory and doesn't do anything on deallocation. It will only deallocate memory when the resource is destructed or on an explicit call to release(). This, connected with no thread safety, makes this type extremely performant. If your application occasionally needs to perform a task that does lots of allocations on a given thread, then releases all the objects used at once afterward, using monotonic resources will yield great gains. It's also a great base building block for chains of resources.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using pool resources}
+
+A common combo of two resources is to use a pool resource on top of a monotonic buffer resource. The standard pool resources create pools of different-sized chunks. There are two types in std::pmr, unsynchronized\_pool\_resource for use when only one thread allocates and deallocates from it and synchronized\_pool\_resource for multi-threaded use. Both should provide you with much better performance compared to the global allocator, especially when using the monotonic buffer as their upstream resource. If you wonder how to chain them, here's how:
+
+\begin{lstlisting}[style=styleCXX]
+auto buffer = std::array<std::byte, 1 * 1024 * 1024>{};
+auto monotonic_resource =
+std::pmr::monotonic_buffer_resource{buffer.data(), buffer.size()};
+auto pool_options = std::pmr::pool_options{.max_blocks_per_chunk = 0,
+	.largest_required_pool_block = 512};
+auto arena =
+std::pmr::unsynchronized_pool_resource{pool_options,
+	&monotonic_resource};
+\end{lstlisting}
+
+We create a 1 MB buffer for the arena to reuse. We pass it to a monotonic resource, which is then passed to an unsynchronized pool resource, creating a simple yet efficient chain of allocators that won't call new until all the initial buffer is used up.
+
+You can pass a std::pmr::pool\_options object to both the pool types to limit the max count of blocks of a given size (max\_blocks\_per\_chunk) or the size of the largest block (largest\_required\_pool\_block). Passing 0 causes the implementation's default to be used. In the case of GCC's library, the actual blocks per chunk differ depending on the block size. If the max size is exceeded, the pool resource will allocate directly from its upstream resource. It also goes to the upstream resource if the initial memory was depleted. In this case, it allocates geometrically growing chunks of memory.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Writing your own memory resource}
+
+If the standard memory resources don't suit all your needs, you can always create a custom one quite simply. For instance, a good optimization that not all standard library implementations offer is to keep track of the last chunks of a given size that were released and return them back on the next allocations of given sizes. This Most Recently Used cache can help you increase the hotness of data caches, which should help your app's performance. You can think of it as a set of LIFO queues for chunks.
+
+Sometimes you might also want to debug allocations and deallocations. In the following snippet, I have written a simple resource that can help you with this task:
+
+\begin{lstlisting}[style=styleCXX]
+class verbose_resource : public std::pmr::memory_resource {
+	std::pmr::memory_resource *upstream_resource_;
+public:
+	explicit verbose_resource(std::pmr::memory_resource *upstream_resource)
+		: upstream_resource_(upstream_resource) {}
+\end{lstlisting}
+
+Our verbose resource inherits from the polymorphic base resource. It also accepts an upstream resource, which it will use for actual allocations. It has to implement three private functions – one for allocating, one for deallocating, and one for comparing instances of the resource itself. Here's the first one:
+
+\begin{lstlisting}[style=styleCXX]
+private:
+void *do_allocate(size_t bytes, size_t alignment) override {
+	std::cout << "Allocating " << bytes << " bytes\n";
+	return upstream_resource_->allocate(bytes, alignment);
+}
+\end{lstlisting}
+
+All it does is print the allocation size on the standard output and then use the upstream resource to allocate memory. The next one will be similar:
+
+\begin{lstlisting}[style=styleCXX]
+	void do_deallocate(void *p, size_t bytes, size_t alignment) override {
+		std::cout << "Deallocating " << bytes << " bytes\n";
+		upstream_resource_->deallocate(p, bytes, alignment);
+	}
+\end{lstlisting}
+
+We log how much memory we deallocate and use the upstream to perform the task. Now the last required function is stated next:
+
+\begin{lstlisting}[style=styleCXX]
+	[[nodiscard]] bool
+	do_is_equal(const memory_resource &other) const noexcept override {
+		return this == &other;
+	}
+\end{lstlisting}
+
+We simply compare the addresses of the instances to know whether they're equal. The [[nodiscard]] attribute helps us be sure that the caller actually consumes the returned value, which can help us avoid accidental misuse of our function.
+
+That's it. For a powerful feature such as the pmr allocators, the API isn't that complex now, isn't it?
+
+Aside from tracking allocations, we can also use pmr to guard us against allocating when we shouldn't.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Ensuring there are no unexpected allocations}
+
+The special std::pmr::null\_memory\_resource() will throw an exception when anyone tries to allocate memory using it. You can safeguard from performing any allocations using pmr by setting it as the default resource as shown next:
+
+\begin{lstlisting}[style=styleCXX]
+std::pmr::set_default_resource(null_memory_resource());
+\end{lstlisting}
+
+You can also use it to limit allocation from the upstream when it shouldn't happen. Check the following code:
+
+\begin{lstlisting}[style=styleCXX]
+auto buffer = std::array<std::byte, 640 * 1024>{}; // 640K ought to be
+enough for anybody
+auto resource = std::pmr::monotonic_buffer_resource{
+	buffer.data(), buffer.size(), std::pmr::null_memory_resource()};
+\end{lstlisting}
+
+If anybody tries to allocate more than the buffer size we set, std::bad\_alloc would be thrown.
+
+Let's move on to our last item in this chapter.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Winking out memory}
+
+Sometimes not having to deallocate the memory, as the monotonic buffer resource does, is still not enough for performance. A special technique called winking out can help here. Winking out objects means that they're not only not deallocated one by one, but their constructors aren't called too. The objects simply evaporate, saving time that would normally be spent calling destructors for each object and their members (and their members...) in the arena.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}This is an advanced topic. Be careful when using this technique, and only use it if the possible gain is worth it.
+\end{tcolorbox}
+
+This technique can save your precious CPU cycles, but it's not always possible to use it. Avoid winking out memory if your objects handle resources other than memory. Otherwise, you will get resource leaks. The same goes if you depend on any side effects the destructors of your objects would have.
+
+Let's now see winking out in action:
+
+\begin{lstlisting}[style=styleCXX]
+auto verbose = verbose_resource(std::pmr::get_default_resource());
+auto monotonic = std::pmr::monotonic_buffer_resource(&verbose);
+std::pmr::set_default_resource(&monotonic);
+
+auto alloc = std::pmr::polymorphic_allocator{};
+auto *vector = alloc.new_object<std::pmr::vector<std::pmr::string>>();
+vector->push_back("first one");
+vector->emplace_back("long second one that must allocate");
+\end{lstlisting}
+
+Here, we created a polymorphic allocator by hand that'll use our default resource – a monotonic one that logs each time it reaches upstream. To create objects, we'll use a C++20 addition to pmr, the new\_object function. We create a vector of strings. We can pass the first one using push\_back, because it's small enough to fit into the small-string buffer we have thanks to SSO. The second string would need to allocate a string using the default resource and only then pass it to our vector if we used push\_back. Emplacing it causes the string to be constructed inside the vector's functions (not before the call), so it will use the vector's allocator. Finally, we don't call the destructors of allocated objects anywhere, and just deallocate everything at once, when we exit the scope. This should give us hard-to-beat performance.
+
+That was the last item on our list for this chapter. Let's summarize what we've learned.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
