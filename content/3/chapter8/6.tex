@@ -1,0 +1,112 @@
+
+In the next chapter, we will focus on continuous integration and continuous deployment (CI/CD). For a CI/CD pipeline to work properly, you need to have a set of tests that catch the bugs before they enter production. It is up to you and your team to make sure all the business requirements are properly expressed as tests.
+
+Tests are useful on several levels. With behavior-driven development, which we mentioned in the previous section, business requirements form a basis for automated tests. But the system you are building doesn't consist solely of business requirements. You want to make sure all the third-party integrations are working as expected. You want to make sure all your subcomponents (such as microservices) can actually interface with each other. Finally, you want to make sure that the functions and classes you are building are free of any bugs you could have imagined.
+
+Each test that you can automate is a candidate for a CI/CD pipeline. Each of them also has its place somewhere in this pipeline. For example, end-to-end tests make the most sense after the deployment as acceptance tests. On the other hand, unit tests make the most sense when they're executed directly after compilation. After all, our aim is to break the circuit as soon as we find any possible divergence from the specification.
+
+You don't have to run all the tests that you have automated each time you run a CI/CD pipeline. It's better if the runtime of each pipeline is relatively short. Ideally, it should finish within a couple of minutes from the commit. How can we make sure everything is properly tested, then, if we want to keep the runtime minimal?
+
+One answer is to prepare different suites of tests for different purposes. For example, you can have minimal tests for commits to a feature branch. With many commits coming to feature branches every day, this means they will only be tested briefly and that the answer will be available fast. Merging feature branches to the shared development branch then requires a slightly larger set of test cases. This way, we make sure we haven't broken anything that other team members will be using. Finally, a more extensive set of cases will be run for merges to production branches. After all, we want the production branches to be tested thoroughly, even if the testing takes quite a long time.
+
+Another answer is to use the trimmed-down set of test cases for CI/CD purposes and have an additional continuous testing process. This process runs regularly and performs indepth checks on the current state of a particular environment. The tests can go as far as security tests and performance tests and may thus assess the eligibility of the environment to be promoted.
+
+Promotion occurs when we select an environment and acknowledge that this environment has all the qualities to become a more mature environment. For example, that development environment can become the next staging environment, or that staging environment can become the next production environment. If this promotion happens automatically, it is also a good practice to provide automatic rollback in case the subtle differences (such as in terms of domain name or traffic) make the freshly promoted environment no longer pass the tests.
+
+This also presents another important practice: to always run tests on the production environment. Such tests have to be the least intrusive, of course, but they should tell you that your system is performing correctly at any given time.
+
+\subsubsubsection{8.6.1\hspace{0.2cm}Testing the infrastructure}
+
+If you want to incorporate the concepts of configuration management, Infrastructure as Code, or immutable deployments into the software architecture of your application, you should also consider testing the infrastructure itself. There are several tools you can use to do this, including Serverspec, Testinfra, Goss, and Terratest, which are among some of the more popular ones.
+
+These tools slightly differ in scope, as stated here:
+
+\begin{itemize}
+\item 
+Serverspec and Testinfra focus more on testing the actual state of the servers that are configured via configuration management, such as Salt, Ansible, Puppet, and Chef. They're written in Ruby and Python, respectively, and they plug into the languages' testing engines. This means RSPec for Serverspec and Pytest for Testinfra.
+
+\item 
+Goss is a bit different both in terms of scope and form. Besides testing the servers, you can also use Goss to test the containers you use in your project with the dgoss wrapper. As for its form, it doesn't use the imperative code you would see in Serverspec or Testinfra. Rather, similar to Ansible or Salt, it uses a YAML file to describe the desired state we want to check for. If you're already using a declarative approach to configuration management (such as the aforementioned Ansible or Salt), Goss may be more intuitive and thus a much better fit for testing.
+
+\item 
+Finally, Terratest is a tool that allows you to test the output of Infrastructure as Code tools such as Packer and Terraform (hence the name). Just like Serverspec and Testinfra use their language testing engines to write tests for servers, Terratest leverages Go's testing package to write the appropriate test cases.
+\end{itemize}
+
+Let's see how can we use each of these tools to validate that the deployment went on according to plan (at least from the infrastructure's point of view).
+
+\subsubsubsection{8.6.2\hspace{0.2cm}Testing with Serverspec}
+
+The following is an example of a test for Serverspec that checks the availability of Git in a specific version and the Let's Encrypt configuration file:
+
+\begin{tcblisting}{commandshell={}}
+# We want to have git 1:2.1.4 installed if we're running Debian
+describe package('git'), :if => os[:family] == 'debian' do
+  it { should be_installed.with_version('1:2.1.4') }
+end
+# We want the file /etc/letsencrypt/config/example.com.conf to:
+describe file('/etc/letsencrypt/config/example.com.conf') do
+  it { should be_file } # be a regular file
+  it { should be_owned_by 'letsencrypt' } # owned by the letsencrypt user
+  it { should be_mode 600 } # access mode 0600
+  it { should contain('example.com') } # contain the text example.com
+                                     # in the content
+end
+\end{tcblisting}
+
+The Ruby DSL syntax should be readable even by those who do not use Ruby daily. You may need to get used to writing the code.
+
+\subsubsubsection{8.6.3\hspace{0.2cm}Testing with Testinfra}
+
+The following is an example of a test for Testinfra that checks the availability of Git in a specific version and the Let's Encrypt configuration file:
+
+\begin{lstlisting}[style=stylePython]
+# We want Git installed on our host
+def test_git_is_installed(host):
+	git = host.package("git")
+	# we test if the package is installed
+	assert git.is_installed
+	# and if it matches version 1:2.1.4 (using Debian versioning)
+	assert git.version.startswith("1:2.1.4")
+
+# We want the file /etc/letsencrypt/config/example.com.conf to:
+def test_letsencrypt_file(host):
+	le = host.file("/etc/letsencrypt/config/example.com.conf")
+	assert le.user == "letsencrypt" # be owned by the letsencrypt user
+	assert le.mode == 0o600 # access mode 0600
+	assert le.contains("example.com") # contain the text example.com in the contents
+\end{lstlisting}
+
+Testinfra uses plain Python syntax. It should be readable, but just like Serverspec, you may need some training to confidently write tests in it.
+
+\subsubsubsection{8.6.4\hspace{0.2cm}Testing with Goss}
+
+The following is an example of a YAML file for Goss that checks the availability of Git in a specific version and the Let's Encrypt configuration file:
+
+\begin{tcblisting}{commandshell={}}
+# We want Git installed on our host
+package:
+  git:
+    installed: true # we test if the package is installed
+  versions:
+  - 1:2.1.4 # and if it matches version 1:2.1.4 (using Debian versioning)
+file:
+  # We want the file /etc/letsencrypt/config/example.com.conf to:
+  /etc/letsencrypt/config/example.com.conf:
+    exists: true
+  filetype: file # be a regular file
+  owner: letsencrypt # be owned by the letsencrypt user
+  mode: "0600" # access mode 0600
+  contains:
+  - "example.com" # contain the text example.com in the contents
+\end{tcblisting}
+
+YAML's syntax will probably require the least preparation both to read it and write it. However, if your project already uses Ruby or Python, you may want to stick to Serverspec or Testinfra when it comes to writing more complicated tests.
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,63 @@
+
+With changes tested and approved, now it's time to deploy them to one of the operating environments.
+
+There are many tools to help with deployment. We decided to provide examples with Ansible as this doesn't require any setup on the target machines besides a functional Python installation (which the majority of UNIX systems already have anyway). Why Ansible? It is very popular in the configuration management space and it's backed up by a trustworthy open source company (Red Hat).
+
+\subsubsubsection{9.5.1\hspace{0.2cm}Using Ansible}
+
+Why not use something that's already available, such as Bourne shell script or PowerShell? For simple deployments, shell scripts may be a better approach. But as our deployment process becomes more complex, it is much harder to handle every possible initial state using the shell's conditional statements.
+
+Dealing with differences between initial states is actually something Ansible is especially good at. Unlike traditional shell scripts, which use the imperative form (move this file, edit that file, run a particular command), Ansible playbooks, as they are called, use the declarative form (make sure the file is available in this path, make sure the file contains specified lines, make sure the program is running, make sure the program completes successfully).
+
+This declarative approach also helps to achieve idempotence. Idempotence is a feature of a function that means applying the function several times over will have exactly the same results as a single application. If the first run of an Ansible playbook introduces some changes to the configuration, each subsequent run will already start in the desired state. This prevents Ansible from performing any additional changes.
+
+In other words, when you invoke Ansible, it will first assess the current state of all the machines you wish to configure:
+
+\begin{itemize}
+\item 
+If any of them requires any changes, Ansible will only run the tasks required to achieve the desired state.
+
+\item 
+If there's no need to modify a particular thing, Ansible won't touch it. Only when the desired and actual states differ will you see Ansible taking action to converge the actual state toward the desired one described by the contents of the playbook.
+\end{itemize}
+
+\subsubsubsection{9.5.2\hspace{0.2cm}How Ansible fits with the CI/CD pipeline}
+
+Ansible's idempotence makes it a great target to use in CI/CD pipelines. After all, there's no risk in running the same Ansible playbook multiple times even if nothing changes between the two runs. If you use Ansible for your deployment code, creating a CD is just a matter of preparing appropriate acceptance tests (such as smoke tests or end-to-end tests).
+
+The declarative approach may require changing the way you think about deployments, but the gains are well worth it. Besides running playbooks, you can also use Ansible to perform one-off commands on remote machines, but we won't cover this use case as it doesn't really help with deployments.
+
+Everything you can do with a shell you can do with Ansible's shell module. That's because, in the playbooks, you write tasks specifying which modules they use and their respective parameters. One such module is the aforementioned shell module, which simply executes the provided parameters in a shell on a remote machine. But what makes Ansible not only convenient but also cross-platform (at least when different UNIX distributions are concerned) is the availability of modules to manipulate common concepts such as user administration, package management, and similar instances.
+
+\subsubsubsection{9.5.3\hspace{0.2cm}Using components to create deployment code}
+
+In addition to the regular modules provided in the standard library, there are also thirdparty components to allow for code reuse. You can test such components individually, which also makes your deployment code more robust. Such components are called roles. They contain a set of tasks to make a machine fit to take on a specific role, such as webserver, db, or docker. While some roles prepare the machine to provide particular services, other roles may be more abstract, such as the popular ansible-hardening role. This has been created by the OpenStack team and it makes it much harder to break into a machine secured by using this role.
+
+When you start to understand the language Ansible uses, all the playbooks cease to be just the scripts. In turn, they will become the documentation of the deployment process. You can either use them verbatim by running Ansible, or you can read the described tasks and perform all the operations manually, for example, on an offline machine.
+
+There is one risk related to using Ansible for deployment in your team. Once you start using it, you have to make sure that everyone on the team is able to use it and modify the relevant tasks. DevOps is a practice the whole team has to follow; it cannot be implemented only partially. When the application's code changes considerably, requiring appropriate changes on the deployment side, the person responsible for changes in the application should also supply the changes in the deployment code. Of course, this is something that  your tests can verify, so the gating mechanism can reject the changes that are incomplete. 
+
+One noteworthy aspect of Ansible is that it can run both in a push and pull model:
+
+\begin{itemize}
+\item 
+The push model is when you run Ansible on your own machine or in the CI system. Ansible then connects to the target machine, for example, over an SSH connection, and performs the necessary steps on the target machine.
+
+\item 
+In the pull model, the whole process is initiated by the target machine. Ansible's component, ansible-pull, runs directly on the target machine and checks the code repository to establish whether there's been any update to the particular branch. After refreshing the local playbook, Ansible performs all the steps as usual. This time, both the controlling component and the actual execution happen on the same machine. Most of the time, you will want to run ansiblepull periodically, for example, from within a cron job.
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

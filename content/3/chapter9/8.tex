@@ -1,0 +1,190 @@
+
+If you are sufficiently confident with your CI/CD pipeline, you may go one step further. Instead of deploying artifacts of the application, you can deploy artifacts of the system. What's the difference? We will come to know about this in the following sections.
+
+\subsubsubsection{9.8.1\hspace{0.2cm}What is immutable infrastructure?}
+
+Previously, we focused on how to make your application's code deployable on the target infrastructure. The CI system created software packages (such as containers) and those packages were then deployed by the CD process. Each time the pipeline ran, the infrastructure stayed the same, but the software differed.
+
+The point is, if you are using cloud computing, you can treat infrastructure just like any other artifact. Instead of deploying a container, you can deploy an entire Virtual Machine (VM), for example, as an AWS EC2 instance. You can build such a VM image upfront as yet another element of your CI process. This way, versioned VM images, as well as the code required to deploy them, become your artifacts, and not the containers themselves.
+
+There are two tools, both authored by HashiCorp, that deal with precisely this scenario. Packer helps to create VM images in a repeatable way, storing all the instructions as code, usually in the form of a JSON file. Terraform is an Infrastructure as Code tool, which means it's used to provision all the necessary infrastructure resources. We will use the output from Packer as input for Terraform. This way, Terraform will create an entire system consisting of the following:
+
+\begin{itemize}
+\item 
+Instance groups
+
+\item 
+Load balancers
+
+\item 
+VPCs
+
+\item 
+Other cloud elements while using the VMs containing our own code
+\end{itemize}
+
+The title of this section may confuse you. Why is it called immutable infrastructure while we are clearly advocating to change the entire infrastructure after every commit? The concept of immutability may be clearer to you if you've studied functional languages.
+
+A mutable object is one whose state we can alter. In infrastructure, this is pretty easy to understand: you can log in to the VM and download a more recent version of the code. The state is no longer the same as it was prior to your intervention.
+
+An immutable object is one whose state we cannot alter. It means we have no means of logging in to the machines and changing things. Once we deploy a VM from an image, it stays like that until we destroy it. This may sound terribly cumbersome, but in fact, it solves a few problems of software maintenance.
+
+\subsubsubsection{9.8.2\hspace{0.2cm}The benefits of immutable infrastructure}
+
+First of all, immutable infrastructure makes the concept of configuration drift obsolete. There is no configuration management so there can also be no drift. The upgrade is much safer as well because we cannot end up in a half-baked state. That is the state that's neither the previous version nor the next version, but something in between. The deployment process provides binary information: either the machine is created and operational or it isn't. There's no other way.
+
+For immutable infrastructure to work without affecting uptime, you also need the following:
+
+\begin{itemize}
+\item 
+Load balancing
+
+\item 
+Some degree of redundancy
+\end{itemize}
+
+After all, the upgrade process consists of taking down an entire instance. You cannot rely on this machine's address or anything that's particular to that one machine. Instead, you need to have at least a second one that will handle the workload while you replace the other one with the more recent version. When you finish upgrading the one machine, you can repeat the same process with another one. This way, you will have two upgraded instances without losing the service. Such a strategy is known as the rolling upgrade.
+
+As you can realize from the process, immutable infrastructure works best when dealing with stateless services. When your service has some form of persistence, things become tougher to implement properly. In that case, you usually have to split the persistence level into a separate object, for example, an NFS volume containing all of the application data. Such volumes can be shared across all the machines in an instance group and each new machine that comes up can access the common state left by the previous running applications.
+
+\subsubsubsection{9.8.3\hspace{0.2cm}Building instance images with Packer}
+
+Considering our example application is already stateless, we can proceed with building an immutable infrastructure on top of it. Since the artifacts Packer generates are VM images, we have to decide on the format and the builder we would like to use. Let's focus our example on Amazon Web Services, while keeping in mind that a similar approach will also work with other supported providers. A simple Packer template may look like this:
+
+\begin{tcblisting}{commandshell={}}
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "eu-central-1",
+    "source_ami": "ami-0f1026b68319bad6c",
+    "instance_type": "t2.micro",
+    "ssh_username": "admin",
+    "ami_name": "Project's Base Image {{timestamp}}"
+  }],
+  "provisioners": [{
+    "type": "shell",
+    "inline": [
+      "sudo apt-get update",
+      "sudo apt-get install -y nginx"
+    ]
+  }]
+}
+\end{tcblisting}
+
+The preceding code will build an image for Amazon Web Services using the EBS builder. The image will reside in eu-central-1 region and will be based on ami-5900cc36, which is a Debian Jessie image. We want the builder to be a t2.micro instance (that's a VM size in AWS). To prepare our image, we run the two apt-get commands.
+
+We can also reuse the previously defined Ansible code and, instead of using Packer to provision our application, we can substitute Ansible as the provisioner. Our code will appear as follows:
+
+\begin{tcblisting}{commandshell={}}
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "eu-central-1",
+    "source_ami": "ami-0f1026b68319bad6c",
+    "instance_type": "t2.micro",
+    "ssh_username": "admin",
+    "ami_name": "Project's Base Image {{timestamp}}"
+  }],
+  "provisioners": [{
+    "type": "ansible",
+    "playbook_file": "./provision.yml",
+    "user": "admin",
+    "host_alias": "baseimage"
+  }],
+  "post-processors": [{
+    "type": "manifest",
+    "output": "manifest.json",
+    "strip_path": true
+  }]
+}
+\end{tcblisting}
+
+The changes are in the provisioners block and also a new block, post-processors, is added. This time, instead of shell commands, we are using a different provisioner that runs Ansible for us. The post-processor is here to produce the results of the build in a machinereadable format. Once Packer finishes building the desired artifact, it returns its ID and also saves it in manifest.json. For AWS, this would mean an AMI ID that we can then feed to Terraform.
+
+\subsubsubsection{9.8.4\hspace{0.2cm}Orchestrating the infrastructure with Terraform}
+
+Creating an image with Packer is the first step. After that, we would like to deploy the image to use it. We can build an AWS EC2 instance based on the image from our Packer template using Terraform.
+
+Example Terraform code would look like the following:
+
+\begin{tcblisting}{commandshell={}}
+# Configure the AWS provider
+provider "aws" {
+  region = var.region
+  version = "~> 2.7"
+}
+
+# Input variable pointing to an SSH key we want to associate with the
+# newly created machine
+variable "public_key_path" {
+  description = <<DESCRIPTION
+Path to the SSH public key to be used for authentication. Ensure this keypair is added to your local SSH agent so provisioners can connect.
+Example: ~/.ssh/terraform.pub
+DESCRIPTION
+
+  default = "~/.ssh/id_rsa.pub"
+}
+
+# Input variable with a name to attach to the SSH key
+variable "aws_key_name" {
+  description = "Desired name of AWS key pair"
+  default = "terraformer"
+}
+
+# An ID from our previous Packer run that points to the custom base image
+variable "packer_ami" {
+}
+
+variable "env" {
+  default = "development"
+}
+
+variable "region" {
+}
+
+# Create a new AWS key pair cotaining the public key set as the input
+# variable
+resource "aws_key_pair" "deployer" {
+  key_name = var.aws_key_name
+  public_key = file(var.public_key_path)
+}
+
+# Create a VM instance from the custom base image that uses the previously created key
+# The VM size is t2.xlarge, it uses a persistent storage volume of 60GiB,
+# and is tagged for easier filtering
+resource "aws_instance" "project" {
+  ami = var.packer_ami
+  
+  instance_type = "t2.xlarge"
+  
+  key_name = aws_key_pair.deployer.key_name
+  
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = 60
+  }
+
+  tags = {
+    Provider = "terraform"
+    Env = var.env
+    Name = "main-instance"
+  }
+}
+\end{tcblisting}
+
+This creates a key pair and an EC2 instance using this key pair. The EC2 instance is based on AMI provided as a variable. When calling Terraform, we will set this variable to point to the image generated by Packer.
+
+
+

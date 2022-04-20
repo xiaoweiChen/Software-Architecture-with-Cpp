@@ -1,0 +1,180 @@
+
+As for the frameworks, the current de facto standard is Google's GTest. Together with its counterpart GMock, they form a small suite of tools that allow you to follow the best practices of testing in C++.
+
+Other popular alternatives to GTest/GMock duo are Catch2, CppUnit, and Doctest. CppUnit has been available for a long time, but its lack of recent releases means we don't recommend it for fresh projects. Both Catch2 and Doctest support the modern C++ standards – in particular, C++14, C++17, and C++20.
+
+To compare these testing frameworks, we will use the same codebase that we want to test. Using it as a basis, we will then implement tests in each of the frameworks.
+
+\subsubsubsection{8.3.1\hspace{0.2cm}GTest examples}
+
+Here is an example test for our customer library written in GTest:
+
+\begin{lstlisting}[style=styleCXX]
+#include "customer/customer.h"
+
+#include <gtest/gtest.h>
+
+TEST(basic_responses,
+given_name_when_prepare_responses_then_greets_friendly) {
+	auto name = "Bob";
+	auto code_and_string = responder{}.prepare_response(name);
+	ASSERT_EQ(code_and_string.first, web::http::status_codes::OK);
+	ASSERT_EQ(code_and_string.second, web::json::value("Hello, Bob!"));
+}
+\end{lstlisting}
+
+Most of the tasks that are commonly done during testing have been abstracted. We're mostly focused on providing the action we want to test (prepare\_response) and the desired behavior (both ASSERT\_EQ lines).
+
+\subsubsubsection{8.3.2\hspace{0.2cm}Catch2 examples}
+
+Here is an example test for our customer library written in Catch2:
+
+\begin{lstlisting}[style=styleCXX]
+#include "customer/customer.h"
+
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do
+						  // this in one cpp file
+#include "catch2/catch.hpp"
+
+TEST_CASE("Basic responses",
+	"Given Name When Prepare Responses Then Greets Friendly") {
+	auto name = "Bob";
+	auto code_and_string = responder{}.prepare_response(name);
+	REQUIRE(code_and_string.first == web::http::status_codes::OK);
+	REQUIRE(code_and_string.second == web::json::value("Hello, Bob!"));
+}
+\end{lstlisting}
+
+It looks pretty similar to the previous one. Some keywords differ (TEST and TEST\_CASE) and there's a slightly different way to check the results (REQUIRE(a == b) instead of ASSERT\_EQ(a,b)). Both are pretty compact and readable anyway.
+
+\subsubsubsection{8.3.3\hspace{0.2cm}CppUnit examples}
+
+Here is an example test for our customer library written in CppUnit. We will split it into several snippets.
+
+The following code block prepares us to use the constructs from the CppUnit library:
+
+\begin{lstlisting}[style=styleCXX]
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/CompilerOutputter.h>
+#include <cppunit/TestCase.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/TestRunner.h>
+#include <cppunit/XmlOutputter.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TextTestRunner.h>
+
+#include "customer/customer.h"
+
+using namespace CppUnit;
+using namespace std;
+\end{lstlisting}
+
+Next, we must define the test class and implement the method that will execute our test case. After that, we must register the class so that we can use it in our test runner:
+
+\begin{lstlisting}[style=styleCXX]
+class TestBasicResponses : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(TestBasicResponses);
+	CPPUNIT_TEST(testBob);
+	CPPUNIT_TEST_SUITE_END();
+	
+protected:
+	void testBob();
+};
+
+void TestBasicResponses::testBob() {
+	auto name = "Bob";
+	auto code_and_string = responder{}.prepare_response(name);
+	CPPUNIT_ASSERT(code_and_string.first == web::http::status_codes::OK);
+	CPPUNIT_ASSERT(code_and_string.second == web::json::value("Hello,
+		Bob!"));
+}
+
+CPPUNIT_TEST_SUITE_REGISTRATION(TestBasicResponses);
+\end{lstlisting}
+
+Finally, we must provide the behavior of our test runner:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	CPPUNIT_NS::TestResult testresult;
+	
+	CPPUNIT_NS::TestResultCollector collectedresults;
+	testresult.addListener(&collectedresults);
+	CPPUNIT_NS::BriefTestProgressListener progress;
+	testresult.addListener(&progress);
+	CPPUNIT_NS::TestRunner testrunner;
+	testrunner.addTest(CPPUNIT_NS::TestFactoryRegistry::getRegistry().makeTest(
+	));
+	testrunner.run(testresult);
+	
+	CPPUNIT_NS::CompilerOutputter compileroutputter(&collectedresults,
+	std::cerr);
+	compileroutputter.write();
+	
+	ofstream xmlFileOut("cppTestBasicResponsesResults.xml");
+	XmlOutputter xmlOut(&collectedresults, xmlFileOut);
+	xmlOut.write();
+	
+	return collectedresults.wasSuccessful() ? 0 : 1;
+}
+\end{lstlisting}
+
+Compared to the previous two examples, there's a lot of boilerplate in here. The test itself, however, looks pretty similar to the previous example.
+
+\subsubsubsection{8.3.4\hspace{0.2cm}Doctest examples}
+
+Here is an example test for our customer library written in Doctest:
+
+\begin{lstlisting}[style=styleCXX]
+#include "customer/customer.h"
+
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
+
+TEST_CASE("Basic responses") {
+	auto name = "Bob";
+	auto code_and_string = responder{}.prepare_response(name);
+	REQUIRE(code_and_string.first == web::http::status_codes::OK);
+	REQUIRE(code_and_string.second == web::json::value("Hello, Bob!"));
+}
+\end{lstlisting}
+
+Once again, it's quite clean and easy to understand. The main selling point of Doctest is that it's the fastest both at compile-time and at runtime compared to the other similarly-featured alternatives.
+
+\subsubsubsection{8.3.5\hspace{0.2cm}Testing compile-time code}
+
+Template metaprogramming allows us to write C++ code that is executed during compiletime as opposed to the usual execution time. The constexpr keyword, which was added in C++11, allows us to use even more compile-time code, and consteval keyword from C++20 aims to give us greater control over the way the code is evaluated.
+
+One of the problems with compile-time programming is that there is no easy way to test it. While unit testing frameworks for execution time code are abundant (as we just saw), there are not that many resources regarding compile-time programming. Part of this may stem from the fact that compile-time programming is still considered complicated and only aimed at experts.
+
+Just because something isn't easy doesn't mean it is impossible, though. Just like execution time tests rely on assertions being checked during runtime, you can check your compiletime code for correct behavior using static\_assert, which was introduced alongside constexpr in C++11.
+
+The following is a simple example of using static\_assert:
+
+\begin{lstlisting}[style=styleCXX]
+#include <string_view>
+constexpr int generate_lucky_number(std::string_view name) {
+	if (name == "Bob") {
+		number = number * 7 + static_cast<int>(letter);
+	}
+	return number;
+}
+
+static_assert(generate_lucky_number("Bob") == 808);
+\end{lstlisting}
+
+Since we can compute each value tested here during compile time, we can effectively use the compiler as our testing framework.
+
+
+
+
+
+
+
+
+
+
+

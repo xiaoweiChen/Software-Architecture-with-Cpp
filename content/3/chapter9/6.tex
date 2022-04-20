@@ -1,0 +1,21 @@
+
+
+In its simplest form, deployment with Ansible may consist of copying a single binary to the target machine and then running that binary. We can achieve this with the following Ansible code:
+
+\begin{tcblisting}{commandshell={}}
+tasks:
+  # Each Ansible task is written as a YAML object
+  # This uses a copy module
+  - name: Copy the binaries to the target machine
+    copy:
+      src: our_application
+      dest: /opt/app/bin/our_application
+  # This tasks invokes the shell module. The text after the `shell:` key
+  # will run in a shell on target machine
+  - name: start our application in detached mode
+    shell: cd /opt/app/bin; nohup ./our_application </dev/null >/dev/null
+2>&1 &
+\end{tcblisting}
+
+Every single task starts with a hyphen. For each of the tasks, you need to specify the module it uses (such as the copy module or the shell module), along with its parameters (if applicable). A task may also have a name parameter, which makes it easier to reference the task individually.
+

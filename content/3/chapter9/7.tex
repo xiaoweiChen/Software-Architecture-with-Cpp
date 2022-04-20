@@ -1,0 +1,115 @@
+
+We have reached the point when we can safely build a CD pipeline using the tools we learned about in this chapter. We already know how CI operates and how it helps to reject changes that are unsuitable for release. The section on test automation presented different ways of making the rejection process more robust. Having smoke tests or end-to-end tests allows us to go beyond CI and to check whether the whole deployed service satisfies requirements. And with deployment code, we can not only automate the process of deployment, but also prepare a rollback when our tests begin to fail.
+
+\subsubsubsection{9.7.1\hspace{0.2cm}Continuous deployment and continuous delivery}
+
+By a funny coincidence, the abbreviation CD can mean two different things. The concepts of continuous delivery and Continuous deployment are pretty similar, but they have some subtle differences. Throughout the book, we are focusing on the concept of continuous deployment. This is the automated process that originates when a person pushes a change into the central repository and finishes with the change successfully deployed to the production environment with all the tests passing. We can therefore say that this is an endto-end process as the developer's work travels all the way to the customer without manual intervention (following the code review, of course). You may have heard the term GitOps to relate to such an approach. As all operations are automated, pushing to a specified branch in Git triggers the deployment scripts.
+
+Continuous delivery doesn't go that far. Like CD, it features a pipeline able to release the final product and test it, but the final product is never automatically delivered to the customers. It can be delivered to the QA first or to the business for internal use. Ideally, the delivered artifact is ready to be deployed in the production environment as son as the internal clients accept it.
+
+\subsubsubsection{9.7.2\hspace{0.2cm}Building an example CD pipeline}
+
+Let's put all of these skills together once again using the GitLab CI as an example to build our pipeline. Following the testing step, we will add two more steps, one that creates the package and another one that uses Ansible to deploy this package.
+
+All we need for the packaging step is the following:
+
+\begin{tcblisting}{commandshell={}}
+# Package the application and publish the artifact
+package:
+  stage: package
+  # Use cpack for packaging
+  script:
+    - cd build
+    - cpack .
+  # Save the deb package artifact
+  artifacts:
+    paths:
+      - build/Customer*.deb
+\end{tcblisting}
+
+When we add the package step containing artifacts definitions, we'll be able to download them from the dashboard.
+
+With this, we can invoke Ansible as part of the deployment step:
+
+\begin{tcblisting}{commandshell={}}
+# Deploy using Ansible
+deploy:
+  stage: deploy
+  script:
+    - cd build
+    - ansible-playbook -i localhost, ansible.yml
+\end{tcblisting}
+
+The final pipeline would then look like the following:
+
+\begin{tcblisting}{commandshell={}}
+cache:
+  key: all
+  paths:
+    - .conan
+    - build
+    
+default:
+  image: conanio/gcc9
+
+stages:
+  - prerequisites
+  - build
+  - test
+  - package
+  - deploy
+  
+before_script:
+  - export CONAN_USER_HOME="$CI_PROJECT_DIR"
+
+prerequisites:
+  stage: prerequisites
+  script:
+    - pip install conan==1.34.1
+    - conan profile new default || true
+    - conan profile update settings.compiler=gcc default
+    - conan profile update settings.compiler.libcxx=libstdc++11 default
+    - conan profile update settings.compiler.version=10 default
+    - conan profile update settings.arch=x86_64 default
+    - conan profile update settings.build_type=Release default
+    - conan profile update settings.os=Linux default
+    - conan remote add trompeloeil
+https://api.bintray.com/conan/trompeloeil/trompeloeil || true
+
+build:
+  stage: build
+  script:
+    - sudo apt-get update && sudo apt-get install -y docker.io
+    - mkdir -p build
+    - cd build
+    - conan install ../ch08 --build=missing
+    - cmake -DBUILD_TESTING=1 -DCMAKE_BUILD_TYPE=Release ../ch08/customer
+    - cmake --build .
+
+test:
+  stage: test
+  script:
+    - cd build
+    - ctest .
+    
+# Package the application and publish the artifact
+package:
+  stage: package
+  # Use cpack for packaging
+  script:
+    - cd build
+    - cpack .
+# Save the deb package artifact
+artifacts:
+  paths:
+    - build/Customer*.deb
+
+# Deploy using Ansible
+deploy:
+  stage: deploy
+  script:
+    - cd build
+    - ansible-playbook -i localhost, ansible.yml
+\end{tcblisting}
+
+To see the whole example, go to the repository from the Technical requirements section for the original sources.

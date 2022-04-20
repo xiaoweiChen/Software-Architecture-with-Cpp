@@ -1,0 +1,110 @@
+CI is the process of shortening the integration cycles. Whereas in traditional software, many different features could have been developed separately and only integrated prior to release, in projects developed with CI, integration can occur several times a day. Usually, each change a developer makes is tested and integrated at the same time as it is committed to the central repository.
+
+Since testing occurs just after development, the feedback loop is much quicker. This lets developers fix bugs more easily (as they usually still remember what was changed). In contrast to the traditional approach of testing just prior to release, CI saves a lot of work and improves the quality of software.
+
+\subsubsubsection{9.2.1\hspace{0.2cm}Release early, release often}
+
+Have you ever heard the saying "release early, release often"? This is a software development philosophy that emphasizes the importance of short release cycles. Short release cycles, in turn, provide a much shorter feedback loop between planning, development, and validation. When something breaks, it should break as early as possible so that the costs of fixing the problem are relatively small.
+
+This philosophy was popularized by Eric S. Raymond (also known as ESR) in his 1997 essay entitled The Cathedral and the Bazaar. There's also a book with the same title that contains this and other essays by the author. Considering ESR's activity within open source movements, the "release early, release often" mantra became synonymous with how open source projects operated.
+
+Some years later, the same principle moved beyond just open source projects. With the rising interest in Agile methodologies, such as Scrum, the "release early, release often" mantra became synonymous with development sprints that end with a product increment. This increment is, of course, a software release, but usually, there are many other releases that happened during the sprint. 
+
+How can you achieve such short release cycles? One answer is to rely on automation as much as possible. Ideally, every commit to the code repository should end as a release. Whether this release ends up facing the customers is another matter. What's important is that every code change can result in a usable product.
+
+Of course, building and releasing every single commit to the public would be a tedious job for any developer. Even when everything is scripted, this can add unnecessary overhead to the usual chores. This is why you would want to set up a CI system to automate the releases for you and your development team.
+
+\subsubsubsection{9.2.2\hspace{0.2cm}Merits of CI}
+
+CI is the concept of integrating the work of several developers, at least daily. As already discussed, sometimes it can mean several times a day. Every commit that enters the repository is integrated and validated separately. The build system checks whether the code can be built without errors. The packaging system may create a package that is ready to be saved as an artifact or even deployed later on when CD is used. Finally, the automated tests check that no known regression occurred in relation to the change. Let's now see its merits in detail:
+
+\begin{itemize}
+\item 
+CI allows for the rapid solving of problems. If one of the developers forgot a semicolon at the end of the line, the compiler on the CI system will catch that error right away before this incorrect code reaches other developers, thereby impeding their work. Of course, developers should always build the changes and test them before committing the code, but minor typos can go unnoticed on the developer's machine and enter the shared repository anyway.
+
+\item 
+Another benefit of using CI is that it prevents the common "works on my machine" excuse. If a developer forgets to commit a necessary file, the CI system will fail to build the changes, yet again preventing them from spreading further and causing mischief to the whole team. The special configuration of one developer's environment also stops being an issue. If a change builds on two machines, the developer's computer and the CI system, we are safe to assume that it should build on other machines as well.
+\end{itemize}
+
+\subsubsubsection{9.2.3\hspace{0.2cm}Gating mechanism}
+
+If we want CI to bring value beyond simply building packages for us, we need a gating mechanism. This gating mechanism will allow us to discern good code changes from bad ones, thus keeping our application safe from modifications that would render it useless. For this to happen, we need a comprehensive suite of tests. Such a suite allows us to automatically recognize when a change is problematic, and we're able to do it quickly.
+
+For individual components, unit tests play the role of a gating mechanism. A CI system can discard any changes that do not pass unit tests or any changes that do not reach a certain code coverage threshold. At the time of building individual components, a CI system may also use integration tests to further ensure that the changes are stable, not only by themselves but also are acting properly together.
+
+\subsubsubsection{9.2.4\hspace{0.2cm}Implementing the pipeline with GitLab}
+
+Throughout this chapter, we will use popular open source tools to build a full CI/CD pipeline consisting of gating mechanisms, automated deployment, and also showing the concepts of infrastructure automation.
+
+The first such tool is GitLab. You may have heard about it as a Git hosting solution, but in reality, it's much more than that. GitLab comes in several distributions, namely, the following:
+
+\begin{itemize}
+\item 
+An open source solution that you can host on your own premises
+
+\item 
+Self-hosted paid versions that offer additional features over the open source community edition
+
+\item 
+And finally, a Software-as-as-Service (SaaS) managed offer hosted under \url{https://gitlab.com}
+\end{itemize}
+
+For the requirements of this book, each of the distributions has all the necessary features. We will, therefore, focus on the SaaS version, as this requires the least amount of preparation.
+
+Although \url{https://gitlab.com} is mainly targeted at open source projects, you can also create private projects and repositories if you don't feel like sharing your work with the entire world. This allows us to create a new private project in GitLab and populate it with the code we have already demonstrated in Chapter 7, Building and Packaging.
+
+A lot of modern CI/CD tools could work instead of GitLab CI/CD. Examples include GitHub Actions, Travis CI, CircleCI, and Jenkins. We've chosen GitLab as it can be used both in SaaS form and on-premises, so should accommodate a lot of different use cases.
+
+We will then use our previous build system to create a simple CI pipeline in GitLab. These pipelines are described in the YAML file as a series of steps and metadata. An example pipeline building all the requirements, as well as the sample project from Chapter 7, Building and Packaging, would look like the following:
+
+\begin{tcblisting}{commandshell={}}
+# We want to cache the conan data and CMake build directory
+cache:
+  key: all
+  paths:
+    - .conan
+    - build
+    
+# We're using conanio/gcc10 as the base image for all the subsequent commands
+default:
+  image: conanio/gcc10
+
+
+stages:
+  - prerequisites
+  - build
+
+before_script:
+  - export CONAN_USER_HOME="$CI_PROJECT_DIR"
+  
+# Configure conan
+prerequisites:
+  stage: prerequisites
+  script:
+  - pip install conan==1.34.1
+  - conan profile new default || true
+  - conan profile update settings.compiler=gcc default
+  - conan profile update settings.compiler.libcxx=libstdc++11 default
+  - conan profile update settings.compiler.version=10 default
+  - conan profile update settings.arch=x86_64 default
+  - conan profile update settings.build_type=Release default
+  - conan profile update settings.os=Linux default
+  - conan remote add trompeloeil
+https://api.bintray.com/conan/trompeloeil/trompeloeil || true
+
+# Build the project
+build:
+  stage: build
+  script:
+  - sudo apt-get update && sudo apt-get install -y docker.io
+  - mkdir -p build
+  - cd build
+  - conan install ../ch08 --build=missing
+  - cmake -DBUILD_TESTING=1 -DCMAKE_BUILD_TYPE=Release ../ch08/customer
+  - cmake --build .
+\end{tcblisting}
+
+Saving the preceding file as .gitlab-ci.yml in the root directory of your Git repository will automatically enable CI in GitLab and run the pipeline with each subsequent commit.
+
+
+

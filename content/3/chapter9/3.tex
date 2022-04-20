@@ -1,0 +1,106 @@
+
+Code reviews can be used both with CI systems and without them. Their main purpose is to double-check each change introduced to the code to make sure that it is correct, that it fits the application's architecture, and that it follows the project's guidelines and best practices.
+
+When used without CI systems, it is often the reviewer's task to test the change manually and verify it is working as expected. CI reduces this burden, letting software developers focus on the logical structure of the code.
+
+\subsubsubsection{9.3.1\hspace{0.2cm}Automated gating mechanisms}
+
+Automated tests are only one example of a gating mechanism. When their quality is high enough, they can guarantee the code works according to design. But there's still a difference between code that works correctly and good code. As you've learned from this book so far, code can be considered good if it fulfills several values. Being functionally correct is just one of them.
+
+There are other tools that can help achieve the desired standard of your code base. Some of them have been covered in previous chapters, so we won't go into the details. Keep in mind that using linters, code formatters, and static analysis in your CI/CD pipeline is a great practice. While static analysis can act as a gating mechanism, you can apply linting and formatting to each commit that enters the central repository to make it consistent with the rest of the code base. You will find more on linters and formatters in the appendix.
+
+Ideally, this mechanism will only have to check whether the code has already been formatted, as the formatting step should be done by developers before pushing the code to the repository. When using Git as a version control system, the mechanism of Git Hooks can prevent committing code without running the necessary tools on it.
+
+But automated analysis can only get you so far. You can check that the code is functionally complete, that it is free of known bugs and vulnerabilities, and that it fits within the coding standard. This is where manual inspection comes in.
+
+\subsubsubsection{9.3.2\hspace{0.2cm}Code review – the manual gating mechanism}
+
+Manual inspection of a code change is often known as a code review. The aim of the code review is to identify problems, both with the implementation of specific subsystems and adherence to the overall architecture of the application. Automated performance tests may or may not discover potential problems with a given function. Human eyes, on the other hand, can usually spot a sub-optimal solution to the problem. Whether it is the wrong data structure or an algorithm with unnecessarily high computational complexity, a good architect should be able to pinpoint the problem.
+
+But it isn't just the architect's role to perform code reviews. Peer reviews, that is, code reviews performed by peers of the author, also have their place in the development process. Such reviews are valuable not just because they allow colleagues to find bugs in each other's code. The more important aspect is the fact that many teammates are suddenly aware of what everybody else is doing. This way, when there is an absence in the team (whether because of a long meeting, vacation, or job rotation), another team member can substitute for the missing one. Even if they're not an expert on the topic, every other member at least knows where the interesting code is located and everyone should be able to remember the last changes to the code. This means both the time when they happened and the scope and content of those changes.
+
+With more people aware of how the insides of your application appear, it is also more probable that they can figure out a correlation between recent changes in one component and a freshly discovered bug. Even though every person on your team probably has different experience, they can pool their resources when everyone knows the code quite thoroughly.
+
+So code reviews can check whether the change fits within the desired architecture and whether its implementation is correct. We call such a code review an architectural review, or an expert's review.
+
+Another type of code review, the peer review, not only helps uncover bugs, but also raises awareness within the team about what other members are working on. If necessary, you can also perform a different kind of expert review when dealing with changes that integrate with external services.
+
+As each interface is a source of potential problems, changes close to the interface level should be treated as especially dangerous. We advise you to supplement the usual peer review with an expert coming from the other side of the interface. For example, if you are writing a producer's code, ask a consumer for a review. This way, you ensure you won't miss some vital use case that you may consider very improbable, but that the other side uses constantly.
+
+\subsubsubsection{9.3.3\hspace{0.2cm}Different approaches to a code review}
+
+You will most often conduct code reviews asynchronously. This means that the communication between the author of the change under review and the reviewers does not happen in real time. Instead, each of the actors posts their comments and suggestions at any given time. Once there are no more comments, the author reworks the original change and once again puts it under review. This can take as many rounds as necessary until everyone agrees that no further corrections are necessary.
+
+When a change is particularly controversial and an asynchronous code review takes too much time, it is beneficial to conduct a code review synchronously. This means a meeting (in-person or remotely) to resolve any opposing views on the way forward. This will happen in particular when a change contradicts one of the initial decisions due to the new knowledge acquired while implementing the change.
+
+There are some dedicated tools aimed solely at code reviews. More often, you will want to use a tool that is built into your repository server, which includes services such as the following:
+
+\begin{itemize}
+\item 
+GitHub
+
+\item 
+Bitbucket
+
+\item 
+GitLab
+
+\item 
+Gerrit
+\end{itemize}
+
+All of the preceding offer both Git hosting and code review. Some of them go even further, providing a whole CI/CD pipeline, issue management, wiki, and much more.
+
+When you use the combined package of code hosting and code review, the default workflow is to push the changes as a separate branch and then ask the project's owner to merge the changes in a process known as a pull request (or a merge request). Despite the fancy name, the pull request or merge request informs the project owner that you have code that you wish to merge with the main branch. This means that the reviewers should review your changes to make sure everything is in order.
+
+\subsubsubsection{9.3.4\hspace{0.2cm}Using pull requests (merge requests) for a code review}
+
+Creating pull requests or merge requests with systems such as GitLab is very easy. First of all, when we push a new branch to the central repository from the command line, we can observe the following message:
+
+\begin{tcblisting}{commandshell={}}
+remote:
+remote: To create a merge request for fix-ci-cd, visit:
+remote:
+https://gitlab.com/hosacpp/continuous-integration/merge_requests/new?merge_
+request%5Bsource_branch%5D=fix-ci-cd
+remote:	
+\end{tcblisting}
+
+If you previously had CI enabled (by adding the .gitlab-ci.yml file), you'll also see that the newly pushed branch has been subjected to the CI process. This occurs even before you open a merge request, and it means you can postpone tagging your colleagues until you get information from CI that every automated check has passed.
+
+The two main ways to open a merge request are as follows:
+
+\begin{itemize}
+\item 
+By following the link mentioned in the push message
+
+\item 
+By navigating to merge requests in the GitLab UI and selecting the Create merge request button or the New merge request button
+\end{itemize}
+
+When you submit the merge request, having completed all the relevant fields, you will see that the status of the CI pipeline is also visible. If the pipeline fails, merging the change wouldn't be possible.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

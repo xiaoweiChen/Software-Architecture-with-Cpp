@@ -1,0 +1,226 @@
+
+As long as you are testing functions that do not interact too much with the outside world, things are pretty easy. The problems start when the units you are testing interface with third-party components such as databases, HTTP connections, and specific files.
+
+On one hand, you want to see how your code behaves due to various circumstances. On the other hand, you don't want to wait for the database to boot, and you definitely don't want to have several databases containing different versions of data so that you can check all the necessary conditions.
+
+How can we deal with such cases? The idea is not to execute the actual code that triggers all those side effects but instead use test doubles. Test doubles are constructions in code that mimic the actual API, except they don't perform actions of the mimicked functions or objects.
+
+The most common test doubles are mocks, fakes, and stubs. Many people tend to mistake one for another as they are similar, though not the same.
+
+\subsubsubsection{8.4.1\hspace{0.2cm}Different test doubles}
+
+Mocks are test doubles that register all the received calls but do nothing more than that. They do not return any value and they do not change state in any way. They are useful when we have a third-party framework that is supposed to call our code. By using mocks, we can observe all the calls and are thus able to verify that the framework behaves as expected.
+
+Stubs are a bit more complicated when it comes to their implementation. They return values, but those values are predefined. It may seem surprising that the StubRandom.randomInteger() method always returns the same value (for example, 3), but it may be a sufficient stub implementation when we are testing the type of the returned value or the fact that it does return a value at all. The exact value may not be that important.
+
+Finally, fakes are objects that have a working implementation and behave mostly like the actual production implementation. The main difference is that fakes may take various shortcuts, such as avoiding calling the production database or filesystem.
+
+When implementing the Command Query Separation (CQS) design pattern, you will  usually want to double queries with stubs and commands with mocks.
+
+\subsubsubsection{8.4.3\hspace{0.2cm}Other uses for test doubles}
+
+Fakes can also be used, to a limited extent, outside of testing. In-memory processing data without resorting to database access can also be great for prototyping or when you're hitting performance bottlenecks.
+
+\subsubsubsection{8.4.3\hspace{0.2cm}Writing test doubles}
+
+To write test doubles, we typically use an external library, just as we do with unit tests. Some of the most popular solutions are as follows:
+
+\begin{itemize}
+\item 
+GoogleMock (also known as gMock), which is now a part of the GoogleTest library: \url{https://github.com/google/googletest}.
+
+\item 
+Trompeloeil, which focuses on C++14, integrates well with many testing libraries, such as Catch2, doctest, and GTest: \url{https://github.com/rollbear/trompeloeil}.
+\end{itemize}
+
+The code in the following sections will show you how to use both GoogleMock and Trompeloeil.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{GoogleMock example}
+
+Since GoogleMock is part of GoogleTest, we will present them together:
+
+\begin{lstlisting}[style=styleCXX]
+#include "merchants/reviews.h"
+
+#include <gmock/gmock.h>
+
+#include <merchants/visited_merchant_history.h>
+
+#include "fake_customer_review_store.h"
+
+namespace {
+	
+class mock_visited_merchant : public i_visited_merchant {
+public:
+	explicit mock_visited_merchant(fake_customer_review_store &store,
+									merchant_id_t id)
+		: review_store_{store},
+		  review_{store.get_review_for_merchant(id).value()} {
+		ON_CALL(*this, post_rating).WillByDefault([this](stars s) {
+			review_.rating = s;
+			review_store_.post_review(review_);
+		});
+		ON_CALL(*this, get_rating).WillByDefault([this] { return
+			review_.rating; });
+	}
+
+	MOCK_METHOD(stars, get_rating, (), (override));
+	MOCK_METHOD(void, post_rating, (stars s), (override));
+
+private:
+	fake_customer_review_store &review_store_;
+	review review_;
+};
+
+} // namespace
+
+class history_with_one_rated_merchant : public ::testing::Test {
+public:
+	static constexpr std::size_t CUSTOMER_ID = 7777;
+	static constexpr std::size_t MERCHANT_ID = 1234;
+	static constexpr const char *REVIEW_TEXT = "Very nice!";
+	static constexpr stars RATING = stars{5.f};
+	
+protected:
+	void SetUp() final {
+		fake_review_store_.post_review(
+		{CUSTOMER_ID, MERCHANT_ID, REVIEW_TEXT, RATING});
+		
+		// nice mock will not warn on "uninteresting" call to get_rating
+		auto mocked_merchant =
+			std::make_unique<::testing::NiceMock<mock_visited_merchant>>(
+				fake_review_store_, MERCHANT_ID);
+				
+		merchant_index_ = history_.add(std::move(mocked_merchant));
+	}
+
+	fake_customer_review_store fake_review_store_{CUSTOMER_ID};
+		history_of_visited_merchants history_{};
+		std::size_t merchant_index_{};
+	};
+
+TEST_F(history_with_one_rated_merchant,
+	   when_user_changes_rating_then_the_review_is_updated_in_store) {
+	const auto &mocked_merchant = dynamic_cast<const mock_visited_merchant
+&>(
+	history_.get_merchant(merchant_index_));
+	EXPECT_CALL(mocked_merchant, post_rating);
+	
+	constexpr auto new_rating = stars{4};
+	static_assert(RATING != new_rating);
+	history_.rate(merchant_index_, stars{new_rating});
+}
+
+TEST_F(history_with_one_rated_merchant,
+	   when_user_selects_same_rating_then_the_review_is_not_updated_in_store) {
+	const auto &mocked_merchant = dynamic_cast<const mock_visited_merchant
+&>(
+	history_.get_merchant(merchant_index_));
+	EXPECT_CALL(mocked_merchant, post_rating).Times(0);
+	
+	history_.rate(merchant_index_, stars{RATING});
+}
+\end{lstlisting}
+
+GTest is the most popular C++ testing framework at the time of writing this book. Its integration with GMock means that GMock is probably already available for you in your project. This combination is intuitive to use and fully-featured, so there's no reason to look for alternatives if you're already invested in GTest.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Trompeloeil example}
+
+To contrast this example with the previous one, this time, we are using Trompeloeil for test doubles and Catch2 as a testing framework:
+
+\begin{lstlisting}[style=styleCXX]
+#include "merchants/reviews.h"
+
+#include "fake_customer_review_store.h"
+
+// order is important
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
+#include <catch2/trompeloeil.hpp>
+
+#include <memory>
+
+#include <merchants/visited_merchant_history.h>
+
+using trompeloeil::_;
+
+class mock_visited_merchant : public i_visited_merchant {
+public:
+	MAKE_MOCK0(get_rating, stars(), override);
+	MAKE_MOCK1(post_rating, void(stars s), override);
+};
+
+SCENARIO("merchant history keeps store up to date", "[mobile app]") {
+	GIVEN("a history with one rated merchant") {
+		static constexpr std::size_t CUSTOMER_ID = 7777;
+		static constexpr std::size_t MERCHANT_ID = 1234;
+		static constexpr const char *REVIEW_TEXT = "Very nice!";
+		static constexpr stars RATING = stars{5.f};
+		
+		auto fake_review_store_ = fake_customer_review_store{CUSTOMER_ID};
+		fake_review_store_.post_review(
+			{CUSTOMER_ID, MERCHANT_ID, REVIEW_TEXT, RATING});
+		
+		auto history_ = history_of_visited_merchants{};
+		const auto merchant_index_ =
+			history_.add(std::make_unique<mock_visited_merchant>());
+			
+		auto &mocked_merchant = const_cast<mock_visited_merchant &>(
+			dynamic_cast<const mock_visited_merchant &>(
+				history_.get_merchant(merchant_index_)));
+				
+		auto review_ = review{CUSTOMER_ID, MERCHANT_ID, REVIEW_TEXT, RATING};
+		ALLOW_CALL(mocked_merchant, post_rating(_))
+			.LR_SIDE_EFFECT(review_.rating = _1;
+				fake_review_store_.post_review(review_););
+	
+		ALLOW_CALL(mocked_merchant, get_rating()).LR_RETURN(review_.rating);
+		
+		WHEN("a user changes rating") {
+			constexpr auto new_rating = stars{4};
+			static_assert(RATING != new_rating);
+			
+			THEN("the review is updated in store") {
+				REQUIRE_CALL(mocked_merchant, post_rating(_));
+				history_.rate(merchant_index_, stars{new_rating});
+			}
+		}
+	
+		WHEN("a user selects same rating") {
+			THEN("the review is not updated in store") {
+				FORBID_CALL(mocked_merchant, post_rating(_));
+				history_.rate(merchant_index_, stars{RATING});
+			}
+		}
+	}
+}
+\end{lstlisting}
+
+One of the great features of Catch2 is that it makes it easy to write behavior-driven development-style tests, such as the one shown here. If you prefer this style, then Catch2 with Trompeloeil would be a good choice as they integrate very well.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

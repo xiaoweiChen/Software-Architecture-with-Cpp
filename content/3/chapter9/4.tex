@@ -1,0 +1,186 @@
+
+
+CI mainly focuses on the integration part. It means building the code of different subsystems and making sure it works together. While tests are not strictly required to achieve this purpose, running CI without them seems like a waste. CI without automated tests makes it easier to introduce subtle bugs to code while giving a false sense of security.
+
+That's one of the reasons why CI often goes hand in hand with continuous testing, which we'll cover in this next section.
+
+
+\subsubsubsection{9.4.1\hspace{0.2cm}Behavior-driven development}
+
+
+So far, we have managed to set up a pipeline that we can call continuous building. Each change we make to the code ends up being compiled, but we don't test it any further. Now it's time to introduce the practice of continuous testing. Testing on a low level will also act as a gating mechanism to automatically reject all the changes that do not satisfy requirements.
+
+How can you check whether a given change satisfies requirements? This is best achieved by writing tests based on these requirements. One of the ways to do this is by following Behavior-Driven Development (BDD). The concept of BDD is to encourage deeper collaboration between the different actors in an Agile project.
+
+Unlike the traditional approach, where tests are written either by developers or the QA team, with BDD, the tests are created collaboratively by the following individuals:
+
+\begin{itemize}
+\item 
+Developers
+
+\item 
+QA engineers
+
+\item 
+Business representatives.
+\end{itemize}
+
+The most common way to specify tests for BDD is to use the Cucumber framework, which uses plain English phrases to describe the desired behavior of any part of the system. These sentences follow a specific pattern that can then be turned into working code, integrating with the testing framework of choice.
+
+There is official support for C++ in the Cucumber framework and it's based on CMake, Boost, GTest, and GMock. After specifying the desired behavior in the cucumber format (which uses a domain-specific language known as Gherkin), we also need to provide the so-called step definitions. Step definitions are the actual code corresponding to the actions described in the cucumber specification. For example, consider the following behavior expressed in Gherkin:
+
+\begin{tcblisting}{commandshell={}}
+# language: en
+Feature: Summing
+In order to see how much we earn,
+Sum must be able to add two numbers together
+
+Scenario: Regular numbers
+  Given I have entered 3 and 2 as parameters
+  When I add them
+  Then the result should be 5
+\end{tcblisting}
+
+We can save it as a sum.feature file. In order to generate a valid C++ code with tests, we would use the appropriate step definitions:
+
+\begin{lstlisting}[style=styleCXX]
+#include <gtest/gtest.h>
+#include <cucumber-cpp/autodetect.hpp>
+
+#include <Sum.h>
+
+using cucumber::ScenarioScope;
+
+struct SumCtx {
+	Sum sum;
+	int a;
+	int b;
+	int result;
+};
+
+GIVEN("^I have entered (\\d+) and (\\d+) as parameters$", (const int a,
+const int b)) {
+	ScenarioScope<SumCtx> context;
+	context->a = a;
+	context->b = b;
+}
+
+WHEN("^I add them") {
+	ScenarioScope<SumCtx> context;
+	context->result = context->sum.sum(context->a, context->b);
+}
+
+THEN("^the result should be (.*)$", (const int expected)) {
+	ScenarioScope<SumCtx> context;
+	EXPECT_EQ(expected, context->result);
+}
+\end{lstlisting}
+
+When building an application from scratch, it's a good idea to follow the BDD pattern. This book aims to show the best practices you can use in such a greenfield project. But it doesn't mean you can't try our examples in an existing project. CI and CD can be added at any given time during the life cycle of the project. Since it's always a good idea to run your tests as often as possible, using a CI system just for the purpose of continuous testing is almost always a good idea.
+
+If you don't have behavior tests, you shouldn't need to worry. You can add them later and, for the moment, just focus on those tests you already have. Whether they are unit tests or end-to-end tests, anything that helps you assess the state of your application is a good candidate for the gating mechanism.
+
+
+\subsubsubsection{9.4.2\hspace{0.2cm}Writing tests for CI}
+
+For CI, it's best to focus on unit tests and integration tests. They work on the lowest possible level, which means they're usually quick to execute and have the smallest requirements. Ideally, all unit tests should be self-contained (no external dependencies like a working database) and able to run in parallel. This way, when the problem appears on the level where unit tests are able to catch it, the offending code would be flagged in a matter of seconds.
+
+There are some people who say that unit tests only make sense in interpreted languages or languages with dynamic typing. The argument goes that C++ already has testing built-in by means of the type system and the compiler checking for erroneous code. While it's true that type checking can catch some bugs that would require separate tests in dynamically typed languages, this shouldn't be used as an excuse not to write unit tests. After all, the purpose of unit tests isn't to verify that the code can execute without any problems. We write unit tests to make sure our code not only executes, but also fulfills all the business requirements we have.
+
+As an extreme example, take a look at the following two functions. Both of them are syntactically correct and they use proper typing. However, just by looking at them, you can probably guess which one is correct and which isn't. Unit tests help to catch this kind of misbehavior:
+
+\begin{lstlisting}[style=styleCXX]
+int sum (int a, int b) {
+	return a+b;
+}
+\end{lstlisting}
+
+The preceding function returns a sum of the two arguments provided. The following one returns just the value of the first argument:
+
+\begin{lstlisting}[style=styleCXX]
+int sum (int a, int b) {
+	return a;
+}
+\end{lstlisting}
+
+Even though the types match and the compiler won't complain, this code wouldn't perform its task. To distinguish useful code from erroneous code, we use tests and assertions.
+
+\subsubsubsection{9.4.3\hspace{0.2cm}Continuous testing}
+
+Having already established a simple CI pipeline, it is very easy to extend it with testing. Since we are already using CMake and CTest for the building and testing process, all we need to do is add another step to our pipeline that will execute the tests. This step may look like this:
+
+\begin{tcblisting}{commandshell={}}
+# Run the unit tests with ctest
+test:
+  stage: test
+  script:
+    - cd build
+    - ctest .
+\end{tcblisting}
+
+An entire pipeline will therefore appear as follows:
+
+\begin{tcblisting}{commandshell={}}
+cache:
+  key: all
+  paths:
+    - .conan
+    - build
+
+default:
+  image: conanio/gcc9
+
+stages:
+  - prerequisites
+  - build
+  - test # We add another stage that tuns the tests
+
+before_script:
+  - export CONAN_USER_HOME="$CI_PROJECT_DIR"
+
+prerequisites:
+  stage: prerequisites
+  script:
+    - pip install conan==1.34.1
+    - conan profile new default || true
+    - conan profile update settings.compiler=gcc default
+    - conan profile update settings.compiler.libcxx=libstdc++11 default
+    - conan profile update settings.compiler.version=10 default
+    - conan profile update settings.arch=x86_64 default
+    - conan profile update settings.build_type=Release default
+    - conan profile update settings.os=Linux default
+    - conan remote add trompeloeil
+https://api.bintray.com/conan/trompeloeil/trompeloeil || true
+
+build:
+  stage: build
+  script:
+    - sudo apt-get update && sudo apt-get install -y docker.io
+    - mkdir -p build
+    - cd build
+    - conan install ../ch08 --build=missing
+    - cmake -DBUILD_TESTING=1 -DCMAKE_BUILD_TYPE=Release ../ch08/customer
+    - cmake --build .
+
+# Run the unit tests with ctest
+test:
+  stage: test
+  script:
+    - cd build
+    - ctest .
+\end{tcblisting}
+
+This way, each commit will not only be subjected to the build process, but also to testing. If one of the steps fails, we will be notified which one was the source of the failure and we could see in the dashboard which steps were successful.
+
+
+
+
+
+
+
+
+
+
+
+
+
