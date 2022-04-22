@@ -1,0 +1,185 @@
+You can reduce the number of common security vulnerabilities in your own code by using modern C++ constructions as opposed to older C equivalents. Yet, there are always cases when even more secure abstractions prove to be vulnerable as well. It is not enough to choose the more secure implementation and decide you've done your best. Most of the time, there are ways to further harden your code.
+
+But what is code hardening? According to the definition, it is the process of reducing the system's surface of vulnerability. Often, this means turning off the features you won't be using and aiming for a simpler system over a complicated one. It may also mean using tools to increase the robustness of the already-available functions.
+
+Such tools may mean kernel patches, firewalls, and Intrusion Detection Systems (IDSes) when applied at the operating system level. At the application level, it may mean various  buffer overrun and underflow protection mechanisms, using containers and Virtual Machines (VMs) for privilege separation and process isolation, or enforcing encrypted communication and storage.
+
+In this section, we'll focus on some examples from the application level, while the next section will focus on the operating system level.
+
+\subsubsubsection{10.4.1\hspace{0.2cm}Security-oriented memory allocator}
+
+If you are serious about protecting your application from heap-related attacks, such as heap overflow, use-after-free, or double free, you may consider replacing your standard memory allocator with a security-oriented version. Two projects that may be of interest are as follows:
+
+\begin{itemize}
+\item 
+FreeGuard, available at https://github.com/UTSASRG/FreeGuard and described in a paper at https://arxiv.org/abs/1709.02746
+
+\item 
+hardened\_malloc from the GrapheneOS project, available at https://github.com/GrapheneOS/hardened\_malloc
+\end{itemize}
+
+FreeGuard was released in 2017 and it hasn't seen much change since then other than sporadic bug fixes. hardened\_malloc, on the other hand, is actively developed. Both allocators are designed to act as drop-in replacements for the standard malloc(). You can use them without modifying your application simply by setting the LD\_PRELOAD environment variable or adding the library to the /etc/preload.so configuration file. While FreeGuard targets Linux with the Clang compiler on 64-bit x86 systems, hardened\_malloc aims at broader compatibility, though at the moment supports mostly Android's Bionic, musl, and glibc. hardened\_malloc is also based on OpenBSD's alloc, with OpenBSD being the security-focused project itself.
+
+Instead of replacing the memory allocator, you can replace the collections you use for their safer equivalents. The SaferCPlusPlus (https://duneroadrunner.github.io/SaferCPlusPlus/) project provides substitutes for std::vector<>, std::array<>, and std::string that can be used as drop-in replacements in the existing code. The project also includes substitutes for basic types that guard against uninitialized use or sign mismatch, concurrent data types, and replacements for pointers and references.
+
+\subsubsubsection{10.4.2\hspace{0.2cm}Automated checks}
+
+There are tools that can be especially helpful to ensure the security of the system you are building. We will cover them in the following section.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Compiler warnings}
+
+While not necessarily a tool in itself, compiler warnings can be used and tweaked to achieve even better output from the one tool every C++ developer will be using: the C++ compiler.
+
+Since the compiler can already do some deeper checks than those required by the standard, it is advised to take advantage of this possibility. When using a compiler such as GCC or Clang, the recommended setting involves -Wall -Wextra flags. This will generate much more diagnostics and result in warnings when your code doesn't follow the diagnostics. If you want to be really strict, you can also enable -Werror, which will turn all the warnings into errors and prevent the compilation of code that doesn't pass the enhanced diagnostics. If you want to keep strictly to the standards, there are the -pedantic and -pedanticerrors flags that will look for conformance against the standards.
+
+When using CMake for building, you can use the following function to enable these flags during compilation:
+
+\begin{lstlisting}[style=styleCMake]
+add_library(customer ${SOURCES_GO_HERE})
+target_include_directories(customer PUBLIC include)
+target_compile_options(customer PRIVATE -Werror -Wall -Wextra)
+\end{lstlisting}
+
+This way, the compilation will fail unless you fix all the warnings (turned errors) reported by the compiler.
+
+You can also find suggested settings for toolchain hardening in these articles from OWASP (https://www.owasp.org/index.php/C-Based\_Toolchain\_Hardening) and Red Hat (https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc/).
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Static analysis}
+
+One class of tools that can help with making your code more secure is the so-called Static Application Security Testing (SAST) tools. They are a variant of static analysis tools only focused on security aspects.
+
+SAST tools integrate well into CI/CD pipelines as they are simply reading your source code. The output is usually suitable for CI/CD as well since it highlights problems found in particular places in the source code. On the other hand, static analysis may omit many types of problems that cannot be found automatically or cannot be found solely with static analysis. These tools are also oblivious to issues related to configuration, as configuration files aren't represented in the source code itself.
+
+Examples of C++ SAST tools include the following open source solutions:
+
+\begin{itemize}
+\item 
+Cppcheck (http://cppcheck.sourceforge.net/), which is a general-purpose static analysis tool focused on the low number of false positives
+
+\item 
+Flawfinder (https://dwheeler.com/flawfinder/), which doesn't seem to be actively maintained 
+
+\item 
+LGTM (https://lgtm.com/help/lgtm/about-lgtm), supporting several different languages and featuring automated analysis of pull requests
+
+\item 
+SonarQube (https://www.sonarqube.org/), which has great CI/CD integration and language coverage, and offers a commercial version as well
+
+\item 
+Checkmarx CxSAST (https://www.checkmarx.com/products/staticapplication-security-testing/), which promises zero configuration and road language coverage
+
+\item 
+CodeSonar (https://www.grammatech.com/products/codesonar), which focuses on in-depth analysis and finding the most flaws
+
+\item 
+Klocwork (https://www.perforce.com/products/klocwork), which focuses on accuracy
+
+\item 
+Micro Focus Fortify (https://www.microfocus.com/en-us/products/staticcode-analysis-sast/overview), with broad language support and integration of other tools by the same manufacturer
+
+\item 
+Parasoft C/C++test (https://www.parasoft.com/products/ctest), which is an integrated solution for static and dynamic analysis, unit testing, tracing, and more
+
+\item 
+Polyspace Bug Finder from MathWorks (https://www.mathworks.com/products/polyspace-bug-finder.html), with the integration of Simulink models 
+
+\item 
+Veracode Static Analysis (https://www.veracode.com/products/binarystatic-analysis-sast), which is a SaaS solution for static analysis 
+
+\item 
+WhiteHat Sentinel Source (https://www.whitehatsec.com/platform/staticapplication-security-testing/), which also focuses on eliminating false positives
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Dynamic analysis}
+
+Just like static analysis is performed on the source code, dynamic analysis is performed on the resulting binaries. The "dynamic" in the name refers to the observation of the code in action processing the actual data. When focused on security, this class of tools can also be called Dynamic Application Security Testing (DAST).
+
+Their main advantage over their SAST counterparts is that they can find many flows that cannot be seen from the source code analysis point of view. This, of course, introduces the drawback that you have to run your application in order to perform the analysis. And as we know, running an application can be both time- and memory-consuming.
+
+DAST tools usually focus on web-related vulnerabilities such as XSS, SQL (and other) injection, or disclosed sensitive information. We will focus more on one of the more general-purpose dynamic analysis tools, Valgrind, in the next subsection.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{Valgrind and Application Verifier}
+
+Valgrind is mostly known as a memory leak debugging tool. It is, in fact, an instrumentation framework that helps to build dynamic analysis tools not necessarily related to memory problems. Besides the memory error detector, the suite of tools currently consists of a thread error detector, a cache and branch prediction profiler, and a heap profiler. It's supported on various platforms on Unix-like operating systems (including Android).
+
+Essentially, Valgrind acts as a VM, first translating the binary into a simpler form called intermediate representation. Instead of running the program on an actual processor, it gets executed under this VM so each call can be can be analyzed and validated.
+
+If you're developing on Windows, you can use Application Verifier (AppVerifier) instead of Valgrind. AppVerifier can help you detect stability and security issues. It can monitor running applications and user-mode drivers to look for memory issues such as leaks and heap corruption, threading and locking issues, invalid use of handles, and more.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{Sanitizers}
+
+Sanitizers are dynamic testing tools that are based on compile-time instrumentation of code. They can help with the overall stability and security of the system, as well as avoiding undefined behavior. At https://github.com/google/sanitizers, you can find implementations for LLVM (which Clang is based on) and GCC. They address problems with memory access, memory leaks, data races and deadlocks, uninitialized memory use,
+and undefined behavior.
+
+AddressSanitizer (ASan) protects your code against issues related to memory addressing, such as global-buffer-overflow, use-after-free, or stack-use-after-return. Even though it's one of the fastest solutions of its kind, it still slows down the process about two times. It's best to use it when running tests and doing development but turn it off in production builds. You can turn it on for your builds by adding the -fsanitize=address flag to Clang.
+
+AddressSanitizerLeakSanitizer (LSan) integrates with ASan to find memory leaks. It is enabled by default on x86\_64 Linux and x86\_64 macOS. It requires setting an environment variable, ASAN\_OPTIONS=detect\_leaks=1. LSan performs leak detection at the end of the process. LSan can also be used as a standalone library without AddressSanitizer, but this mode is much less tested.
+
+ThreadSanitizer (TSan), as we previously mentioned, detects problems with concurrency such as data races and deadlocks. You can enable it with the -fsanitize=thread flag to Clang.
+
+MemorySanitizer (MSan) focuses on bugs related to access to uninitialized memory. It implements some of the features of Valgrind that we covered in the previous subsection. MSan supports 64-bit x86, ARM, PowerPC, and MIPS platforms. You can enable it with the -fsanitize=memory -fPIE -pie flag to Clang (which also turns on positionindependent executables, a concept we'll discuss later on).
+
+Hardware-Assisted Address Sanitizer (HWASAN) is similar to the regular ASan. The main difference is the use of hardware assistance when possible. This feature is, for now, available only on 64-bit ARM architectures.
+
+UndefinedBehaviorSanitizer (UBSan) looks for other possible causes of undefined behavior, such as integer overflow, division by zero, or improper bit shift operations. You can enable it with the -fsanitize=undefined flag to Clang.
+
+Even though sanitizers can help you uncover many potential problems, they are only as good as the tests that you run them against. When using the sanitizers, keep in mind to keep the code coverage of your tests high because otherwise, you may get a false sense of security.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{Fuzz-testing}
+
+A subcategory of DAST tools, fuzz-testing checks the behavior of your application when confronted with invalid, unexpected, random, or maliciously formed data. Such checks can be especially useful when used against the interfaces that cross the trust boundary (such as end user file upload forms or inputs).
+
+Some interesting tools from this category include the following:
+
+\begin{itemize}
+\item 
+Peach Fuzzer: https://www.peach.tech/products/peach-fuzzer/
+
+\item 
+PortSwigger Burp: https://portswigger.net/burp
+
+\item 
+The OWASP Zed Attack Proxy project: https://www.owasp.org/index.php/OWAS\_Zed\_Attack\_Proxy\_Project
+
+\item 
+Google's ClusterFuzz: https://github.com/google/clusterfuzz (and OSSFuzz: https://github.com/google/oss-fuzz)
+\end{itemize}
+
+\subsubsubsection{10.4.3\hspace{0.2cm}Process isolation and sandboxing}
+
+If you want to run unverified software in your own environment, you may want to isolate it from the rest of your system. Some ways to sandbox the executed code is via VMs, containers, or micro VMs such as Firecracker (https://firecracker-microvm.github.io/) used by AWS Lambda.
+
+This way, the crashes, leaks, and security problems of one application won't propagate to the entire system, rendering it either useless or compromised. As each process will have its own sandbox, the worst-case scenario would be the loss of only this one service.
+
+For C and C++ code, there is also Sandboxed API (SAPI; https://github.com/google/sandboxed-api) an open source project led by Google. It allows building sandboxes not for entire processes but for libraries. It is used by Google's own Chrome and Chromium web browsers, among others.
+
+Even though VMs and containers can be a part of the process isolation strategy, don't confuse them with microservices, which often use similar building blocks. Microservices are an architectural design pattern and they don't automatically equal better security.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

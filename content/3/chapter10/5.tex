@@ -1,0 +1,42 @@
+
+Even if you take the necessary precautions to ensure that your dependencies and code are free from known vulnerabilities, there still exists an area that can compromise your security strategy. All applications need an execution environment and this can mean either a container, VMs, or an operating system. Sometimes, this can also mean the underlying infrastructure as well.
+
+It's not enough to make your application hardened to the maximum when the operating system it runs on has open access. This way, instead of targeting your application, the attacker can gain unauthorized access to the data directly from the system or infrastructure level.
+
+This section will focus on some techniques of hardening that you can apply at this lowest level of execution.
+
+\subsubsubsection{10.5.1\hspace{0.2cm}Static versus dynamic linking}
+
+Linking is the process that occurs after compilation when the code you've written is brought together with its various dependencies (such as the standard library). Linking can occur at build time, at load time (when the operating system executes the binary), or at runtime, as is the case with plugins and other dynamic dependencies. The last two use cases are only possible with dynamic linking.
+
+So, what is the difference between dynamic and static linking? With static linking, the contents of all the dependencies are copied to the resulting binary. When the program is loaded, the operating system places this single binary in the memory and executes it. Static linking is performed by programs called linkers as the last step of the build process.
+
+Because each executable has to contain all the dependencies, statically linked programs tend to be big. This has its upside as well; since everything needed to execute the problem is already available in a single place, the execution can be faster and it always takes the same amount of time to load the program into memory. Any changes in the dependencies require recompilation and relinking; there is no way to upgrade one dependency without changing the resulting binary.
+
+In dynamic linking, the resulting binary contains the code you've written, but instead of the contents of the dependencies, there are only references to the actual libraries that need to be loaded separately. During load time, it is the task of the dynamic loader to find the appropriate libraries and load them to memory alongside your binary. When several applications are running simultaneously and each of them is using similar dependencies (such as a JSON parsing library or JPEG processing library), the dynamically liked binaries will result in lower memory usage. This is due to the fact that only a single copy of a given library can be loaded into memory. In contrast, with statically linked binaries, the same libraries would be loaded over and over again as part of the resulting binaries. When you need to upgrade one of your dependencies, you can do so without touching any other component of your system. The next time your application is loaded into memory, it will reference the newly upgraded component automatically.
+
+Static and dynamic linking also have security implications. It is easier to gain unauthorized access to dynamically linked applications. This can be achieved by substituting a compromised dynamic library in place of a regular one or by preloading certain libraries into each newly executed process.
+
+When you combine static linking with containers (explained in detail in a later chapter), you get small, secure, sandboxed execution environments. You may even go further and use such containers with microkernel-based VMs that reduce the attack surface considerably.
+
+\subsubsubsection{10.5.2\hspace{0.2cm}Address space layout randomization}
+
+Address Space Layout Randomization (ASLR) is a technique used to prevent memorybased exploits. It works by replacing the standard memory layout of the program and data with a randomized one. This means an attacker cannot reliably jump to a particular function that would otherwise be present on a system without ASLR.
+
+This technique can be made even more effective when combined with no-execute (NX) bit support. The NX bit marks certain pages in the memory, such as the heap and stack, as containing only data that cannot be executed. NX bit support has been implemented in most mainstream operating systems and can be used whenever hardware supports it.
+
+
+\subsubsubsection{10.5.3\hspace{0.2cm}DevSecOps}
+
+To deliver software increments on a predictable basis, it is best to embrace the DevOps philosophy. In short, DevOps means breaking the traditional model by encouraging communication between business, software development, software operations, quality assurance, and clients. DevSecOps is a form of DevOps that also emphasizes the need to design with security in mind at each step of the process.
+
+This means that the application you are building has observability built-in from the beginning, leverages CI/CD pipelines, and is scanned for vulnerabilities on a regular basis. DevSecOps gives developers a voice in the design of the underlying infrastructure, and it gives operations experts a voice in the design of the software packages that make up the application. Since every increment represents a working system (albeit not fully functional), security audits are performed regularly and therefore take less time than normal. This results in faster and more secure releases and allows for quicker reactions to security incidents.
+
+
+
+
+
+
+
+
+

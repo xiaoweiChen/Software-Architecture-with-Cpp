@@ -1,0 +1,249 @@
+
+In this chapter, we provide information on how to check your code, your dependencies, and your environment for potential threats. Keep in mind, though, that following every step outlined within this chapter won't necessarily protect you against all possible problems. Our aim is to show you some possible dangers and the ways to deal with them. Given this, you should always be conscious of the security of your system and make audits a routine event.
+
+Before the internet became ubiquitous, software authors weren't too concerned about the security of their designs. After all, if the user presented malformed data, the user could crash their own computer at most. In order to use software vulnerabilities to access protected data, the attacker had to obtain physical access to the machines holding the data.
+
+Even in software that was designed to be used within networks, security was often an afterthought. Take the Hypertext Transfer Protocol (HTTP) as an example. Even though it allows the password protection of some assets, all of the data is transferred in plain text. This means everyone on the same network can eavesdrop on the data being transferred.
+
+Today, we should embrace security right from the first stages of design and keep it in mind at every stage of software development, operations, and maintenance. Most of the software we produce every day is meant to, in one way or another, connect with other existing systems.
+
+By omitting security measures, we open up not only ourselves but also our partners to potential attacks, data leaks, and, eventually, lawsuits. Keep in mind that failure to protect personal data can result in a fine of several million US dollars.
+
+\subsubsubsection{10.1.1\hspace{0.2cm}Security-conscious design}
+
+How can we design an architecture for security? The best way to do this is to think like a potential attacker. There are many ways in which you can break a box open but usually, you will look for the cracks where different elements connect. (In the case of a box, this may be between the lid and the bottom of the box.)
+
+In software architecture, connections between elements are called interfaces. Since their main role is to interact with the external world, they are the most vulnerable part of the entire system. Making sure your interfaces are protected, intuitive, and robust will solve the most obvious ways in which your software can be broken.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Making interfaces easy to use and hard to misuse}
+
+To design interfaces in a way that would be both easy to use and hard to misuse, consider the following exercise. Imagine you are a customer of your interface. You want to implement an e-commerce store that uses your payment gateway, or maybe you want to implement a VR application that connects with the Customer API of the example system we've used throughout this book.
+
+As a general rule regarding interface design, avoid the following traits:
+
+\begin{itemize}
+\item 
+Too many parameters passed to the function/method
+
+\item 
+Ambiguous names of parameters
+
+\item 
+Using output parameters
+
+\item 
+Parameters depending on other parameters
+\end{itemize}
+
+Why are these traits considered problematic?
+
+\begin{itemize}
+\item 
+The first one makes it hard to memorize not only the meaning but also the order of the parameters. This can lead to errors in usage, which, in turn, may lead to crashes and security issues.
+
+\item 
+The second trait has similar consequences to the first one. By making it less intuitive to use your interface, you make it easier for the user to make mistakes.
+
+\item 
+The third trait is a variant of the second one but with an added twist. Not only does the user have to remember which parameters are input and which are output, but it is also necessary for the user to remember how the output should be treated. Who manages the creation and deletion of the resources? How is this achieved? What is the memory management model behind it?
+
+With modern C++, it's easier than ever to return a value that contains all of the necessary data. With pairs, tuples, and vectors, there is no excuse to use the output parameters. Besides all of this, returning the value helps embrace the practice of not modifying the state of an object. This, in turn, reduces concurrency-related problems.
+
+\item 
+Finally, the last trait introduces unnecessary cognitive load, which, as in the previous examples, can result in mistakes and eventually failures. Such code is also harder to test and maintain as each change introduced has to take into account all the possible combinations already available. Failure to properly handle any combination is a potential threat to the system.
+\end{itemize}
+
+The preceding rules apply to the external part of the interfaces. You should also apply similar measures to the internal part by validating the inputs, making sure the values are correct and sensible and preventing unwanted use of the services the interface provides.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Enabling automatic resource management}
+
+System instability may also result from memory leaks, data races, and deadlocks. All of these symptoms are manifestations of poor resource management. Even though resource management is a hard topic, there is a mechanism that can help you reduce the number of problems. One such mechanism is automatic resource management.
+
+In this context, a resource is something you gain access to via the operating system and you have to make sure you use it correctly. This may mean using dynamically allocated memory, open files, sockets, processes, or threads. All of these require specific actions to be taken when you acquire them and when you release them. Some of them also require specific actions during their lifetime. Failure to release such resources at the right time leads to leaks. Since the resources are usually finite, in the long run, leaks will turn to unexpected behavior when no new resources can be created. 
+
+Resource management is so important in C++ because, unlike many other high-level languages, there is no garbage collection in C++ and the software developers are responsible for the life cycle of the resources. Understanding this life cycle helps create secure and stable systems.
+
+The most common idiom of resource management is Resource Acquisition Is Initialization (RAII). Although it originated in C++, it has also been used in other languages, such as Vala and Rust. This idiom uses the object's constructor and destructor to allocate and free up resources, respectively. This way, we can guarantee that the resource in use will be properly freed when the object that holds it goes out of scope.
+
+Some examples of using this idiom in the standard library are the std::unique\_ptr and std::shared\_ptr smart pointer types. Other examples include mutexes – std::lock\_guard, std::unique\_lock, and std:shared\_lock – or files – std::ifstream and std::ofstream.
+
+The Guidelines Support Library (GSL), which we'll discuss at length shortly, also implements a particularly useful guideline for automated resource management. By using the gsl::finally() function in our code, we create a gsl::final\_action() object with some code attached to it. This code will be executed when the object's destructor is called. This means the code will be executed both upon a successful return from the function as well as when the stack unwinding happens during an exception.
+
+This approach shouldn't be used too often as it is generally a better idea to design your classes with RAII in mind. But if you're interfacing with a third-party module and you want to ensure the safety of your wrapper, finally() can help you get there.
+
+As an example, consider that we have a payment operator that allows only a single concurrent login per account. If we don't want to block the user from making future payments, we should always log out as soon as we finish processing the transaction. This is not a problem when we are on a happy path and everything goes according to our design. But in the event of an exception, we also want to be safe and release the resource. Here's how we could do it using gsl::finally():
+
+\begin{lstlisting}[style=styleCXX]
+TransactionStatus processTransaction(AccountName account, ServiceToken
+token,
+Amount amount)
+{
+	payment::login(account, token);
+	auto _ = gsl::finally([] { payment::logout(); });
+	payment::process(amount); // We assume this can lead to exception
+	
+	return TransactionStatus::TransactionSuccessful;
+}
+\end{lstlisting}
+
+Regardless of what happens during the call to payment::process(), we can at least guarantee that we log the user out as soon as we go out of processTransaction()'s scope.
+
+In short, using RAII makes you think more about the resource management during the class design phase while you have full control of the code and think less about when you (or other parties) use the interface when your intentions may no longer be as clear.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Drawbacks of concurrency and how to deal with it}
+
+While concurrency improves performance and resource utilization, it also makes your code much harder to design and debug. This is because, unlike in a single-threaded flow, the timing of operations cannot be determined upfront. In single-threaded code, you either write to the resource or read from it, but you always know the order of the operations and can, therefore, predict the state of the object.
+
+With concurrency, several threads or processes can be either reading from an object or modifying it at the same time. If the modifications aren't atomic, we can reach one of the variants of the common update problem. Consider the following code:
+
+\begin{lstlisting}[style=styleCXX]
+TransactionStatus chargeTheAccount(AccountNumber acountNumber, Amount
+amount)
+{
+	Amount accountBalance = getAcountBalance(accountNumber);
+	if (accountBalance > amount)
+	{
+		setAccountBalance(accountNumber, accountBalance - amount);
+		return TransactionStatus::TransactionSuccessful;
+	}
+	return TransactionStatus::InsufficientFunds;
+}
+\end{lstlisting}
+
+When calling the chargeTheAccount function from a non-concurrent code, everything will end up well. Our program will check the account balance and charge it if possible. The concurrent execution, however, can lead to a negative balance. This is because two threads can one after another call getAccountBalance(), which will return the same amount, such as 20. After performing that call, both threads check whether the current balance is higher than the available amount. Finally, after the check, they modify the account balance. Supposing both transactions are for the amount of 10, each thread will set the balance to be 20 – 10 = 10. After both operations, the account has a balance of 10, even though it should be 0!
+
+To mitigate a similar class of problems, we can use solutions such as mutexes and critical sections, atomic operations provided by CPU, or concurrency-safe data structures.
+
+Mutexes, critical sections, and other similar concurrency design patterns prevent more than one thread from modifying (or reading) the data. Even though they are useful when designing concurrent applications, there is a trade-off associated with them. They effectively make parts of your code single-threaded. This is because code guarded by mutexes allows only a single thread to execute it; all of the others have to wait until the mutex is released. And since we introduce waiting, we can make our code less performant even though our original aim was to make it more performant.
+
+Atomic operations mean using a single CPU instruction to get the desired effect. The term can mean any high-level operation that transforms into a single CPU instruction. They are particularly interesting when that single instruction achieves more than would be normally possible. For example, compare-and-swap (CAS) is an instruction that compares the memory location with a given value and modifies the contents of this location to the new value only if the comparison proved successful. Since C++11, there's a <std::atomic> header available that contains several atomic data types and operations. CAS, for instance, is implemented as a compare\_and\_exchange\_* set of functions.
+
+Finally, concurrency-safe data structures (also known as concurrent data structures) provide safe abstractions for data structures that would otherwise require some sort of synchronization. For example, the Boost.Lockfree (https://www.boost.org/doc/libs/1\_66\_0/doc/html/lockfree.html) library provides concurrent queues and stacks for use with multiple producers and multiple consumers. libcds (https://github.com/khizmax/libcds) also offers ordered lists, sets, and maps, but it hasn't been updated in a few years as of the time of writing this book.
+
+Useful rules to keep in mind when designing concurrent processing are as follows:
+
+\begin{itemize}
+\item 
+Consider whether you need concurrency in the first place.
+
+\item 
+Pass data by value rather than by pointer or reference. This prevents modifications of the value when other threads are reading it.
+
+\item 
+If the size of the data makes it impractical to share by value, use shared\_ptr. This way, it's easier to avoid resource leaks.
+\end{itemize}
+
+\subsubsubsection{10.1.2\hspace{0.2cm}Secure coding, the guidelines, and GSL}
+
+The Standard C++ Foundation released a set of guidelines to document the best practices for building C++ systems. It is a Markdown document released on GitHub under https://github.com/isocpp/CppCoreGuidelines. It is an evolving document without a release schedule (unlike the C++ standard itself). The guidelines are aimed at modern C++, which basically means code bases that implement at least C++11 features.
+
+Many of the rules presented in the guidelines cover the topics that we present in this chapter. For example, there are rules related to interface design, resource management, and concurrency. The editors of the guidelines are Bjarne Stroustrup and Herb Sutter, both respected members of the C++ community.
+
+We won't go into detail describing the guidelines. We encourage you to read them yourself. This book is inspired by many of the rules presented there and we follow them in our examples.
+
+To ease the use of these rules in various code bases, Microsoft released the Guidelines Support Library (GSL) as an open source project hosted on https://github.com/microsoft/GSL. It is a header-only library that you can include in your project to use the defined types. You can either include the whole GSL or selectively use only some of the types you plan on using.
+
+What's also interesting about the library is the fact that it uses CMake for building, Travis for continuous integration, and Catch for unit testing. It is, therefore, a good example of the topics we've covered in Chapter 7, Building and Packaging, and Chapter 8, Writing Testable Code, and Chapter 9, Continuous Integration and Continuous Deployment.
+
+\subsubsubsection{10.1.3\hspace{0.2cm}Defensive coding, validating everything}
+
+In a previous chapter on testability, we mentioned the method of defensive programming. Even though this method is not strictly a security feature, it happens to help with creating a robust interface. Such interfaces, in turn, increase the overall security of your system.
+
+As a good heuristic, you can treat all the external data as unsafe. What we mean by external data is every input coming to the system via some interface (either a programming interface or user interface). To denote this, you can go as far as prefixing the appropriate types as Unsafe, as follows:
+
+\begin{lstlisting}[style=styleCXX]
+RegistrationResult registerUser(UnsafeUsername username, PasswordHash
+passwordHash)
+{
+	SafeUsername safeUsername = username.sanitize();
+	try
+	{
+		std::unique_ptr<User> user = std::make_unique<User>(safeUsername,
+		passwordHash);
+		CommitResult result = user->commit();
+		if (result == CommitResult::CommitSuccessful)
+		{
+			return RegistrationResult::RegistrationSuccessful;
+		}
+		else
+		{
+			return RegistrationResult::RegistrationUnsuccessful;
+		}
+	}
+	catch (UserExistsException _)
+	{
+		return RegistrationResult::UserExists;
+	}
+}
+\end{lstlisting}
+
+If you have already read the guidelines, you will know that you should generally avoid using the C API directly. Some of the functions in the C API can be used in an unsafe way and require special care to use them defensively. It is much better to instead use respective concepts from C++ that ensure better type safety as well as protection (for example, against buffer overflow).
+
+Another facet of defensive programming is the intelligent reuse of the existing code. Each time you try to implement some technique, ensure nobody else has implemented it before you. Writing a sorting algorithm yourself may be a fun challenge to do when you're learning a new programming language, but for production code, it's much better to use the sorting algorithms available in the standard library. The same goes for password hashing. No doubt you can find some clever way to calculate the password hashes and store them in a database but it is generally wiser to go with the tried and true (and don't forget peerreviewed!) bcrypt. Keep in mind that intelligent code reuse assumes you check and audit the third-party solutions with the same due diligence as  you would your own code. We will dive deeper into this topic in the next section, Are my dependencies secure?.
+
+It's worth noting that defensive programming shouldn't turn into paranoid programming. Checking user input is a sane thing to do, while asserting whether an initialized variable is still equal to the original value just after the initialization is going too far. You want to control the integrity of your data and algorithms and the integrity of third-party solutions. You don't want to verify the correctness of your compiler by embracing language features.
+
+In short, it's a good idea from both a security and readability point of view to use Expects() and Ensures() as presented in C++ Core Guidelines and to distinguish between unsafe and safe data through typing and conversions.
+
+\subsubsubsection{10.1.4\hspace{0.2cm}The most common vulnerabilities}
+
+To check whether your code is safe against the most common vulnerabilities, you should first learn about the said vulnerabilities. After all, a defense is only possible when you know what the offense looks like. The Open Web Application Security Project (OWASP) has cataloged the most common vulnerabilities and has published them at https://www.owasp.org/index.php/Category:OWASP\_Top\_Ten\_Project. At the moment of writing this book, those vulnerabilities are as follows:
+
+\begin{itemize}
+\item 
+Injection: Commonly known as SQL injection. It is not limited to SQL; this vulnerability occurs when untrusted data is passed directly to an interpreter (such as a SQL database, NoSQL database, shell, or eval function). The attacker may this way gain access to parts of the system that should be protected.
+
+\item 
+Broken Authentication: If authentication is improperly implemented, attackers may use flaws to either compromise secret data or impersonate other users.
+
+\item 
+Sensitive Data Exposure: The lack of encryption and proper access rights may lead to sensitive data being exposed publicly.
+
+\item 
+XML External Entities (XXE): Some XML processors may disclose the contents of the server's filesystem or allow remote code execution.
+
+\item 
+Broken Access Control: When access control is not enforced properly, attackers may gain access to files or data that should be restricted.
+
+\item 
+Security Misconfiguration: Using insecure defaults and improper care with configuration are the most common sources of vulnerabilities.
+
+\item 
+Cross-Site Scripting (XSS): Including and executing untrusted external data, especially with JavaScript, that allows control of the user's web browser. 
+
+\item 
+Insecure Deserialization: Some flawed parsers may fall prey to denial of services attacks or remote code execution.
+
+\item 
+Using Components with Known Vulnerabilities: A lot of the code in modern applications comes as third-party components. These components should be regularly audited and updated as known security flaws in a single dependency can result in your entire application and data being compromised. Fortunately, there are tools that help automate this.
+
+\item 
+Insufficient Logging \& Monitoring: If your system is under attack and your logging and monitoring is not very thorough, the attacker may obtain deeper access and still become unnoticed.
+\end{itemize}
+
+We won't go into detail regarding each of the mentioned vulnerabilities. What we want to highlight here is that you can prevent injection, XML external entities, and insecure deserialization by following the defensive programing techniques we mentioned before. By treating all external data as unsafe, you can first sanitize it by removing all the unsafe content before you start the actual processing.
+
+When it comes to insufficient logging and monitoring, we will go into detail in Chapter 15, Cloud-Native Design. There we will present some possible approaches to observability, including logging, monitoring, and distributed tracing.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,98 @@
+
+There are many things that can help your compiler generate efficient code for you. Some boil down to steering it properly, others require writing your code in a compiler-friendly way.
+
+It's also important to know what you need to do on your critical path and to design it efficiently. For instance, try to avoid virtual dispatch there (unless you can prove it's being devirtualized), and try not to allocate new memory on it. Often, the clever design of code to avoid locking (or at least using lock-free algorithms) is helpful. Generally speaking, everything that can worsen your performance should be kept outside your hot path. Having both your instruction and data caches hot is really going to pay out. Even attributes such as [[likely]] and [[unlikely]] that hint to the compiler which branch it should expect to be executed can sometimes change a lot.
+
+\subsubsubsection{11.3.1\hspace{0.2cm}Optimizing whole programs}
+
+An interesting way to increase the performance of many C++ projects is to enable link-time optimization (LTO). During compilation, your compiler doesn't know how the code will get linked with other object files or libraries. Many opportunities to optimize arise only at this point: when linking, your tools can see the bigger picture of how the parts of your program interact with each other. By enabling LTO, you can sometimes grab a significant improvement in performance with very little cost. In CMake projects, you can enable LTO by setting either the global CMAKE\_INTERPROCEDURAL\_OPTIMIZATION flag or by setting the INTERPROCEDURAL\_OPTIMIZATION property on your targets.
+
+One drawback of using LTO is that it makes the building process longer. Sometimes a lot longer. To mitigate this cost for developers, you may want to only enable this optimization for builds that undergo performance testing or are meant to be released.
+
+\subsubsubsection{11.3.2\hspace{0.2cm}Optimizing based on real-world usage patterns}
+
+Another interesting way to optimize your code is to use Profile-Guided Optimization (PGO). This optimization is actually a two-step one. In the first step, you need to compile your code with additional flags that cause the executable to gather special profiling information during runtime. You should then execute it under the expected production load. Once you're done with it, you can use the gathered data to compile the executable a second time, this time passing a different flag that instructs the compiler to use the gathered data to generate code better suited for your profile. This way, you'll end up with a binary that's prepared and tuned to your specific workload.
+
+
+\subsubsubsection{11.3.3\hspace{0.2cm}Writing cache-friendly code}
+
+Both those types of optimization can be of use, but there's one more important thing that you need to keep in mind when working on performant systems: cache friendliness. Using flat data structures instead of node-based ones means that you need to perform less pointer chasing at runtime, which helps your performance. Using data that's contiguous in memory, regardless of whether you're reading it forward or backward, means your CPU's memory prefetcher can load it before it's used, which can often make a huge difference. Node-based data structures and the mentioned pointer chasing cause random memory access patterns that can "confuse" the prefetcher and make it impossible for it to prefetch correct data.
+
+If you want to see some performance results, please refer to the C++ Containers Benchmark linked in the Further reading section. It compares various usage scenarios of std::vector, std::list, std::deque, and plf::colony. If you don't know that last one, it's an interesting "bag"-type container with great fast insertion and deletion of large data.
+
+When choosing from associative containers, you'll most often want to use "flat" implementations instead of node-based ones. This means that instead of using std::unordered\_map and std::unordered\_set, you might want to try out ones like tsl::hopscotch\_map or Abseil's flat\_hash\_map and flat\_hash\_set.
+
+Techniques such as putting colder instructions (such as exception handling code) in a noninline function can help to increase the hotness of your instruction cache. This way, lengthy code for handling rare cases will not be loaded in the instruction cache, leaving space for more code that should be there, which can also improve your performance.
+
+
+\subsubsubsection{11.3.3\hspace{0.2cm}Designing your code with data in mind}
+
+If you want to help your caches, another technique that can be helpful is data-oriented design. Often, it's a good idea to store members used more often close to each other in memory. Colder data can often be placed in another struct and just be connected with the hotter data by an ID or a pointer.
+
+Sometimes, instead of the more commonly spotted arrays of objects, using objects of arrays can yield better performance. Instead of writing your code in an object-oriented manner, split your object's data member across a few arrays, each containing data for multiple objects. In other words, take the following code:
+
+\begin{lstlisting}[style=styleCXX]
+struct Widget {
+	Foo foo;
+	Bar bar;
+	Baz baz;
+};
+
+auto widgets = std::vector<Widget>{};
+\end{lstlisting}
+
+And consider replacing it with the following:
+
+\begin{lstlisting}[style=styleCXX]
+struct Widgets {
+	std::vector<Foo> foos;
+	std::vector<Bar> bars;
+	std::vector<Baz> bazs;
+};
+\end{lstlisting}
+
+This way, when processing a specific set of data points against some objects, the cache hotness increases and so does the performance. If you don't know whether this will yield more performance from your code, measure.
+
+Sometimes even reordering members of your types can give you better performance. You should take into account the alignment of your types of data members. If performance matters, usually it's a good idea to order them so that the compiler doesn't need to insert too much padding between the members. Thanks to that, the size of your data type can be smaller, so many such objects can fit into one cache line. Consider the following example (let's assume we're compiling for the x86\_64 architecture):
+
+\begin{lstlisting}[style=styleCXX]
+struct TwoSizesAndTwoChars {
+	std::size_t first_size;
+	char first_char;
+	std::size_t second_size;
+	char second_char;
+};
+static_assert(sizeof(TwoSizesAndTwoChars) == 32);
+\end{lstlisting}
+
+Despite the sizes being 8 bytes each and chars being just 1 byte each, we end up with 32 bytes in total! That's because second\_size must start on an 8-byte aligned address, so after first\_char, we get 7 bytes of padding. The same goes for second\_char, as types need to be aligned with respect to their largest data type member.
+
+Can we do better? Let's try switching the order of our members:
+
+\begin{lstlisting}[style=styleCXX]
+struct TwoSizesAndTwoChars {
+	std::size_t first_size;
+	std::size_t second_size;
+	char first_char;
+	char second_char;
+};
+static_assert(sizeof(TwoSizesAndTwoChars) == 24);
+\end{lstlisting}
+
+By simply putting the biggest members first, we were able to cut the size of our structure by 8 bytes, which is 25\% of its size. Not bad for such a trivial change. If your goal is to pack many such structs in a contiguous block of memory and iterate through them, you could see a big performance boost of that code fragment.
+
+Let's now talk about another way to improve your  performance.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

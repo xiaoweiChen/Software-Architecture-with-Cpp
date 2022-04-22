@@ -1,0 +1,85 @@
+
+In this section, we'll discuss a few different ways to parallelize computations. We will start with a comparison between threads and processes, after which we'll show you the tools available in the C++ standard, and last but not least, we'll say a few words about the OpenMP and MPI frameworks.
+
+Before we start, let's say a few words on how to estimate the maximum possible gains you can have from parallelizing your code. There are two laws that can help us here. The first is Amdahl's law. It states that if we want to speed up our program by throwing more cores at it, then the part of our code that must remain sequential (cannot be parallelized) will limit our scalability. For instance, if 90\% of your code is parallelizable, then even with infinite cores you can still get only up to a 10x speedup. Even if we cut down the time to execute that 90\% to zero, the 10\% of the code will always remain there.
+
+The second law is Gustafson's law. It states that every large-enough task can be efficiently parallelized. This means that by increasing the size of the problem, we can obtain better parallelization (assuming we have free computing resources to use). In other words, sometimes it's better to add more capabilities to be run in the same time frame instead of trying to reduce the execution time of existing code. If you can cut the time of a task by half by doubling the cores, at some point, doubling them again and again will get you diminishing returns, so their processing power can be better spent elsewhere.
+
+\subsubsubsection{11.4.1\hspace{0.2cm}Understanding the differences between threads and processes}
+
+To parallelize computations efficiently, you need to also understand when to use processes to perform computation and when threads are the better tool for the job. Long story short, if your only target is to actually parallelize work, then it's best to start with adding extra threads up to the point where they don't bring extra benefits. At such a point, add more processes on other machines in your network, each with multiple threads too.
+
+Why is that? Because processes are more heavyweight than threads. Spawning a process and switching between them takes longer than creating and switching between threads. Each process requires its own memory space, while threads within the same process share their memory. Also, inter-process communication is slower than just passing variables between threads. Working with threads is easier than it is with processes, so the development will be faster too.
+
+Processes, however, also have their uses in the scope of a single application. They're great for isolating components that can independently run and crash without taking down the whole application with them. Having separate memory also means one process can't snoop another one's memory, which is great when you need to run third-party code that could turn out to be malicious. Those two reasons are why they're used in web browsers, among other apps. Aside from that, it's possible to run different processes with different OS permissions or privileges, which you can't achieve with multiple threads.
+
+Let's now discuss a simple way to parallelize work in the scope of a single machine.
+
+\subsubsubsection{11.4.2\hspace{0.2cm}Using the standard parallel algorithms}
+
+If the computations you perform can be parallelized, there are two ways you can use that to your advantage. One is by replacing your regular calls to standard library algorithms with parallelizable ones. If you're not familiar with parallel algorithms, they were added in C++17 and in essence are the same algorithms, but you can pass each of them an execution policy. There are three execution policies:
+
+\begin{itemize}
+\item 
+std::execution::seq: The sequenced policy for the plain-old execution of an algorithm in a non-parallelized way. This one we know too well.
+
+\item
+std::execution::par: A parallel policy that signals that the execution may be parallelized, usually using a thread pool under the hood.
+
+\item
+std::execution::par\_unseq: A parallel policy that signals that the execution may be parallelized and vectorized.
+
+\item
+std::execution::unseq: A C++20 addition to the family. This policy signals that the execution can be vectorized, but not parallelized.
+\end{itemize}
+
+If the preceding policies are not enough for you, additional ones may be provided by a standard library implementation. Possible future additions may include ones for CUDA, SyCL, OpenCL, or even artificial intelligence processors.
+
+Let's now see the parallel algorithms in action. As an example, to sort a vector in a parallel way, you can write the following:
+
+\begin{lstlisting}[style=styleCXX]
+std::sort(std::execution::par, v.begin(), v.end());
+\end{lstlisting}
+
+Simple and easy. Although in many cases this will yield better performance, in some cases you might be better off executing the algorithms in the traditional way. Why? Because  scheduling work on more threads requires additional work and synchronization. Also, depending on the architecture of your app, it may influence the performance of other already existing threads and flush their cores' data caches. As always, measure first.
+
+\subsubsubsection{11.4.3\hspace{0.2cm}Parallelizing computations using OpenMP and MPI}
+
+An alternative to using the standard parallel algorithms would be to leverage OpenMP's pragmas. They're an easy way to parallelize many types of computations by just adding a few lines of code. And if you want to distribute your code across a cluster, you might want to see what MPI can do for you. Those two can also be joined together.
+
+With OpenMP, you can use various pragmas to easily parallelize code. For instance, you can write \#pragma openmp parallel for before a for loop to get it executed using parallel threads. The library can do much more, such as executing computations on GPUs and other accelerators.
+
+Integrating MPI into your project is harder than just adding an appropriate pragma. Here, you'll need to use the MPI API in your code base to send or receive data between processes (using calls such as MPI\_Send and MPI\_Recv), or perform various gather and reduce operations (calling MPI\_Bcast and MPI\_Reduce, among other functions in this family). Communication can be done point to point or to all clusters using objects called communicators.
+
+Depending on your algorithm implementation, MPI nodes can all execute the same code or it can vary when needed. The node will know how it should behave based on its rank: a unique number assigned when the computations start. Speaking of which, to start a process using MPI, you should run it through a wrapper, like so:
+
+\begin{tcblisting}{commandshell={}}
+$ mpirun --hostfile my_hostfile -np 4 my_command --with some ./args
+\end{tcblisting}
+
+This would read hosts from said file one by one, connect to each of them, and run four instances of my\_command on each with the args passed.
+
+There are many implementations of MPI. One of the most notable is OpenMPI (don't confuse that with OpenMP). Among some useful features, it offers fault tolerance. After all, it's not uncommon for a node to go down.
+
+The last tool we'd like to mention in this section is GNU Parallel, which you might find useful if you want to easily span processes that perform work by spawning parallel processes. It can be used both on a single machine and across a compute cluster.
+
+Speaking about different ways to execute code, let's now discuss one more big topic from C++20: coroutines.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

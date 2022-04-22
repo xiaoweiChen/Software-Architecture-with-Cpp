@@ -1,0 +1,455 @@
+
+
+To effectively improve the performance of your code, you must start by measuring how it performs. Without knowing where the actual bottlenecks are, you will end up optimizing the wrong places, losing time, and getting surprised and frustrated that your hard work gave little to no gains. In this section, we'll show how to properly measure performance using benchmarks, how to successfully profile your code, and how to gain insights into performance in distributed systems.
+
+\subsubsubsection{11.2.1\hspace{0.2cm}Performing accurate and meaningful measurementsg}
+
+For accurate and repeatable measurements, you might also want to put your machine into performance mode instead of the usual default power-saving one. If you require low  latency from your system, you might want to disable power saving permanently on both the machines you benchmark on and in your production environment. Many times this may mean going into BIOS and configuring your server properly. Note that this may not be possible if you use a public cloud provider. If you have root/admin permissions on your machine, the OS can often steer some of the settings too. For instance, you can force your CPU to run with its maximum frequency on a Linux system by running the following:
+
+\begin{tcblisting}{commandshell={}}
+sudo cpupower frequency-set --governor performance
+\end{tcblisting}
+
+Moreover, to obtain meaningful results, you might want to perform measurements on a system that as closely resembles your production environment as possible. Aside from configuration, aspects such as the different speeds of RAM, the number of CPU caches, and the microarchitecture of your CPUs can also skew your results and lead you to incorrect conclusions. The same goes for the hard drive setup and even the network topology and hardware used. The software you build on also plays a crucial role: from the firmware used, through the OS and kernel, all the way up the software stack to your dependencies. It's best to have a second environment that's identical to your production one and governed using the same tools and scripts.
+
+Now that we have a solid environment for taking measurements, let's see what we can actually measure.
+
+\subsubsubsection{11.2.2\hspace{0.2cm}Leveraging different types of measuring tools}
+
+There are several ways to measure performance, each focusing on a different scope. Let's go through them one by one.
+
+Benchmarks can be used to time the speed of your system in a pre-made test. Usually, they result in either a time to finish or another performance metric such as orders processed per second. There are several types of benchmarks:
+
+\begin{itemize}
+\item 
+Microbenchmarks, which you can use to measure the execution of a small code fragment. We'll cover them in the next section.
+
+\item 
+Simulations, which are synthetic tests on a larger scale with artificial data. They can be useful if you don't have access to the target data or your target hardware. For instance, when you are planning to check the performance of hardware that you're working on, but it doesn't exist yet, or when you plan to handle incoming traffic, but can only assume how the traffic will look.
+
+\item 
+Replays, which can be a very accurate way of measuring performance under the real-life workload. The idea is to record all the requests or workloads coming into the production system, often with timestamps. Such dumps can then later be "replayed" into the benchmarked system, respecting the time differences between them, to check how it performs. Such benchmarks can be great to see how potential changes to code or the environment can influence the latency and throughput of your system.
+
+\item 
+Industry-standard, which is a good way to see how our product performs compared to its competitors. Examples of such benchmarks include SuperPi for CPUs, 3D Mark for graphic cards, and ResNet-50 for artificial intelligence processors.
+\end{itemize}
+
+Aside from benchmarking, another type of tool that is invaluable when it comes to measuring performance is profilers. Instead of just giving you overall performance metrics, profilers allow you to examine what your code is doing and look for bottlenecks. They're useful for catching unexpected things that slow your system down. We'll cover them in more detail later in this chapter.
+
+The last way to grasp your system's performance is tracing. Tracing is essentially a way to log your system's behavior during execution. By monitoring how long it takes for a request to complete various steps of processing (such as being handled by different types of microservices), you can gain insight into what parts of your system need to improve their performance, or how well your system deals with different kinds of requests: either different types or those that get accepted or rejected. We'll cover tracing later in this chapter – right after profiling.
+
+Let's now say a few more words on microbenchmarks.
+
+\subsubsubsection{11.2.3\hspace{0.2cm}Using microbenchmarks}
+
+Microbenchmarks are used to measure how fast a "micro" fragment of code can perform. If you're wondering how to implement a given functionality or how fast different third-party libraries deal with the same task, then they're the perfect tool for the job. While they're not representative of a realistic environment, they're well suited to perform such small experiments.
+
+Let's show how to run such experiments using one of the most commonly used frameworks to create microbenchmarks in C++: Google Benchmark.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Setting up Google Benchmark}
+
+Let's start by introducing the library into our code by using Conan. Put the following in your conanfile.txt:
+
+\begin{tcblisting}{commandshell={}}
+[requires]
+benchmark/1.5.2
+
+[generators]
+CMakeDeps	
+\end{tcblisting}
+
+We're going to use the CMakeDeps generator as it's the recommended CMake generator in Conan 2.0. It relies on CMake's find\_package feature to use the packages installed by our barbaric dependency manager. To install the dependencies in their release versions, run the following:
+
+\begin{tcblisting}{commandshell={}}
+cd <build_directory>
+conan install <source_directory> --build=missing -s build_type=Release
+\end{tcblisting}
+
+If you're using a custom Conan profile, remember to add it here as well.
+
+Using it from your CMakeLists.txt file is also pretty straightforward, as shown next:
+
+\begin{lstlisting}[style=styleCMake]
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
+find_package(benchmark REQUIRED)
+\end{lstlisting}
+
+First, we add our build directory to CMAKE\_PREFIX\_PATH so that CMake can find the config and/or target files produced by Conan. Next, we just use them to find our dependency.
+
+As we're going to create several microbenchmarks, we could use a CMake function to help us with defining them:
+
+\begin{lstlisting}[style=styleCMake]
+function(add_benchmark NAME SOURCE)
+	add_executable(${NAME} ${SOURCE})
+	target_compile_features(${NAME} PRIVATE cxx_std_20)
+	target_link_libraries(${NAME} PRIVATE benchmark::benchmark)
+endfunction()
+\end{lstlisting}
+
+The function will be able to create single-translation-unit microbenchmarks, each using C++20 and linked to the Google Benchmark library. Let's now use it to create our first microbenchmark executable:
+
+\begin{lstlisting}[style=styleCMake]
+add_benchmark(microbenchmark_1 microbenchmarking/main_1.cpp)
+\end{lstlisting}
+
+Now we're ready to put some code in our source file.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Writing your first microbenchmark}
+
+We'll try to benchmark how much faster a lookup takes when it's done using bisection in a sorted vector as compared to just going through it linearly. Let's start with code that will create the sorted vector:
+
+\begin{lstlisting}[style=styleCXX]
+using namespace std::ranges;
+
+template <typename T>
+auto make_sorted_vector(std::size_t size) {
+	auto sorted = std::vector<T>{};
+	sorted.reserve(size);
+	
+	auto sorted_view = views::iota(T{0}) | views::take(size);
+	std::ranges::copy(sorted_view, std::back_inserter(sorted));
+	return sorted;
+}
+\end{lstlisting}
+
+Our vector will contain size elements with all the numbers from 0 to size - 1 in ascending order. Let's now specify the element we're looking for and the container size:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr auto MAX_HAYSTACK_SIZE = std::size_t{10'000'000};
+constexpr auto NEEDLE = 2137;
+\end{lstlisting}
+
+As you can see, we'll benchmark how long it takes to find a needle in a haystack. The simple linear search can be implemented as follows:
+
+\begin{lstlisting}[style=styleCXX]
+void linear_search_in_sorted_vector(benchmark::State &state) {
+	auto haystack = make_sorted_vector<int>(MAX_HAYSTACK_SIZE);
+	for (auto _ : state) {
+		benchmark::DoNotOptimize(find(haystack, NEEDLE));
+	}
+}
+\end{lstlisting}
+
+Here, we can see the first use of Google Benchmark. Each microbenchmark should accept State as an argument. This special type does the following:
+
+\begin{itemize}
+\item 
+Contains information about the iterations performed and the time spent on the measured computation
+
+\item 
+Counts the bytes processed if wanted 
+
+\item 
+Can return other state information, such as the need to run further (through the KeepRunning() member function)
+
+\item 
+Can be used to pause and resume the timing of an iteration (through the PauseTiming() and ResumeTiming() member functions, respectively)
+\end{itemize}
+
+The code in our loop will be measured, making as many iterations as desired, based on the total allowed time to run this particular benchmark. The creation of our haystack is outside the loop and won't be measured. 
+
+Inside the loop, there's a sink helper named DoNotOptimize. Its purpose is to ensure the compiler doesn't get rid of our computations as it can prove that they are irrelevant outside of this scope. In our case, it will mark the result of std::find necessary, so the actual code to find the needle is not optimized away. Using tools such as objdump or sites such as Godbolt and QuickBench allows you to peek if the code you want to run wasn't optimized out. QuickBench has the additional advantage of running your benchmarks in the cloud and sharing their results online.
+
+Back to our task at hand, we have a microbenchmark for the linear search, so let's now time the binary search in another microbenchmark:
+
+\begin{lstlisting}[style=styleCXX]
+void binary_search_in_sorted_vector(benchmark::State &state) {
+	auto haystack = make_sorted_vector<int>(MAX_HAYSTACK_SIZE);
+	for (auto _ : state) {
+		benchmark::DoNotOptimize(lower_bound(haystack, NEEDLE));
+	}
+}
+\end{lstlisting}
+
+Our new benchmark is pretty similar. It only differs in the function used: lower\_bound will perform a binary search. Note that similar to our base example, we don't even check if the iterator returned points to a valid element in the vector, or to its end. In the case of lower\_bound, we could check if the element under the iterator is actually the one we're looking for.
+
+Now that we have the microbenchmark functions, let's create actual benchmarks out of them by adding the following:
+
+\begin{lstlisting}[style=styleCXX]
+BENCHMARK(binary_search_in_sorted_vector);
+BENCHMARK(linear_search_in_sorted_vector);
+\end{lstlisting}
+
+If the default benchmark settings are okay with you, that's all you need to pass. As the last step, let's add a main() function:
+
+\begin{lstlisting}[style=styleCXX]
+BENCHMARK_MAIN();
+\end{lstlisting}
+
+Simple as that! Alternatively, you can link our program with benchmark\_main instead. Using Google Benchmark's main() function has the advantage of providing us with some default options. If you compile our benchmark and run it passing -\,-help as a parameter, you'll see the following:
+
+\begin{tcblisting}{commandshell={}}
+benchmark [--benchmark_list_tests={true|false}]
+          [--benchmark_filter=<regex>]
+          [--benchmark_min_time=<min_time>]
+          [--benchmark_repetitions=<num_repetitions>]
+          [--benchmark_report_aggregates_only={true|false}]
+          [--benchmark_display_aggregates_only={true|false}]
+          [--benchmark_format=<console|json|csv>]
+          [--benchmark_out=<filename>]
+          [--benchmark_out_format=<json|console|csv>]
+          [--benchmark_color={auto|true|false}]
+          [--benchmark_counters_tabular={true|false}]
+          [--v=<verbosity>]
+\end{tcblisting}
+
+This is a nice set of features to use. For example, when designing experiments, you can use the benchmark\_format switch to get a CSV output for easier plotting on a chart.
+
+Let's now see our benchmark in action by running the compiled executable with no command-line arguments. A possible output from running ./microbenchmark\_1 is as follows:
+
+\begin{tcblisting}{commandshell={}}
+2021-02-28T16:19:28+01:00
+Running ./microbenchmark_1
+Run on (8 X 2601 MHz CPU s)
+Load Average: 0.52, 0.58, 0.59
+-------------------------------------------------------------------------
+Benchmark Time CPU Iterations
+-------------------------------------------------------------------------
+linear_search_in_sorted_vector 984 ns 984 ns 746667
+binary_search_in_sorted_vector 18.9 ns 18.6 ns 34461538
+\end{tcblisting}
+
+Starting with some data about the running environment (the time of benchmarking, the executable name, the server's CPUs, and the current load), we get to the results of each benchmark we defined. For each benchmark, we get the average wall time per iteration, the average CPU time per iteration, and the number of iterations that the benchmark harness ran for us. By default, the longer a single iteration, the fewer iterations it will go through. Running more iterations ensures you get more stable results.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Passing arbitrary arguments to a microbenchmark}
+
+If we were to test more ways of dealing with our problem at hand, we could look for a way to reuse the benchmark code and just pass it to the function used to perform the lookup. Google Benchmark has a feature that we could use for that. The framework actually lets us pass any arguments we want to the benchmark by adding them as additional parameters to the function signature.
+
+Let's see how a unified signature for our benchmark could look with this feature:
+
+\begin{lstlisting}[style=styleCXX]
+void search_in_sorted_vector(benchmark::State &state, auto finder) {
+	auto haystack = make_sorted_vector<int>(MAX_HAYSTACK_SIZE);
+	for (auto _ : state) {
+		benchmark::DoNotOptimize(finder(haystack, NEEDLE));
+	}
+}
+\end{lstlisting}
+
+You can notice the new finder parameter to the function, which is used in the spot where we previously called either find or lower\_bound. We can now make our two microbenchmarks using a different macro than we did last time:
+
+
+\begin{lstlisting}[style=styleCXX]
+BENCHMARK_CAPTURE(search_in_sorted_vector, binary, lower_bound);
+BENCHMARK_CAPTURE(search_in_sorted_vector, linear, find);
+\end{lstlisting}
+
+The BENCHMARK\_CAPTURE macro accepts the function, a name suffix, and the arbitrary number of parameters. If we wanted more, we could just pass them here. Our benchmark function could be a regular function or a template – both are supported. Let's now see what we get when running the code:
+
+\begin{tcblisting}{commandshell={}}
+-------------------------------------------------------------------------
+Benchmark Time CPU Iterations
+-------------------------------------------------------------------------
+search_in_sorted_vector/binary 19.0 ns 18.5 ns 28000000
+search_in_sorted_vector/linear 959 ns 952 ns 640000
+\end{tcblisting}
+
+As you can see the arguments passed to the functions are not part of the name, but the function name and our suffix are.
+
+Let's now see how we can further customize our benchmarks.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Passing numeric arguments to a microbenchmark}
+
+A common need when designing experiments like ours is to check it on different sizes of arguments. Such needs can be addressed in Google Benchmark in a number of ways. The simplest is to just add a call to Args() on the object returned by the BENCHMARK macros. This way, we can pass a single set of values to use in a given microbenchmark. To use the passed value, we'd need to change our benchmark function as follows:
+
+\begin{lstlisting}[style=styleCXX]
+void search_in_sorted_vector(benchmark::State &state, auto finder) {
+	const auto haystack = make_sorted_vector<int>(state.range(0));
+	const auto needle = 2137;
+	for (auto _ : state) {
+		benchmark::DoNotOptimize(finder(haystack, needle));
+	}
+}
+\end{lstlisting}
+
+The call to state.range(0) will read the 0-th argument passed. An arbitrary number can be supported. In our case, it's used to parameterize the haystack size. What if we wanted to pass a range of value sets instead? This way, we could see how changing the size influences the performance more easily. Instead of calling Args, we could call Range on the benchmark:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr auto MIN_HAYSTACK_SIZE = std::size_t{1'000};
+constexpr auto MAX_HAYSTACK_SIZE = std::size_t{10'000'000};
+BENCHMARK_CAPTURE(search_in_sorted_vector, binary, lower_bound)
+	->RangeMultiplier(10)
+	->Range(MIN_HAYSTACK_SIZE, MAX_HAYSTACK_SIZE);
+BENCHMARK_CAPTURE(search_in_sorted_vector, linear, find)
+	->RangeMultiplier(10)
+	->Range(MIN_HAYSTACK_SIZE, MAX_HAYSTACK_SIZE);
+\end{lstlisting}
+
+We specify the range boundaries using a predefined minimum and maximum. We then tell the benchmark harness to create the ranges by multiplying by 10 instead of the default value. When we run such benchmarks, we could get the following results:
+
+\begin{tcblisting}{commandshell={}}
+-------------------------------------------------------------------------
+Benchmark Time CPU Iterations
+-------------------------------------------------------------------------
+search_in_sorted_vector/binary/1000 0.2 ns 19.9 ns 34461538
+search_in_sorted_vector/binary/10000 24.8 ns 24.9 ns 26352941
+search_in_sorted_vector/binary/100000 26.1 ns 26.1 ns 26352941
+search_in_sorted_vector/binary/1000000 29.6 ns 29.5 ns 24888889
+search_in_sorted_vector/binary/10000000 25.9 ns 25.7 ns 24888889
+search_in_sorted_vector/linear/1000 482 ns 474 ns 1120000
+search_in_sorted_vector/linear/10000 997 ns 1001 ns 640000
+search_in_sorted_vector/linear/100000 1005 ns 1001 ns 640000
+search_in_sorted_vector/linear/1000000 1013 ns 1004 ns 746667
+search_in_sorted_vector/linear/10000000 990 ns 1004 ns 746667
+\end{tcblisting}
+
+When analyzing those results, you might be wondering why the linear search doesn't show us linear growth. That's because we look for a constant value of the needle that can be spotted at a constant position. If the haystack contains our needle, we need the same number of operations to find it regardless of the haystack size, so the execution time stops growing (but can still be subject to small fluctuations).
+
+Why not play with the needle position as well?
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{Generating the passed arguments programmatically}
+
+Generating both the haystack sizes and needle positions might be the easiest when done in a simple function. Google Benchmark allows such scenarios, so let's show how they work in practice.
+
+Let's first rewrite our benchmark function to use two parameters passed in each iteration:
+
+\begin{lstlisting}[style=styleCXX]
+void search_in_sorted_vector(benchmark::State &state, auto finder) {
+	const auto needle = state.range(0);
+	const auto haystack = make_sorted_vector<int>(state.range(1));
+	for (auto _ : state) {
+		benchmark::DoNotOptimize(finder(haystack, needle));
+	}
+}
+\end{lstlisting}
+
+As you can see, state.range(0) will mark our needle position, while state.range(1) will be the haystack size. This means we need to pass two values each time. Let's create a function that generates them:
+
+\begin{lstlisting}[style=styleCXX]
+void generate_sizes(benchmark::internal::Benchmark *b) {
+	for (long haystack = MIN_HAYSTACK_SIZE; haystack <= MAX_HAYSTACK_SIZE;
+	haystack *= 100) {
+		for (auto needle :
+		{haystack / 8, haystack / 2, haystack - 1, haystack + 1}) {
+			b->Args({needle, haystack});
+		}
+	}
+}
+\end{lstlisting}
+
+Instead of using Range and RangeMultiplier, we write a loop to generate the haystack sizes, this time increasing them by 100 each time. When it comes to the needles, we use three positions in proportionate positions of the haystack and one that falls outside of it. We call Args on each loop iteration, passing both the generated values.
+
+Now, let's apply our generator function to the benchmarks we define:
+
+\begin{lstlisting}[style=styleCXX]
+BENCHMARK_CAPTURE(search_in_sorted_vector, binary,
+lower_bound)->Apply(generate_sizes);
+BENCHMARK_CAPTURE(search_in_sorted_vector, linear,
+find)->Apply(generate_sizes);
+\end{lstlisting}
+
+Using such functions makes it easy to pass the same generator to many benchmarks. Possible results of such benchmarks are as follows:
+
+\begin{tcblisting}{commandshell={}}
+-------------------------------------------------------------------------
+Benchmark Time CPU Iterations
+-------------------------------------------------------------------------
+search_in_sorted_vector/binary/125/1000 20.0 ns 20.1 ns 37333333
+search_in_sorted_vector/binary/500/1000 19.3 ns 19.0 ns 34461538
+search_in_sorted_vector/binary/999/1000 20.1 ns 19.9 ns 34461538
+search_in_sorted_vector/binary/1001/1000 18.1 ns 18.0 ns 40727273
+search_in_sorted_vector/binary/12500/100000 35.0 ns 34.5 ns 20363636
+search_in_sorted_vector/binary/50000/100000 28.9 ns 28.9 ns 24888889
+search_in_sorted_vector/binary/99999/100000 31.0 ns 31.1 ns 23578947
+search_in_sorted_vector/binary/100001/100000 29.1 ns 29.2 ns 23578947
+// et cetera
+\end{tcblisting}
+
+Now we have a pretty well-defined experiment for performing the searches. As an exercise, run the experiment on your own machine to see the complete results and try to draw some conclusions from the results.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Choosing what to microbenchmark and optimize}
+
+Running such experiments can be educative and even addictive. However, keep in mind that microbenchmarks shouldn't be the only type of performance testing in your project. As Donald Knuth famously said:
+
+\begin{center}
+We should forget about small efficiencies, say about 97\% of the time: premature optimization is the root of all evil	
+\end{center}
+
+This means that you should microbenchmark only code that matters, especially code on your hot path. Larger benchmarks, along with tracing and profiling, can be used to see where and when to optimize instead of guessing and optimizing prematurely. First, understand how your software executes.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}There's one more point we want to make regarding the quote above. It doesn't mean you should allow premature pessimization. Poor choice of data structures or algorithms, or even small inefficiencies that spread all your code, can sometimes influence the overall performance of your system. For instance, performing unnecessary dynamic allocations, although it might not look that bad at first, can lead to heap fragmentation over time and cause you serious trouble if your app should run for long periods of time. Overuse of node-based containers can lead to more cache misses too. Long story short, if it's not a big effort to write efficient code instead of less efficient code, go for it.
+\end{tcolorbox}
+
+Let's now learn what to do if your project has spots that need to maintain good performance over time.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Creating performance tests using benchmarks}
+
+Similar to having unit tests for precise testing and functional tests for larger-scale testing of your code's correctness, you can use microbenchmarks and larger benchmarks to test your code's performance.
+
+If you have tight constraints on the execution time for certain code paths, having a test that ensures the limit is met can be very useful. Even if you don't have such specific constraints, you might be interested in monitoring how the performance changes across code changes. If after a change your code runs slower than before by a certain threshold, the test could be marked as failed.
+
+Although also a useful tool, remember that such tests are prone to the boiling frog effect: degrading the performance slowly over time can go unnoticed, so be sure to monior the execution times occasionally. When introducing performance tests to your CI, be sure to always run them in the same environment for stable results.
+
+Let's now discuss the next type of tools in our performance shed.
+
+\subsubsubsection{11.2.4\hspace{0.2cm}Profiling}
+
+While benchmarks and tracing can give you an overview and specific numbers for a given scope, profilers can help you analyze where those numbers came from. They are an essential tool if you need to gain insight into your performance and improve it.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Choosing the type of profiler to use}
+
+There are two types of profilers available: instrumentation profilers and sampling ones. One of the better-known instrumentation profilers is Callgrind, part of the Valgrind suite. Instrumentation profilers have lots of overhead because they need to, well, instrument your code to see what functions you call and how much each of them takes. This way, the results they produce contain even the smallest functions, but the execution times can be skewed by this overhead. It also has the drawback of not always catching input/output (I/O) slowness and jitters. They slow down the execution, so while they can tell you how often you call a particular function, they won't tell you if the slowness is due to waiting on a disk read to finish.
+
+Due to the flaws of instrumentation profilers, it's usually better to use sampling profilers instead. Two worth mentioning are the open source perf for profiling on Linux systems and Intel's proprietary tool called VTune (free for open source projects). Although they can sometimes miss key events due to the nature of sampling, they should usually give you a much better view of where your code spends time.
+
+If you decide to use perf, you should know that you can either use it by invoking perf stat, which gives you a quick overview of statistics like CPU cache usage, or perf record -g and perf report -g to capture and analyze profiling results.
+
+If you want a solid overview of perf, please watch Chandler Carruth's video, which shows the tool's possibilities and how to use it, or take a look at its tutorial. Both are linked in the Further reading section.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Preparing the profiler and processing the results}
+
+When analyzing profiling results, you may often want to perform some preparation, cleanup, and processing. For instance, if your code mostly spends time spinning around, you might want to filter that out. Before even starting the profiler, be sure to compile or download as many debug symbols as you can, both for your code, your dependencies, even the OS libraries, and kernel. Also, it's essential you disable frame pointer optimizations. On GCC and Clang, you can do so by passing the -fno-omit-frame-pointer flag. It won't affect performance much but will give you much more data about the execution of your code. When it comes to post-processing of the results, when using perf, it's usually a good idea to create flame graphs from the results. Brendan Gregg's tool from the Further reading section is great for that. Flame graphs are a simple and effective tool to see where the execution takes too much time, as the width of each item on the graph corresponds to the resource usage. You can have flame graphs for CPU usage, as well as for resources such as memory usage, allocations, and page faults, or the time spent when the code is not executing such as staying blocked during system calls, on mutexes, I/O operations, and the like. There are also ways to perform diffs on the generated flame graphs.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Analyzing the results}
+
+Keep in mind that not all performance issues will show up on such graphs and not all can be found using profilers. While with some experience you'll be able to see that you could benefit from setting affinity to your threads or changing which threads execute on specific NUMA nodes, it might not always be that obvious to see that you've forgotten to disable power-saving features or would benefit from enabling or disabling hyper-threading. Information about the hardware you're running on is useful, too. Sometimes you might see the SIMD registers of your CPU being used, but the code still doesn't run at its full speed: you might be using SSE instructions instead of AVX ones, AVX instead of AVX2, or AVX2 instead of AVX512. Knowing what specific instructions your CPU is capable of running can be golden when you analyze the profiling results.
+
+Solving performance issues also requires a bit of experience. On the other hand, sometimes experience can lead you to false assumptions. For instance, in many cases, using dynamic polymorphism will hurt your performance; there are cases where it doesn't slow down your code. Before jumping to conclusions, it might be worth profiling the code and gaining knowledge about the various ways a compiler can optimize code and the limits of those techniques. Talking specifically about virtualization, it's often beneficial to mark your classes of virtual member functions as final when you don't want other types to inherit and override them, respectively. This tends to help the compilers in lots of cases.
+
+Compilers can also optimize much better if they "see" what type the object is: if you create a type in scope and call its virtual member function, the compiler should be able to deduce which function should be called. GCC tends to devirtualize better than other compilers. For more information on this, you can refer to Arthur O'Dwyer's blog post from the Further reading section.
+
+As with other types of tools presented in this section, try not to rely only on your profiler. Improvements in profiling results are not a guarantee that your system got faster. A betterlooking profile can still not tell you the whole story. And the better performance of one component doesn't necessarily mean the whole system's performance improved. This is where our last type of tool can come in use.
+
+\subsubsubsection{11.2.5\hspace{0.2cm}Tracing}
+
+The last technique we'll discuss in this section is meant for distributed systems. When looking at the overall system, often deployed in the cloud, profiling your software on one  box won't tell you the whole story. In such a scope, your best bet would be to trace the requests and responses flowing through your system.
+
+Tracing is a way to log the execution of your code. It's often used when a request (and sometimes its response) has to flow through many parts of your system. Usually, such messages are being traced along the route, with timestamps being added at interesting points of execution.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Correlation IDs}
+
+One common addition to timestamps is correlation IDs. Basically, they're unique identifiers that get assigned to each traced message. Their purpose is to correlate the logs produced by different components of your system (like different microservices) during the processing of the same incoming request and sometimes for the events it caused, too. Such IDs should be passed with the message everywhere it goes, for example, by appending to its HTTP header. Even when the original request is gone, you could add its correlation ID to each of the responses produced.
+
+By using correlation IDs, you can track how messages for a given request propagate through the system and how long it took for different parts of your system to process it. Often you'll want additional data to be gathered along the way, like the thread that was used to perform the computation, the type, and count of responses produced for a given request, or the names of the machines it went through.
+
+Tools like Jaeger and Zipkin (or other OpenTracing alternatives) can help you to add tracing support to your system fast.
+
+Let's now tackle a different subject and say a few words about code generation.
+
+
+
+
+

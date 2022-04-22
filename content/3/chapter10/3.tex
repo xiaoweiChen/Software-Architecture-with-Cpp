@@ -1,0 +1,53 @@
+
+In the early days of computers, all programs were monoliths without any external dependencies. Ever since the dawn of operating systems, any non-trivial software is rarely free from dependencies. Those dependencies can come in two forms: external dependencies and internal ones:
+
+\begin{itemize}
+\item 
+External dependencies are those that should be present in the environment that we run our application. Examples can include the aforementioned operating systems, dynamically linked libraries, and other applications (such as a database).
+
+\item 
+Internal dependencies are modules we want to reuse, so this will usually mean static libraries or header-only libraries.
+\end{itemize}
+
+Both kinds of dependencies provide potential security risks. As each line of code increases the risk of vulnerability, the more components you have, the higher the chance your system may be susceptible to attack. In the following sections, we'll see how to check whether your software is indeed susceptible to known vulnerabilities.
+
+\subsubsubsection{10.2.1\hspace{0.2cm}Common Vulnerabilities and Exposures}
+
+The first place to check for known security issues within software is the Common Vulnerabilities and Exposures (CVE) list available at https://cve.mitre.org/. The list is constantly updated by several institutions known as CVE Numbering Authorities (CNAs). These institutions include vendors and projects, vulnerability researchers, national and industry CERTs, and bug bounty programs. 
+
+The website also presents a search engine. With this, you can use several methods to learn about the vulnerabilities:
+
+\begin{itemize}
+\item 
+You can enter the vulnerability number. These are prefixed by CVE with examples including CVE-2014-6271, the infamous ShellShock, or CVE-2017-5715, also known as Spectre).
+
+\item 
+You can enter the vulnerability common name, such as the previously mentioned ShellShock or Spectre.
+
+\item 
+You can enter the name of the software you want to audit, such as Bash or Boost.
+\end{itemize}
+
+For each search result, you can see the description as well as a list of references to other bug trackers and related resources. The description usually lists versions affected by the vulnerability, so you can check whether the dependency you are planning to use has been already patched.
+
+\subsubsubsection{10.2.2\hspace{0.2cm}Automated scanners}
+
+There are tools that can help you to audit your list of dependencies. One such tool is OWASP Dependency-Check (https://www.owasp.org/index.php/OWASP\_Dependency\_Check). Although it only supports Java and .NET officially, it has experimental support for Python, Ruby, Node.js, and C++ (when used with CMake or autoconf). Besides working as a standalone tool, it has integrations for Continuous Integration/Continuous Deployment (CI/CD) software such as Jenkins, SonarQube, and CircleCI.
+
+Another tool that allows checking dependencies for known vulnerabilities is Snyk. This is a commercial product with several levels of support. It also does more than the OWASP Dependency-Check as Snyk can also audit container images and license compliance issues. It also offers more integrations with third-party solutions.
+
+\subsubsubsection{10.2.3\hspace{0.2cm}Automated dependency upgrade management}
+
+Monitoring your dependencies for vulnerabilities is only the first step in making sure your project is secure. After that, you need to take action and update the compromised dependencies manually. As you might have expected, there are also automated solutions just for that. One of them is Dependabot, which scans your source code repository and issues a pull request whenever there's a security-related update available. At the moment of writing this book, Dependabot does not support C++ yet. It can, however, be used with other languages that your application may use. Other than that, it can scan Docker containers for vulnerabilities found in base images.
+
+Automated dependency management requires mature test support. Switching dependency versions without tests may lead to instabilities and bugs. One protection against problems related to dependency upgrades is using wrappers to interface with third-party code. Such wrappers may have their own suite of tests that instantly  tells us when an interface is broken during an upgrade.
+
+
+
+
+
+
+
+
+
+
