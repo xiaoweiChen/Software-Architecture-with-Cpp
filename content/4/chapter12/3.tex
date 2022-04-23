@@ -1,0 +1,93 @@
+
+As we've mentioned previously in this chapter, messaging has many different use cases, ranging from IoT and sensor networks to microservices-based distributed applications running in the cloud.
+
+One of the benefits of messaging is that it is a neutral way to connect services implemented using different technologies. When developing an SOA, each service is typically developed and maintained by a dedicated team. Teams may choose the tools they feel comfortable with. This applies to programming languages, third-party libraries, and build systems.
+
+Maintaining a uniform set of tools may be counter-productive as different services may have different needs. For example, a kiosk application may require a Graphical User Interface (GUI) library such as Qt. A hardware controller that is a part of the same application will have other requirements, possibly linking to the hardware manufacturer's third-party components. These dependencies may then impose some restrictions that cannot be satisfied for both components simultaneously (for example, a GUI application may require a recent compiler, while the hardware counterpart may be pinned to an older one). Using messaging systems to decouple these components lets them have separate life cycles.
+
+Some use cases for messaging systems include the following:
+
+\begin{itemize}
+\item 
+Financial operations
+
+\item 
+Fleet monitoring
+
+\item 
+Logistics capturing
+
+\item 
+Processing sensor
+
+\item 
+Data order fulfillment
+
+\item 
+Task queuing
+\end{itemize}
+
+The following sections focus on the messaging systems designed for low overhead and message systems with brokers used for distributed systems.
+
+\subsubsubsection{12.3.1\hspace{0.2cm}Low-overhead messaging systems}
+
+Low-overhead messaging systems are typically used in environments that either require a small footprint or low latency. These are usually sensor networks, embedded solutions, and IoT devices. They are less common in cloud-based and distributed services, but it's still possible to use them in such solutions.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{MQTT}
+
+MQTT stands for Message Queuing Telemetry Transport. It is an open standard both under OASIS and ISO. MQTT uses the PubSub model usually over TCP/IP, but it can also work with other transport protocols.
+
+As the name suggests, MQTT's design goals are a low-code footprint and the possibility of running in low-bandwidth locations. There is a separate specification called MQTT-SN, which stands for MQTT for Sensor Networks. It focuses on battery-powered embedded devices without the TCP/IP stack.
+
+MQTT uses a message broker that receives all the messages from the client and routes those messages to their destinations. QoS is provided on three levels:
+
+\begin{itemize}
+\item 
+At most once delivery (no guarantee)
+
+\item 
+At least once delivery (acknowledged delivery)
+
+\item 
+Exactly once delivery (assured delivery)
+\end{itemize}
+
+It should be no surprise that MQTT is especially popular with various IoT applications. It's supported by OpenHAB, Node-RED, Pimatic, Microsoft Azure IoT Hub, and Amazon IoT. It's also popular with instant messaging, being used in ejabberd and Facebook Messanger. Other use cases include carsharing platforms, logistics, and transportation.
+
+The two most popular C++ libraries supporting this standard are Eclipse Paho and mqtt\_cpp based on C++14 and Boost.Asio. For Qt applications, there's also qmqtt.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{ZeroMQ}
+
+ZeroMQ is a brokerless messaging queue. It supports common messaging patterns, such as PubSub, client/server, and several others. It is independent of a particular transport and may be used with TCP, WebSockets, or IPC.
+
+The main idea, contained in the name, is that ZeroMQ requires zero brokers and zero administration. It is also advocated as providing zero latency, which means no latency is added coming from the presence of a broker.
+
+The low-level library is written in C, and it has implementations for various popular programming languages, including C++. The most popular implementation for C++ is cppzmq, which is a header-only library targeting C++11.
+
+\subsubsubsection{12.3.2\hspace{0.2cm}Brokered messaging systems}
+
+The two most popular messaging systems that don't focus on low overhead are AMQPbased RabbitMQ and Apache Kafka. Both are mature solutions that are extremely popular in a lot of different designs. Many articles focus on superiority in a particular area of either RabbitMQ or Apache Kafka.
+
+This is a slightly incorrect point of view as both messaging systems are based on different paradigms. Apache Kafka focuses on streaming vast amounts of data and storing the stream in persistent memory to allow future replay. RabbitMQ, on the other hand, is often used as a message broker between different microservices or a task queue to handle background jobs. For this reason, routing in RabbitMQ is much more advanced than the one present in Apache Kafka. Kafka's primary use cases are data analysis and real-time processing.
+
+While RabbitMQ uses the AMQP protocol (and supports other protocols as well, such as MQTT and STOMP), Kafka uses its own protocol based on TCP/IP. This means that RabbitMQ is interoperable with other existing solutions based on these supported protocols. If you write an application that uses AMQP to interact with RabbitMQ, it should be possible to migrate it later to use Apache Qpid, Apache ActiveMQ, or managed solutions from AWS or Microsoft Azure.
+
+The scaling concerns could also drive the choice of one message broker over another. The architecture of Apache Kafka allows for easy horizontal scaling, which means adding more machines to the existing pool of workers. RabbitMQ, on the other hand, was designed with vertical scaling in mind, which means adding more resources to the existing machine, rather than adding more machines of similar sizes.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,243 @@
+
+Service-Oriented Architecture may be extended to the current cloud computing trend. While Enterprise Service Bus features services usually developed in-house, with cloud computing it is possible to use the services provided by one or more cloud providers.
+
+While designing an application architecture for cloud computing, you should always consider the managed services offered by the provider before implementing any alternatives. For example, before you decide that you want to host your own PostgreSQL database with selected plugins, make sure you understand the trade-offs and costs when compared to a managed database hosting offered by your provider.
+
+The current cloud landscape provides a lot of services designed to handle popular use cases such as the following:
+
+\begin{itemize}
+\item 
+Storage
+
+\item 
+Relational databases
+
+\item 
+Document (NoSQL) databases
+
+\item 
+In-memory cache
+
+\item 
+Email
+
+\item 
+Message queues
+
+\item 
+Container orchestration
+
+\item 
+Computer vision
+
+\item 
+Natural language processing
+
+\item 
+Text-to-speech and speech-to-text
+
+\item 
+Monitoring, logging, and tracing
+
+\item 
+Big data
+
+\item 
+Content delivery networks
+
+\item 
+Data analytics
+
+\item 
+Task management and scheduling
+
+\item 
+Identity management
+
+\item 
+Key and secret management
+\end{itemize}
+
+Due to the huge choice of available third-party services, it is clear how cloud computing fits within Service-Oriented Architecture.
+
+\subsubsubsection{12.5.1\hspace{0.2cm}Cloud computing as an extension of SOA}
+
+Cloud computing is an extension of virtual machine hosting. What differentiates cloud computing providers from traditional VPS providers is two things:
+
+\begin{itemize}
+\item 
+Cloud computing is available via an API, which makes it a service in itself.
+
+\item 
+Besides virtual machine instances, cloud computing offers additional services such as storage, managed databases, programmable networking, and many others. All of them are also available via an API.
+\end{itemize}
+
+There are several ways you can use the cloud provider's API to feature in your application, which we will now present.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using API calls directly}
+
+If your cloud provider offers an API accessible in your language of choice, you can interact with the cloud resources directly from your application.
+
+Example: you have an application that allows users to upload their own pictures. This application uses the Cloud API to create a storage bucket for each newly registered user:
+
+\begin{lstlisting}[style=styleCXX]
+#include <aws/core/Aws.h>
+#include <aws/s3/S3Client.h>
+#include <aws/s3/model/CreateBucketRequest.h>
+
+#include <spdlog/spdlog.h>
+
+const Aws::S3::Model::BucketLocationConstraint region =
+	Aws::S3::Model::BucketLocationConstraint::eu_central_1;
+bool create_user_bucket(const std::string &username) {
+	Aws::S3::Model::CreateBucketRequest request;
+	
+	Aws::String bucket_name("userbucket_" + username);
+	request.SetBucket(bucket_name);
+	
+	Aws::S3::Model::CreateBucketConfiguration bucket_config;
+	bucket_config.SetLocationConstraint(region);
+	request.SetCreateBucketConfiguration(bucket_config);
+	
+	Aws::S3::S3Client s3_client;
+	auto outcome = s3_client.CreateBucket(request);
+	
+	if (!outcome.IsSuccess()) {
+		auto err = outcome.GetError();
+		spdlog::error("ERROR: CreateBucket: {}: {}",
+			err.GetExceptionName(),
+			err.GetMessage());
+		return false;
+	}
+	return true;
+}
+\end{lstlisting}
+
+In this example, we have a C++ function that creates an AWS S3 bucket named after the username provided in the parameter. This bucket is configured to reside in a given region. If the operation fails, we want to get the error message and log it using spdlog.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using API calls through a CLI tool}
+
+Some operations don't have to be performed during the runtime of your application. They are typically run during the deployment and therefore may be automated in shell scripts, for example. One such use case is invoking a CLI tool to create a new VPC: 
+
+\begin{tcblisting}{commandshell={}}
+gcloud compute networks create database --description "A VPC to access the database from private instances"
+\end{tcblisting}
+
+We use the gcloud CLI tool from Google Cloud Platform to create a network called database that will be used to handle traffic from the private instances to the database.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using third-party tools that interact with the Cloud API}
+
+Let's look at an example of running HashiCorp Packer to build a virtual machine instance image that is preconfigured with your application:
+
+\begin{tcblisting}{commandshell={}}
+{
+  variables : {
+    do_api_token : {{env `DIGITALOCEAN_ACCESS_TOKEN`}} ,
+    region : fra1 ,
+    packages : "customer"
+    version : 1.0.3
+  },
+  builders : [
+    {
+      type : digitalocean ,
+      api_token : {{user `do_api_token`}} ,
+      image : ubuntu-20-04-x64 ,
+      region : {{user `region`}} ,
+      size : 512mb ,
+      ssh_username : root
+    }
+  ],
+  provisioners: [
+    {
+      type : file ,
+      source : ./{{user `package`}}-{{user `version`}}.deb ,
+      destination : /home/ubuntu/
+    },
+    {
+      type : shell ,
+      inline :[
+        dpkg -i /home/ubuntu/{{user `package`}}-{{user `version`}}.deb
+      ]
+    }
+  ]
+}
+\end{tcblisting}
+
+In the preceding code, we provide the required credentials and region and employ a builder to prepare an instance from the Ubuntu image for us. The instance we are interested in needs to have 512 MB RAM. Then, we provide the instance first by sending a .deb package to it, and then by executing a shell command to install this package.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Accessing the cloud API}
+
+Accessing cloud computing resources via an API is one of the most important features that distinguish it from traditional hosting. Using an API means you are able to create and delete instances at will without the intervention of an operator. This way, it becomes very easy to implement features such as load-based autoscaling, advanced deployments (Canary releases or Blue-Green), and automated development and testing environments for an application.
+
+Cloud providers usually expose their APIs as RESTful services. On top of that, they often also provide client libraries for several programming languages. While all of the three most popular providers support C++ as a client library, the support from smaller vendors may vary.
+
+If you're thinking about deploying your C++ application to the cloud and plan on using the Cloud API, make sure your provider has released a C++ Software Development Kit (SDK). It is still possible to use the Cloud API without an official SDK, for example, using the CPP REST SDK library, but keep in mind this would require a lot more work to implement. 
+
+To access the Cloud SDK, you will also need access control. Typically, there are two ways your application can be authenticated to use the Cloud API:
+
+\begin{itemize}
+\item 
+By providing an API token
+
+The API token should be secret and never stored as part of the version control system or inside a compiled binary. To prevent theft, it should also be encrypted at rest.
+
+One of the ways to pass the API token securely to the application is by means of a security framework such as HashiCorp Vault. It is programmable secret storage with built-in lease time management and key rotation.
+
+\item 
+By being hosted on an instance with appropriate access rights
+
+Many cloud providers allow giving access rights to particular virtual machine instances. This way, an application hosted on such an instance doesn't have to authenticate using a separate token. Access control is then based on the instance the cloud API request originates from.
+
+This approach is easier to implement since it doesn't have to factor in the need for secret management. The downside is that when the instance becomes compromised, the access rights will be available to all of the applications running there, not just the application you've deployed.
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using the cloud CLI}
+
+The Cloud CLI is typically used by human operators to interact with the Cloud API. Alternatively, it may be used for scripting or using the Cloud API with languages that are officially unsupported.
+
+As an example, the following Bourne Shell script creates a resource group in the Microsoft Azure cloud and then creates a virtual machine belonging to that resource group:
+
+\begin{tcblisting}{commandshell={}}
+#!/bin/sh
+RESOURCE_GROUP=dominicanfair
+VM_NAME=dominic
+REGION=germanynorth
+
+az group create --name $RESOURCE_GROUP --location $REGION
+
+az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image
+UbuntuLTS --ssh-key-values dominic_key.pub
+\end{tcblisting}
+
+When looking for documentation on how to manage cloud resources, you will encounter a lot of examples using the Cloud CLI. Even if you wouldn't normally use the CLI, instead preferring a solution such as Terraform, having the Cloud CLI at hand may help you with debugging infrastructure problems.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Using tools that interact with the Cloud API}
+
+You have already learned about the dangers of vendor lock-in when using products from cloud providers. Typically, each cloud provider will offer a different API and a different CLI to all the others. There are cases where smaller providers offer abstraction layers that allow accessing their products via an API similar to that of the well-known providers. This approach aims to help with migrating the application from one platform to another.
+
+Such instances are rare, though, and in general, tools used to interact with services from one provider are incompatible with those from another provider. This is a problem not only when you consider migration from one platform to the next. It may also be problematic if you want to host your application on a variety of providers.
+
+For this purpose, there's a new set of tools, collectively known as Infrastructure as Code (IaC) tools, that offer an abstraction layer on top of different providers. These tools are not necessarily limited to cloud providers either. They're usually general-purpose and help to automate many different layers of your application's architecture.
+
+In Chapter 9, Continuous Integration and Continuous Deployment, we briefly covered some of them.
+
+
+\subsubsubsection{12.5.2\hspace{0.2cm}Cloud-native architecture}
+
+New tools allow architects and developers to abstract the infrastructure even more and build, first and foremost, with the cloud in mind. Popular solutions such as Kubernetes and OpenShift are driving this trend, but the landscape consists of a lot of smaller players as well. The last chapter of this book is dedicated to cloud-native design and describes this modern approach to building applications.
+
+
+
+

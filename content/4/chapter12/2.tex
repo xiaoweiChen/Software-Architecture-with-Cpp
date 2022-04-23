@@ -1,0 +1,417 @@
+
+Service-Oriented Architecture is an example of a software design that features loosely coupled components that provide services to each other. The components use a shared communication protocol, usually over a network. In this design, services mean units of functionality that can be accessed outside of the originating component. An example of a component could be a mapping service that provides a map of the area in response to geographical coordinates.
+
+According to the definition, a service has four properties:
+
+\begin{itemize}
+\item 
+It is a representation of business activity with a defined outcome.
+
+\item 
+It is self-contained.
+
+\item 
+It is opaque to its users.
+
+\item 
+It may be composed of other services.
+\end{itemize}
+
+\subsubsubsection{12.2.1\hspace{0.2cm}Implementation approaches}
+
+Service-Oriented Architecture does not regulate how to approach the service orientation. It's a term that may be applied to many different implementations. There are discussions on whether some approaches actually should be considered to be Service-Oriented Architecture. We don't want to take part in these discussions, only to highlight some of the approaches that often are mentioned as SOA approaches.
+
+Let's compare some of them.
+
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Enterprise Service Bus}
+
+ESB is often the first association when someone says Service-Oriented Architecture. It's one of the oldest approaches to implementing SOA.
+
+ESB draws an analogy from computer hardware architecture. Hardware architecture uses computer buses such as PCI to achieve modularity. This way, third-party providers are able to implement modules (such as graphic cards, sound cards, or I/O interfaces) independently of the motherboard manufacturer as long as everyone is adhering to the standards required by the bus.
+
+Much like the PCI, the ESB architecture aims to build a standard, general-purpose way to allow for the interaction of loosely coupled services. Such services are expected to be developed and deployed independently. It should also be possible to combine heterogeneous services.
+
+As with SOA itself, ESB is not defined by any global standard. To implement ESB, it is necessary to establish an additional component in the system. This component is the bus itself. The communication over ESB is event-driven and often achieved with the means of message-oriented middleware and message queues, which we'll discuss in later chapters.
+
+The Enterprise Service Bus component serves the following roles:
+
+\begin{itemize}
+\item 
+Controlling the deployment and versioning of services
+
+\item 
+Maintaining service redundancy
+
+\item 
+Routing messages between services
+
+\item 
+Monitoring and controlling the message exchange
+
+\item 
+Resolving contention between the components
+
+\item 
+Providing common services, such as event handling, encryption, or message queuing
+
+\item 
+Enforcing Quality of Service (QOS)
+\end{itemize}
+
+There are both proprietary commercial products as well as open source ones that implement the Enterprise Service Bus functionality. Some of the most popular open source products are the following:
+
+\begin{itemize}
+\item 
+Apache Camel
+
+\item 
+Apache ServiceMix
+
+\item 
+Apache Synapse
+
+\item 
+JBoss ESB
+
+\item 
+OpenESB
+
+\item 
+Red Hat Fuse (based on Apache Camel)
+
+\item 
+Spring Integration
+\end{itemize}
+
+The most popular commercial products are the following:
+
+\begin{itemize}
+\item 
+IBM Integration Bus (replacing IBM WebSphere ESB)
+
+\item 
+Microsoft Azure Service Bus
+
+\item 
+Microsoft BizTalk Server
+
+\item 
+Oracle Enterprise Service Bus
+
+\item 
+SAP Process Integration
+\end{itemize}
+
+As with all the patterns and products that we present in this book, you will have to consider the strengths and weaknesses before deciding to go with a particular architecture. Some of the benefits of introducing Enterprise Service Bus are as follows:
+
+\begin{itemize}
+\item 
+Better scalability of services
+
+\item 
+Distributed workload
+
+\item 
+Can focus on configuration rather than implementing custom integration in services
+
+\item 
+An easier way to design loosely coupled services
+
+\item 
+Services are replaceable
+
+\item 
+Built-in redundancy capability
+\end{itemize}
+
+The disadvantages, on the other hand, mostly revolve around the following:
+
+\begin{itemize}
+\item 
+A single point of failure – the ESB component's failure means the outage of an entire system.
+
+\item 
+The configuration is more complex, which impacts maintenance.
+
+\item 
+Message queuing, message translation, and other services provided by ESB may reduce performance or even become a bottleneck.
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Web services}
+
+Web services are another popular implementation of Service-Oriented Architecture. By their definition, web services are services offered by one machine to another machine (or operator) where communication occurs over World Wide Web protocols. Even though W3C, the governing body concerning the World Wide Web, allows the use of other protocols such as FTP or SMTP, web services typically use HTTP as transport.
+
+Although it is possible to implement web services using proprietary solutions, most implementations are based on open protocols and standards. Although many of the approaches are often referred to as web services, they are fundamentally different from each other. Later in the chapter, we will describe the various approaches in detail. For now, let's focus on their common features.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Benefits and disadvantages of web services}
+
+The benefits of web services are as follows:
+
+\begin{itemize}
+\item 
+Using popular web standards
+
+\item 
+A lot of tooling
+
+\item 
+Extensibility
+\end{itemize}
+
+Given next are the disadvantages:
+
+\begin{itemize}
+\item 
+A lot of overhead.
+
+\item 
+Some implementations are too complex (for example, SOAP/WSDL/UDDI specifications).
+\end{itemize}
+
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Messaging and streaming}
+
+We've mentioned message queues and message brokers already when covering the Enterprise Service Bus architecture. Other than as part of an ESB implementation, messaging systems may also be standalone architectural elements.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Message queues}
+
+Message queues are components used for Inter-Process Communication (IPC). As the name suggests, they use the queue data structure to pass messages between different processes. Usually, message queues are a part of Message-Oriented Middleware (MOM) designs.
+
+On the lowest level, message queues are available in UNIX specifications, both in System V and in POSIX. While they are interesting when implementing IPC on a single machine, we would like to focus on message queues that are suitable for distributed computing.
+
+There are currently three standards used in open source software that are related to message queuing:
+
+\begin{enumerate}
+\item 
+Advanced Message Queuing Protocol (AMQP), a binary protocol operating on the application layer of the 7-Layer OSI model. Popular implementations include the following:
+
+\begin{itemize}
+\item 
+Apache Qpid
+
+\item 
+Apache ActiveMQ
+
+\item 
+RabbitMQ
+
+\item 
+Azure Event Hubs
+
+\item 
+Azure Service Bus
+\end{itemize}
+
+\item 
+Streaming Text Oriented Messaging Protocol (STOMP), a text-based protocol similar to HTTP (uses verbs such as CONNECT, SEND, SUBSCRIBE). Popular implementations include the following:
+
+\begin{itemize}
+\item 
+Apache ActiveMQ
+
+\item 
+RabbitMQ
+
+\item 
+syslog-ng
+\end{itemize}
+
+\item 
+MQTT, a lightweight protocol aimed at embedded devices. Popular implementations include home automation solutions such as the following:
+
+\begin{itemize}
+\item 
+OpenHAB
+
+\item 
+Adafruit IO
+
+\item 
+IoT Guru
+
+\item 
+Node-RED
+
+\item 
+Home Assistant
+
+\item 
+Pimatic
+
+\item 
+AWS IoT
+
+\item 
+Azure IoT Hub
+\end{itemize}
+
+\end{enumerate}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Message brokers}
+
+Message brokers deal with the translation, validation, and routing of messages in a messaging system. Like message queues, they are parts of MOM.
+
+Using message brokers, you can minimize the application's awareness regarding other parts of the system. This leads to designing loosely coupled systems, as message brokers take all the burden related to common operations on messages. It is known as a PublishSubscribe (PubSub) design pattern.
+
+Brokers typically manage message queues for receivers but are also able to perform additional functions, such as the following:
+
+\begin{itemize}
+\item 
+Translating messages from one representation to another
+
+\item 
+Validating the message sender, receiver, or contents
+
+\item 
+Routing messages to one or more destinations
+
+\item 
+Aggregating, decomposing, and recomposing messages in transit
+
+\item 
+Retrieving data from external services
+
+\item 
+Augmenting and enriching messages through interaction with external services
+
+\item 
+Handling and responding to errors and other events
+
+\item 
+Providing different routing patterns, such as PubSub
+\end{itemize}
+
+Popular implementations of message brokers are the following:
+
+\begin{itemize}
+\item 
+Apache ActiveMQ
+
+\item 
+Apache Kafka
+
+\item 
+Apache Qpid
+
+\item 
+Eclipse Mosquitto MQTT Broker
+
+\item 
+NATS
+
+\item 
+RabbitMQ
+
+\item 
+Redis
+
+\item 
+AWS ActiveMQ
+
+\item 
+AWS Kinesis
+
+\item 
+Azure Service Bus
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Cloud computing}
+
+Cloud computing is a broad term with a lot of different meanings. Initially, the term cloud referred to a layer of abstraction that the architecture shouldn't be too worried about. This could, for example, mean servers and network infrastructure managed by a dedicated operations team. Later, service providers started applying the term cloud computing to their own products that abstracted the underlying infrastructure with all its complexities. Instead of having to configure each piece of infrastructure individually, it was possible to use a simple Application Programming Interface (API) to set up all the necessary resources.
+
+Nowadays, cloud computing has grown to include many novel approaches to application architecture. It may consist of the following:
+
+\begin{itemize}
+\item 
+Managed services, such as databases, cache layers, and message queues
+
+\item 
+Scalable workload orchestration
+
+\item 
+Container deployment and orchestration platforms
+
+\item 
+Serverless computing platforms
+\end{itemize}
+
+The most important thing to remember when considering cloud adoption is that hosting your application in the cloud requires an architecture designed specifically for the cloud. Most often, it also means architecture designed specifically for the given cloud provider.
+
+This means choosing a cloud provider is not just a decision about whether one choice is better than another at a given moment in time. It means that the future cost of switching a provider may be too big to warrant the move. Migration between providers requires architectural changes and for a working application, they may outweigh the savings expected from the migration.
+
+There is also another consequence of cloud architecture design. For legacy applications, it means that in order to take advantage of the cloud benefits, the applications would first have to be rearchitected and rewritten. Migration to the cloud is not just a matter of copying binary and configuration files from on-premises hosting to virtual machines managed by a cloud provider. Such an approach would only mean a waste of money as cloud computing is only cost-effective if your applications are scalable and cloud-aware.
+
+Cloud computing doesn't necessarily mean using external services and leasing machines from third-party providers. There are also solutions such as OpenStack that run onpremises, which allow you to leverage the benefits of cloud computing using the servers you already own.
+
+We will cover managed services later in this chapter. Containers, cloud-native design, and serverless architecture will have their own dedicated chapters later in the book.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Microservices}
+
+There is some debate regarding whether microservices are a part of SOA or not. Most of the time, the term SOA is pretty much equivalent to the ESB design. Microservices are in many respects the opposite of ESB. This leads to opinions that microservices are a distinct pattern from SOA, being the next step in the evolution of software architecture.
+
+We believe that they are, in fact, a modern approach to SOA that aims to eliminate some of the problems featured in ESB. After all, microservices fit within the definition of ServiceOriented Architecture very well.
+
+Microservices are the subject of the next chapter.
+
+\subsubsubsection{12.2.2\hspace{0.2cm}Benefits of Service-Oriented Architecture}
+
+Splitting the system's functionality over multiple services has several benefits. First of all, each service can be maintained and deployed separately. This helps the team focus on a given task, without the need to understand every possible interaction within the system. It also enables agile development as tests only have to cover a particular service, not the entire system.
+
+The second benefit is that the modularity of the services helps create a distributed system. With a network (usually based on the Internet Protocol) as a means of communication, services can be split between different machines to provide scalability, redundancy, and better resource usage.
+
+Implementing new features and maintaining the existing software is a difficult task when there are many producers and many consumers for each service. This is why SOA encourages the use of documented and versioned APIs.
+
+Another way to make it easier for both service producers and consumers to interact is by using established protocols that describe how to pass data and metadata between different services. These protocols may include SOAP, REST, or gRPC.
+
+The use of APIs and standard protocols makes it easy to create new services that provide added value over the existing ones. Considering we have a service, A, that returns our geographical location and another service, B, that provides the current temperature for a given location, we can invoke A and use its response in a request to B. This way, we get the current temperature for the current location without implementing the entire logic on our own.
+
+All of the complexity and implementation details of both services are unknown to us and we treat them as black boxes. The maintainers of both services may also introduce new functionality and release new versions of the services without the need to inform us about it.
+
+Testing and experimenting with Service-Oriented Architecture is also easier than with monolithic applications. A small change in a single place doesn't require the recompilation of an entire code base. It is often possible to invoke services in an ad hoc manner using client tools.
+
+Let's return to our example with the weather and geographical location service. If both services are exposing a REST API, we are able to build a prototype using nothing more than a cURL client to send appropriate requests manually. When we confirm that the response is satisfactory, we may then start writing code that will automate the entire operation and possibly expose the results as another service.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}To get the benefits of SOA, we need to remember that all of the services have to be loosely coupled. If services depend on each other's implementation, it means they are no longer loosely coupled and are tightly coupled instead. Ideally, any given service should be replaceable by a different analogous service without impacting the operation of the entire system.
+\end{tcolorbox}
+
+In our weather and location example, this means that reimplementing a location service in a different language (say, switching from Go to C++) should not affect the downstream consumers of that service as long as they use the established API.
+
+It is possible to still introduce breaking changes in the API by releasing a new API version. A client connecting to version 1.0 would observe the legacy behavior while clients connecting to 2.0 would benefit from bugfixes, better performance, and other improvements that come at the cost of compatibility.
+
+For services relying on HTTP, API versioning usually occurs at the URI level. So a version 1.0, 1.1, or 1.2 API can be accessed when calling https://service.local/v1/customer while the version 2.0 API resides at https://service.local/v2/customer. An API gateway, HTTP proxy, or a load balancer is then able to route the requests to appropriate services.
+
+\subsubsubsection{12.2.3\hspace{0.2cm}Challenges with SOA}
+
+Introducing an abstraction layer always comes at a cost. The same rule applies to ServiceOriented Architecture. It's easy to see the abstraction costs when looking at Enterprise Service Bus, web services, or message queues and brokers. What may be less obvious is that microservices also come at a cost. Their cost is related to the Remote Procedure Call (RPC) frameworks they use and the resource consumption related to service redundancy and duplication of their functionality. 
+
+Another target of criticism related to SOA is the lack of uniform testing frameworks. Individual teams that develop the services of an application may use tooling unknown to other teams. Other issues related to testing are that the heterogeneous nature and interchangeability of components mean there is a huge set of combinations to test. Some combinations may introduce edge cases that are not typically observed.
+
+As the knowledge about particular services is mostly concentrated in a single team, it is much harder to understand how an entire application works.
+
+When the SOA platform is developed during the lifetime of an application, it may introduce the need for all the services to update their version to target the recent platform development. This means that instead of introducing new features, developers would be focused on making sure their application functions correctly after the changes to the platform. In an extreme case, maintenance costs may rise drastically for those services that don't see new releases and are constantly patched to adhere to platform requirements.
+
+Service-Oriented Architecture follows Conway's law, described in Chapter 2, Architectural Styles.
+
+
+
+
+
+
