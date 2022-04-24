@@ -1,0 +1,44 @@
+\begin{enumerate}
+\item
+How should you ensure each file of our code that's open, will be closed when no longer in use?
+\begin{itemize}
+\item 
+By using the RAII idiom; for instance, by using std::unique\_ptr, which will close it in its destructor.
+\end{itemize}
+
+\item When should you use "naked" pointers in C++ code?
+\begin{itemize}
+\item 
+Only to pass optional (nullable) references
+\end{itemize}
+
+\item What is a deduction guide?
+\begin{itemize}
+\item 
+A way of telling the compiler what parameters it should deduce for a template. They can be implicit or user-defined.
+\end{itemize}
+
+\item When should you use std::optional and gsl::not\_null?
+\begin{itemize}
+\item 
+The former is for cases where we want to pass the contained value around. The latter just passes the pointer to it. Also, the former can be empty, while the latter will always point to an object.
+\end{itemize}
+
+\item How are range algorithms different than views?
+\begin{itemize}
+\item 
+Algorithms are eager, while views are lazy. Algorithms also allow the use of projections.
+\end{itemize}
+
+\item How can you constrain your type by doing more than just specifying the concept's name when you're defining a function?
+\begin{itemize}
+\item 
+By using a requires clause.
+\end{itemize}
+
+\item How is import X different than import <X>?
+\begin{itemize}
+\item 
+The latter allows macros from the imported X header to be visible.
+\end{itemize}
+\end{enumerate}

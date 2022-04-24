@@ -1,0 +1,110 @@
+
+
+Containers are making a lot of buzz recently. One might think they are a brand new technology that was not available before. However, that is not the case. Before the rise of Docker and Kubernetes, the dominating players in the industry at the moment, there were already solutions such as LXC, which offered a lot of similar features.
+
+We can trace the origins of separating one execution environment from another with the chroot mechanism available in UNIX systems since 1979. Similar concepts were also used in FreeBSD jails and Solaris Zones.
+
+The main task of the container is to isolate one execution environment from another. This isolated environment can have its own configuration, different applications, and even different user accounts than the host environment.
+
+Even though the containers are isolated from the host, they usually share the same operating system kernel. This is the main differentiator from virtualized environments. Virtual machines have dedicated virtual resources, which means they are separated at the hardware level. Containers are separated at the process level, which means there is less overhead to run them.
+
+The ability to package and run another operating system that is already optimized and configured for running your application is a strong advantage of containers. Without containers, the build and deploy process usually consists of several steps:
+
+\begin{enumerate}
+\item 
+The application is built.
+
+\item 
+The example configuration files are provided.
+
+\item 
+Installation scripts and associated documentation is prepared.
+
+\item 
+The application is packaged for a target operating system (such as Debian or Red Hat).
+
+\item 
+The packages are deployed to the target platform.
+
+\item 
+Installation scripts prepare the basis for the application to run.
+
+\item 
+The configuration has to be tweaked to fit the existing system.
+\end{enumerate}
+
+When you switch to containers, there is less of a need for a robust installation script. The application will only target a single well-known operating system – the one present in the container. The same goes for configuration: instead of preparing many configurable options, the application is pre-configured for the target operating system and distributed alongside it. The deployment process consists only of unpacking the container image and running the application process inside it.
+
+While containers and microservices are often thought to be the same thing, they are not. Moreover, containers may mean application containers or operating system containers, and only application containers fit well with microservices. The following sections will tell you why. We'll describe the different container types that you can encounter, show you how they relate to microservices, and explain when it's best to use them (and when to avoid them).
+
+\subsubsubsection{14.2.1\hspace{0.2cm}Exploring the container types}
+
+Of the containers described so far, operating system containers are fundamentally different from the current container trend led by Docker, Kubernetes, and LXD. Instead of focusing on recreating an entire operating system with services such as syslog and cron, application containers focus on running a single process within a container – just the application.
+
+Proprietary solutions replace all the usual OS-level services. These solutions provide a unified way to manage the applications within a container. For example, instead of using syslog to handle logs, the standard output of the process with PID 1 is considered as application logs. Instead of using a mechanism such as init.d or systemd, the application container's lifecycle is handled by the runtime application.
+
+Since Docker is at the moment the dominant solution for application containers, we will mostly use it as an example throughout this book. To make the picture complete, we will present viable alternatives, as they may be better suited to your needs. Since the project and specification are open source, these alternatives are compatible with Docker and can be used as replacements.
+
+Later in this chapter, we will explain how to use Docker to build, deploy, run, and manage application containers.
+
+\subsubsubsection{14.2.2\hspace{0.2cm}The rise of microservices}
+
+The success of Docker coincided with the rise of the adoption of microservices. It is no surprise since microservices and application containers fit together naturally.
+
+Without application containers, there was no easy and unified way to package, deploy, and maintain microservices. Even though individual companies developed some solutions to fix these problems, none was popular enough to approach being an industry standard.
+
+Without microservices, the application containers were pretty limited. The software architecture focused on building entire systems explicitly configured for the given set of services running there. Replacing one service with another required a change of the architecture.
+
+When brought together, application containers provide a standard way for the distribution of microservices. Each microserver comes with its own configuration embedded, so operations such as autoscaling or self-healing no longer require knowledge about an underlying application.
+
+You can still use microservices without application containers and you can use application containers without hosting microservices in them. For instance, even though neither PostgreSQL databases nor Nginx web servers were designed as microservices, they are typically used in application containers.
+
+\subsubsubsection{14.2.3\hspace{0.2cm}Choosing when to use containers}
+
+There are several benefits to the container approach. OS containers and application containers also have some different use cases in which their strengths lie.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{The benefits of containers}
+
+When compared to virtual machines, the other popular way of isolating environments, containers require less overhead during runtime. Unlike virtual machines, there is no need to run a separate version of an operating system kernel and use the hardware or software virtualization techniques. Application containers also do not run other operating system services that are typically found in virtual machines such as syslog, cron, or init. Additionally, application containers offer smaller images as they do not usually have to carry an entire operating system copy. In extreme examples, an application container can consist of a single statically linked binary.
+
+At this point, you may wonder why to bother with containers at all if there is just a single binary inside? There is one particular benefit of having a unified and standardized way to build and run containers. As containers have to follow specific conventions, it is easier to orchestrate them than regular binaries, which can have different expectations regarding logging, configuration, opening ports, and so on.
+
+Another thing is that containers provide a built-in means of isolation. Each container has its own namespace for processes and a namespace for user accounts, among others. This means that the process (or processes) from one container has no notion of the processes on the host or in the other containers. The sandboxing can go even further as you can assign memory and a CPU quota to your containers with the same standard user interface (whether it is Docker, Kubernetes, or something else). 
+
+The standardized runtime also means higher portability. Once a container is built, you can typically run it on different operating systems without modifications. This also means what runs in operations is very close or identical to what runs in development. Issue reproduction is more effortless and so is debugging.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{The disadvantages of containers}
+
+Since there is a lot of pressure nowadays to move workloads to containers, you want to understand all the risks associated with such migration as an architect. The benefits are touted everywhere and you probably already understand them.
+
+The main obstacle to container adoption is that not all applications can be easily migrated to containers. This is especially true of application containers that are designed with microservices in mind. If your application is not based on microservices architecture, putting it into containers may introduce more problems than it will solve. 
+
+If your application already scales well, uses TCP/IP-based IPC, and is mostly stateless, the move to containers should not be challenging. Otherwise, each of these aspects would pose a challenge and prompt a rethink of the existing design.
+
+Another problem associated with containers is persistent storage. Ideally, containers should have no persistent storage of their own. This makes it possible to take advantage of fast startups, easy scaling, and flexible scheduling. The problem is that applications providing business value cannot exist without persistent storage.
+
+This drawback is usually mitigated by making most containers stateless and relying on an external non-containerized component to store the data and the state. Such an external component can be either a traditional self-hosted database or a managed database from a cloud provider. Going in either direction requires you to reconsider the architecture and modify it accordingly.
+
+Since application containers follow specific conventions, the application has to be modified to follow these conventions. For some applications, it will be a low-effort task. For others, such as multiprocess components using in-memory Inter-Process Communication (IPC), it will be complicated.
+
+One point often omitted is that application containers work great as long as the applications inside them are native Linux applications. While Windows containers are supported, they are neither convenient nor as supported as their Linux counterparts. They also require licensed Windows machines running as hosts.
+
+It is easier to enjoy the application containers' benefits if you are building a new application from scratch and can base your design on this technology. Moving an existing application to application containers, especially if it is complicated, will require a lot more work and possibly also a revamp of the entire architecture. In such a case, we advise you to consider all the benefits and disadvantages extra carefully. Making a wrong decision may harm your product's lead time, availability, and budget.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

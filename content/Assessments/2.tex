@@ -1,0 +1,63 @@
+\begin{enumerate}
+\item
+What are the traits of a RESTful service?
+
+\begin{itemize}
+\item 
+Obviously, the use of REST APIs.
+
+\item 
+Statelessness – Each request contains all the data required for its processing. Remember, this doesn't mean that RESTful services cannot use databases, quite the opposite.
+
+\item 
+Using cookies instead of keeping sessions
+\end{itemize}
+
+\item
+What toolkit can you use to aid you in creating a resilient distributed architecture?
+
+\begin{itemize}
+\item 
+Simian Army by Netflix.
+\end{itemize}
+
+\item
+Should you use centralized storage for your microservices? Why/why not?
+
+\begin{itemize}
+\item 
+Microservices should use decentralized storage. Each microservice should choose the storage type that suits it best, as this leads to increased efficiency and scalability.
+\end{itemize}
+
+\item
+When should you write a stateful service instead of a stateless one?
+
+\begin{itemize}
+\item 
+Only when it's not reasonable to have a stateless one and you won't need to scale. For instance, when the client and service have to keep their state in sync or when the state to send would be enormous.
+\end{itemize}
+
+\item
+How does a broker differ from a mediator?
+
+\begin{itemize}
+\item 
+A mediator "mediates" between services, so it needs to know how to process each request. A broker only knows where to send each request, so it's a lightweight component. It can be used to create a publishersubscriber (pub-sub) architecture.
+\end{itemize}
+
+\item
+What is the difference between an N-tier and an N-layer architecture?
+
+\begin{itemize}
+\item 
+Layers are logical and specify how you organize your code. Tiers are physical and specify how you run your code. Each tier has to be separated by others, either by being run in a different process, or even on a different machine.
+\end{itemize}
+
+\item
+How should you approach replacing a monolith with a microservice-based architecture?
+
+\begin{itemize}
+\item 
+Incrementally. Carve small microservices out of the monolith. You can use the strangler pattern described in Chapter 4, Architectural and System Design, to help you with this.
+\end{itemize}
+\end{enumerate}

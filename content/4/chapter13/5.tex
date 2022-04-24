@@ -1,0 +1,122 @@
+
+Microservices are so useful because they can be connected in many different ways with other services, thus creating new value. However, as there is no standard for microservices, there is not a single way to connect to them.
+
+This means that most of the time when we want to use a particular microservice, we have to learn how to interact with it. The good news is that although it is possible to implement any communication method in microservices, there are a few popular approaches that most microservices follow.
+
+How to connect microservices is just one of the relevant questions when designing architecture around them. The other is what to connect with and where. This is where service discovery comes into play. With service discovery, we let the microservices use automated means of discovering and connecting to other services within our application.
+
+These three questions, how, what, and where, will be our next topic. We will introduce some of the most popular methods of communication and discovery used by modern microservices.
+
+\subsubsubsection{13.5.1\hspace{0.2cm}Application programming interfaces (APIs)}
+
+Just like software libraries, microservices often expose APIs. These APIs make it possible to communicate with the microservices. Since the typical manner of communication utilizes computer networking, the most popular form of an API is the web API.
+
+In the previous chapter, we already covered some possible approaches with web services. Nowadays, microservices typically use web services based on REpresentational State Transfer (REST).
+
+\subsubsubsection{13.5.2\hspace{0.2cm}Remote procedure calls}
+
+While web APIs such as REST allow easy debugging and great interoperability, there's a lot of overhead related to data translation and using HTTP for transport.
+
+This overhead may be too much for some microservices, which is the reason for lightweight Remote Procedure Calls (RPCs).
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Apache Thrift}
+
+Apache Thrift is an interface description language and binary communication protocol. It is used as an RPC method that allows creating distributed and scalable services built in a variety of languages.
+
+It supports several binary protocols and transport methods. Native data types are used for each programming language, so it is easy to introduce even in an existing codebase.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{gRPC}
+
+If you really care about performance, often you'll find that text-based solutions don't work for you. REST, however elegant and easily understandable, may turn out to be too slow for your needs. If that's the case, you should try to build your API around binary protocols. One of them, which is growing in popularity, is gRPC.
+
+gRPC, as its name suggests, is an RPC system that was initially developed by Google. It uses HTTP/2 for transport, and Protocol Buffers as an Interface Description Language (IDL) for interoperability between multiple programming languages, and for data serialization. It's possible to use alternative technologies for this, for example, FlatBuffers. gRPC can be used both synchronously and in an asynchronous manner and allows creating both simple services and streaming ones. 
+
+Assuming you've decided to use protobufs, our Greeter service defintion can look like this:
+
+\begin{lstlisting}[style=styleCXX]
+service Greeter {
+	rpc Greet(GreetRequest) returns (GreetResponse);
+}
+message GreetRequest {
+	string name = 1;
+}
+message GreetResponse {
+	string reply = 1;
+}
+\end{lstlisting}
+
+Using the protoc compiler, you can create data access code from this definition. Assuming you want to have a synchronous server for our Greeter, you can create the service in the following way:
+
+\begin{lstlisting}[style=styleCXX]
+class Greeter : public Greeter::Service {
+		Status sendRequest(ServerContext *context, const GreetRequest
+	*request,
+							GreetReply *reply) override {
+		auto name = request->name();
+		if (name.empty()) return Status::INVALID_ARGUMENT;
+		reply->set_result("Hello " + name);
+		return Status::OK;
+	}
+};
+\end{lstlisting}
+
+Then, you have to build and run the server for it:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	Greeter service;
+	ServerBuilder builder;
+	builder.AddListeningPort("localhost", grpc::InsecureServerCredentials());
+	builder.RegisterService(&service);
+	
+	auto server(builder.BuildAndStart());
+	server->Wait();
+}
+\end{lstlisting}
+
+Simple as that. Let's now take a look at a client to consume this service:
+
+\begin{lstlisting}[style=styleCXX]
+#include <grpcpp/grpcpp.h>
+
+#include <string>
+
+#include "grpc/service.grpc.pb.h"
+
+using grpc::ClientContext;
+using grpc::Status;
+
+int main() {
+	std::string address("localhost:50000");
+	auto channel =
+		grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+	auto stub = Greeter::NewStub(channel);
+	
+	GreetRequest request;
+	request.set_name("World");
+	
+	GreetResponse reply;
+	ClientContext context;
+	Status status = stub->Greet(&context, request, &reply);
+	
+	if (status.ok()) {
+		std::cout << reply.reply() << '\n';
+	} else {
+		std::cerr << "Error: " << status.error_code() << '\n';
+	}
+}
+\end{lstlisting}
+
+This was a simple, synchronous example. To make it work asynchronously, you'll need to add tags and CompletionQueue, as described on gRPC's website.
+
+One interesting feature of gRPC is that it is available for mobile applications on Android and iOS. This means that if you use gRPC internally, you don't have to provide an additional server to translate the traffic from your mobile applications.
+
+In this section, you learned the most popular methods of communication and discovery utilized by microservices. Next, we'll see how microservices can be scaled. 
+
+
+
+

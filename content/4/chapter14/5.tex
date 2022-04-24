@@ -1,0 +1,302 @@
+
+Some of the containers' benefits only become apparent when you are using a container orchestrator to manage them. An orchestrator keeps track of all the nodes that will be running your workload, and it also monitors the health and status of the containers spread across these nodes.
+
+More advanced features, for example, high availability, require the proper setup of the orchestrator, which typically means dedicating at least three machines for the control plane and another three machines for worker nodes. The autoscaling of nodes, in addition to the autoscaling of containers, also requires the orchestrator to have a driver able to control the underlying infrastructure (for example, by using the cloud provider's API).
+
+Here, we will cover some of the most popular orchestrators that you can choose from to base your system on. You will find more practical information on Kubernetes in the next chapter, Chapter 15, Cloud-Native Design. Here, we give you an overview of the possible choices.
+
+The presented orchestrators operate on similar objects (services, containers, batch jobs) although each may behave differently. The available features and operating principles vary between them. What they have in common is that you typically write a configuration file that declaratively describes the required resources and then you apply this configuration using a dedicated CLI tool. To illustrate the differences between the tools, we provide an example configuration specifying a web application introduced before (the merchant service) and a popular web server, Nginx, to act as a proxy.
+
+\subsubsubsection{14.5.1\hspace{0.2cm}Self-hosted solutions}
+
+Whether you are running your application on-premises, in a private cloud, or in a public cloud, you may want to have tight control over the orchestrator of your choice. The following is a collection of self-hosted solutions in this space. Keep in mind that most of them are also available as managed services. However, going with self-hosted helps you prevent vendor lock-in, which may be desirable for your organization.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Kubernetes}
+
+Kubernetes is probably the best-known orchestrator of all the ones that we mention here. It is prevalent, which means there is a lot of documentation and community support if you decide to implement it.
+
+Even though Kubernetes uses the same application container format as Docker, this is basically where all the similarities end. It is impossible to use standard Docker tools to interact with Kubernetes clusters and resources directly. There is a new set of tools and concepts to learn when using Kubernetes.
+
+Whereas with Docker, the container is the main object you will operate on, with Kubernetes, the smallest piece of the runtime is called a Pod. A Pod may consist of one or more containers that share mount points and networking resources. Pods in themselves are rarely of interest as Kubernetes also has higher-order concepts such as Replication Controllers, Deployment Controllers, or DaemonSets. Their role is to keep track of the pods and ensure the desired number of replicas is running on the nodes.
+
+The networking model in Kubernetes is also very different from Docker. With Docker, you can forward ports from a container to make it accessible from different machines. With Kubernetes, if you want to access a pod, you typically create a Service resource, which may act as a load balancer to handle the traffic to the pods that form the service's backend. Services may be used for pod-to-pod communication, but they may also be exposed to the internet. Internally, Kubernetes resources perform service discovery using DNS names.
+
+Kubernetes is declarative and eventually consistent. This means that instead of directly creating and allocating resources, you only have to provide the description of the desired end state and Kubernetes will do the work required to bring the cluster to the desired state. Resources are often described using YAML.
+
+Since Kubernetes is highly extensible, there are a lot of associated projects developed under the Cloud Native Computing Foundation (CNCF), which turn Kubernetes into a provideragnostic cloud development platform. We will present Kubernetes in more detail in the next chapter, Chapter 15, Cloud Native Design.
+
+Here's how the resource definition looks for Kubernetes using YAML (merchant.yaml):
+
+\begin{tcblisting}{commandshell={}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dominican-front
+  name: dominican-front
+spec:
+  selector:
+    matchLabels:
+      app: dominican-front
+  template:
+    metadata:
+      labels:
+        app: dominican-front
+    spec:
+      containers:
+        - name: webserver
+          imagePullPolicy: Always
+          image: nginx
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: dominican-front
+  name: dominican-front
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: dominican-front
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dominican-merchant
+  name: merchant
+spec:
+  selector:
+    matchLabels:
+      app: dominican-merchant
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: dominican-merchant
+  spec:
+    containers:
+      - name: merchant
+        imagePullPolicy: Always
+        image: hosacpp/merchant:v2.0.3
+        ports:
+          - name: http
+            containerPort: 8000
+            protocol: TCP
+    restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: dominican-merchant
+  name: merchant
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8000
+  selector:
+    app: dominican-merchant
+    type: ClusterIP
+\end{tcblisting}
+
+To apply this configuration and orchestrate the containers, use kubectl apply -f merchant.yaml.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Docker Swarm}
+
+Docker Engine, also required to build and run Docker containers, comes pre-installed with its own orchestrator. This orchestrator is Docker Swarm, and its main feature is high compatibility with existing Docker tools by using the Docker API.
+
+Docker Swarm uses the concept of Services to manage health checks and autoscaling. It supports rolling upgrades of the services natively. Services are able to publish their ports, which will then be served by Swarm's load balancer. It supports storing configs as objects for runtime customization and has basic secret management built in.
+
+Docker Swarm is much simpler and less extensible than Kubernetes. This could be an advantage if you do not want to learn about all the details of Kubernetes. However, the main disadvantage is a lack of popularity, which means it is harder to find relevant material about Docker Swarm.
+
+One of the benefits of using Docker Swarm is that you don't have to learn new commands. If you're already used to Docker and Docker Compose, Swarm works with the same resources. It allows specific options that extend Docker to handle deployments.
+
+Two services orchestrated with Swarm would look like this (docker-compose.yml):
+
+\begin{tcblisting}{commandshell={}}
+version: "3.8"
+services:
+  web:
+    image: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - merchant
+  merchant:
+    image: hosacpp/merchant:v2.0.3
+    deploy:
+      replicas: 3
+    ports:
+      - "8000"
+\end{tcblisting}
+
+To apply the configuration, you run docker stack deploy -\,-compose-file dockercompose.yml dominican.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Nomad}
+
+Nomad is different from the previous two solutions, as it is not focused solely on containers. It is a general-purpose orchestrator with support for Docker, Podman, Qemu Virtual Machines, isolated fork/exec, and several other task drivers. Nomad is a solution worth learning about if you want to gain some of the advantages of container orchestration without migrating your application to containers.
+
+It is relatively easy to set up and integrates well with other HashiCorp products such as Consul for service discovery and Vault for secret management. Like Docker or Kubernetes, Nomad clients can run locally and connect to the server responsible for managing your cluster.
+
+There are three job types available in Nomad:
+
+\begin{itemize}
+\item 
+Service: A long-lived task that should not exit without manual intervention (for example, a web server or a database).
+
+\item 
+Batch: A shorter-lived task that can complete within as little as a few minutes. If the batch job returns an exit code indicating an error, it is either restarted or rescheduled according to configuration.
+
+\item 
+System: A task that it is necessary to run on every node in the cluster (for example, logging agent).
+\end{itemize}
+
+Compared to other orchestrators, Nomad is relatively easy to install and maintain. It is also extensible when it comes to task drivers or device plugins (used to access dedicated hardware such as GPUs or FPGAs). It lacks in community support and third-party integrations when compared to Kubernetes. Nomad does not require you to redesign the application's architecture to access the provided benefits, which is often the case with Kubernetes.
+
+To configure the two services with Nomad, we need two configuration files. The first one is nginx.nomad:
+
+\begin{tcblisting}{commandshell={}}
+job "web" {
+  datacenters = ["dc1"]
+  type = "service"
+  group "nginx" {
+    task "nginx" {
+      driver = "docker"
+      config {
+        image = "nginx"
+        port_map {
+          http = 80
+        }
+      }
+      resources {
+        network {
+          port "http" {
+            static = 80
+          }
+        }
+      }
+      service {
+        name = "nginx"
+        tags = [ "dominican-front", "web", "nginx" ]
+        port = "http"
+        check {
+          type = "tcp"
+          interval = "10s"
+          timeout = "2s"
+        }
+      }
+    }
+  }
+}
+\end{tcblisting}
+
+The second describes the merchant application, so it's called merchant.nomad:
+
+\begin{tcblisting}{commandshell={}}
+job "merchant" {
+  datacenters = ["dc1"]
+  type = "service"
+  group "merchant" {
+    count = 3
+    task "merchant" {
+      driver = "docker"
+      config {
+        image = "hosacpp/merchant:v2.0.3"
+        port_map {
+          http = 8000
+        }
+      }
+      resources {
+        network {
+          port "http" {
+            static = 8000
+          }
+        }
+      }
+      service {
+        name = "merchant"
+        tags = [ "dominican-front", "merchant" ]
+        port = "http"
+        check {
+          type = "tcp"
+          interval = "10s"
+          timeout = "2s"
+        }
+      }
+    }
+  }
+}
+\end{tcblisting}
+
+To apply the configuration, you run nomad job run merchant.nomad \&\& nomad job run nginx.nomad.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{OpenShift}
+
+OpenShift is Red Hat's commercial container platform built on Kubernetes. It includes a lot of additional components that are useful in the everyday operations of Kubernetes clusters. You get a container registry, a build tool similar to Jenkins, Prometheus for monitoring, Istio for service mesh, and Jaeger for tracing. It is not fully compatible with Kubernetes so it shouldn't be thought of as a drop-in replacement.
+
+It is built on top of existing Red Hat technology such as CoreOS and Red Hat Enterprise Linux. You can use it on-premises, within Red Hat Cloud, on one of the supported public cloud providers (including AWS, GCP, IBM, and Microsoft Azure), or as a hybrid cloud. 
+
+There is also an open source community-supported project called OKD, which forms the basis of Red Hat's OpenShift. If you do not require commercial support and other benefits of OpenShift, you may still use OKD for your Kubernetes workflow.
+
+\subsubsubsection{14.5.2\hspace{0.2cm}Managed services}
+
+As previously mentioned, some of the aforementioned orchestrators are also available as managed services. Kubernetes, for instance, is available as a managed solution in multiple public cloud providers. This section will show you some of the different approaches to container orchestration, which are not based on any of the solutions mentioned above.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{AWS ECS}
+
+Before Kubernetes released its 1.0 version, Amazon Web Services proposed its own container orchestration technology called Elastic Container Service (ECS). ECS provides an orchestrator that monitors, scales, and restarts your services when needed.
+
+To run containers in ECS, you need to provide the EC2 instances on which the workload will run. You are not billed for the orchestrator's use, but you are billed for all the AWS services that you typically use (the underlying EC2 instances, for example, or an RDS database).
+
+One of the significant benefits of ECS is its excellent integration with the rest of the AWS ecosystem. If you are already familiar with AWS services and invested in the platform, you will have less trouble understanding and managing ECS.
+
+If you do not require many of the Kubernetes advanced features and its extensions, ECS may be a better choice as it's more straightforward and more comfortable to learn.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{AWS Fargate}
+
+Another managed orchestrator offered by AWS is Fargate. Unlike ECS, it does not require you to provision and pay for the underlying EC2 instances. The only components you are focused on are the containers, the network interfaces attached to them, and IAM permissions.
+
+Fargate requires the least amount of maintenance compared to other solutions and is the easiest to learn. Autoscaling and load-balancing are available out of the box thanks to the existing AWS products in this space.
+
+The main downside here is the premium that you pay for hosting your services when compared to ECS. A straight comparison is not possible as ECS requires paying for the EC2 instances, while Fargate requires paying for the memory and CPU usage independently. This lack of direct control over your cluster may easily lead to high costs once your services start to autoscale.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Azure Service Fabric}
+
+The problem with all of the preceding solutions is that they mostly target Docker containers, which are first and foremost Linux-centric. Azure Service Fabric, on the other hand, is a Windows-first product backed by Microsoft. It enables running legacy Windows apps without modifications, which may help you migrate your application if it relies on such services.
+
+As with Kubernetes, Azure Service Fabric is not so much a container orchestrator in itself, but rather a platform on top of which you can build your applications. One of the building blocks happens to be containers, so it works fine as an orchestrator.
+
+With the recent introduction of Azure Kubernetes Service, the managed Kubernetes platform in the Azure cloud, there is less need for using Service Fabric.
+
+
+
+
+
+
+
+

@@ -1,0 +1,45 @@
+\begin{enumerate}
+\item
+What's the difference between installing and exporting your targets in CMake?
+\begin{itemize}
+\item 
+Exporting means the targets will be available for other projects that try to find our package, even if our code is not installed. CMake's package registry can be used to store data about locations of the exported targets. The binaries never leave the build directory. Installation requires the targets to be copied somewhere and, if it's not a system directory, setting up paths to the config files or the targets themselves.
+\end{itemize}
+
+\item
+How do you make your template code compile faster?
+\begin{itemize}
+\item 
+Follow the Rule of Chiel.
+\end{itemize}
+
+\item
+How do you use multiple compilers with Conan?
+\begin{itemize}
+\item 
+Use Conan profiles.
+\end{itemize}
+
+\item
+What do you do if you'd like to compile your Conan dependencies with the preC++11 GCC ABI?
+\begin{itemize}
+\item 
+Set compiler.libcxx to libstdc++ instead of libstdc++11.
+\end{itemize}
+
+\item
+How to ensure we force a specific C++ standard in CMake?
+\begin{itemize}
+\item 
+By calling set\_target\_properties(our\_target PROPERTIES
+CXX\_STANDARD our\_required\_cxx\_standard
+CXX\_STANDARD\_REQUIRED YES CXX\_EXTENSIONS NO).
+\end{itemize}
+
+\item
+How would you build documentation in CMake and ship it along with your RPM package?
+\begin{itemize}
+\item 
+Create a target to generate the documentation as described in Chapter 3, Functional and Nonfunctional Requirements, install it to CMAKE\_INSTALL\_DOCDIR, and then make sure the path is not specified in the CPACK\_RPM\_EXCLUDE\_FROM\_AUTO\_FILELIST variable.
+\end{itemize}
+\end{enumerate}

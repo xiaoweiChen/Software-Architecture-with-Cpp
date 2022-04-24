@@ -1,0 +1,12 @@
+While related to cloud-native design, serverless architecture is a popular topic on its own. It gained a lot of popularity since the introduction of FaaS or CaaS products, such as AWS Lambda, AWS Fargate, Google Cloud Run, and Azure Functions.
+
+Serverless is mostly an evolution of PaaS products such as Heroku. It abstracts the underlying infrastructure so that developers can focus on the application and not on infrastructural choices.
+
+An additional benefit of serverless over older PaaS solutions is that you don't have to pay for what you don't use. Rather than paying for a given service level, you typically pay for the actual execution time of the deployed workload with serverless. If you only want to run a given piece of code once a day, you don't need to pay a monthly fee for an underlying server.
+
+While we didn't get into too much detail about serverless, it is rarely used with C++. When it comes to FaaS, only AWS Lambda currently supports C++ as a possible language. Since containers are language-agnostic, you can use C++ applications and functions with CaaS products such as AWS Fargate, Azure Container Instances, or Google Cloud Run.
+
+Serverless functions may still be relevant to you if you want to run non-C++ auxiliary code  used along with your C++ application. Maintenance tasks and scheduled jobs are an excellent fit for serverless and they usually don't require the performance or efficiency of C++ binaries.
+
+
+

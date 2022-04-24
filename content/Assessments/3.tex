@@ -1,0 +1,58 @@
+\begin{enumerate}
+\item
+What are quality attributes?
+
+\begin{itemize}
+\item 
+A mediator "mediates" between services, so it needs to know how to process each request. A broker only knows where to send each request, so it's a lightweight component. It can be used to create a publishersubscriber (pub-sub) architecture.
+\end{itemize}
+
+\item
+What sources should be used when gathering requirements?
+
+\begin{itemize}
+\item 
+The context of your system, existing documentation, and the system's stakeholders.
+\end{itemize}
+
+\item
+How can you tell whether a requirement is architecturally significant?
+
+\begin{itemize}
+\item 
+Architecturally significant requirements (ASRs) often require a separate software component, impact a large part of the system, are hard to achieve, and/or force you to make trade-offs.
+\end{itemize}
+
+\item
+How should you document graphically the functional requirements various parties may have regarding your system?
+
+\begin{itemize}
+\item 
+Prepare a use case diagram.
+\end{itemize}
+
+\item
+When is development view documentation useful?
+
+\begin{itemize}
+\item 
+In cases where you're developing a large system with many modules and need to communicate global constraints and common design choices to all the software teams.
+\end{itemize}
+
+\item
+How should you automatically check whether your code's API documentation is out of date?
+
+\begin{itemize}
+\item 
+Doxygen has built-in checks, like the one that warns you about mismatches between the function signatures and their parameters in comments
+\end{itemize}
+
+\item
+How should you show on a diagram that a given operation is handled by different components of the system?
+
+\begin{itemize}
+\item 
+Use one of the UML interaction diagrams for this purpose. Sequence diagrams are a good choice, although communication diagrams can be fine in certain scenarios, too.
+\end{itemize}
+
+\end{enumerate}

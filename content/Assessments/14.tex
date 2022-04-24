@@ -1,0 +1,57 @@
+\begin{enumerate}
+\item
+How do application containers differ from operating system containers?
+\begin{itemize}
+\item 
+Application containers are designed to host a single process, while operating system containers usually run all the processes typically available in a Unix system.
+\end{itemize}
+
+\item
+What are some early examples of sandboxing environments in UNIX systems?
+\begin{itemize}
+\item 
+chroot, BSD Jails, Solaris Zones.
+\end{itemize}
+
+\item
+Why are containers a good fit for microservices?
+\begin{itemize}
+\item 
+They offer a unified interface to run applications regardless of the underlying technology.
+\end{itemize}
+
+\item
+What are the main differences between containers and virtual machines?
+\begin{itemize}
+\item 
+Containers are more lightweight as they don't require a hypervisor, a copy of an operating system kernel, or auxiliary processes, such as an init system or syslog.
+\end{itemize}
+
+\item
+When are application containers a bad choice?
+\begin{itemize}
+\item 
+When you want to put a multi-process application in a single container.
+\end{itemize}
+
+\item
+What are some tools to build multi-platform container images?
+\begin{itemize}
+\item 
+manifest-tool, docker buildx.
+\end{itemize}
+
+\item
+Besides Docker, what are some other container runtimes?
+\begin{itemize}
+\item 
+Podman, containerd, CRI-O.
+\end{itemize}
+
+\item
+What are some popular orchestrators?
+\begin{itemize}
+\item 
+Kubernetes, Docker Swarm, Nomad.
+\end{itemize}
+\end{enumerate}

@@ -1,0 +1,32 @@
+\begin{enumerate}
+\item
+What can we learn from the performance results from this chapter's microbenchmarks?
+\begin{itemize}
+\item 
+The fact that a binary search is a lot faster than a linear search, even if the number of elements to check is not that high. This means that computational complexity (aka the Big O) matters. Probably on your machine, even the longest search on the biggest dataset for a binary search was still faster than the shortest one for a linear search!
+
+\item 
+Depending on your cache sizes, you may have also noticed how increasing the required memory caused slowdowns when the data could no longer fit in specific cache levels.
+\end{itemize}
+
+\item
+Is how we traverse a multi-dimensional array important for performance? Why/why not?
+\begin{itemize}
+\item 
+It's crucial, as we may access the data linearly in memory, which the CPU prefetcher would like and reward us with better performance, or jump through the memory, hindering thereby our performance.
+\end{itemize}
+
+\item
+In our coroutines example, why can't we create our thread pool inside the do\_routine\_work function?
+\begin{itemize}
+\item 
+Because of lifetime issues.
+\end{itemize}
+
+\item
+How can we rework our coroutine example so it uses a generator instead of just tasks?
+\begin{itemize}
+\item 
+The body of the generator would need to co\_yield. Also, the threads from our pool would need to synchronize, probably using an atomic.
+\end{itemize}
+\end{enumerate}

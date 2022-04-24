@@ -1,92 +1,180 @@
 
 
+While microservices are not tied to any particular programming language or technology, a common choice when implementing microservices has been the Go language. That does not mean that other languages are not suitable for microservices development – quite the contrary. The low computational and memory overhead of C++ makes it an ideal candidate for microservices. 
+
+But first, we will start with a detailed view of some of the pros and cons of microservices. After that, we'll focus on design patterns that are often associated with microservices (as opposed to the general design patterns covered in Chapter 4, Architectural and System Design).
+
 \subsubsubsection{13.2.1\hspace{0.2cm}The benefits of microservices}
+
+You may often hear about microservices in superlatives. It is true that they can bring some benefits and here are some of them.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Modularity}
 
+Since the entire application is split into many relatively small modules, it is easier to understand what each microservice does. The natural consequence of this understanding is that it is also easier to test individual microservices. Testing is also aided by the fact that each microservice typically has a limited scope. After all, it's easier to test just the calendar application than to test the entire Personal Information Management (PIM) suite.
+
+This modularity, however, comes at some cost. Your teams may have a much better understanding of individual microservices, but at the same time they may find it harder to grasp how the entire application is composed. While it shouldn't be necessary to learn all the internal details of the microservices that form an application, the sheer number of relationships between components presents a cognitive challenge. It's good practice to use microservices contracts when using this architectural  approach.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Scalability}
+
+It is easier to scale applications that are limited in scope. One reason for that is that there are fewer potential bottlenecks.
+
+Scaling smaller pieces of a workflow is also more cost-effective. Imagine a monolithic application responsible for managing a trade fair. Once the system starts showing performance issues, the only way to scale is to bring in a bigger machine for the monolith to run on. This is called vertical scaling.
+
+With microservices, the first advantage is that you can scale horizontally, that is, bring in more machines instead of a bigger machine (which is usually cheaper). The second advantage comes from the fact that you only need to scale those parts of the application that are having performance issues. This also contributes to money saved on infrastructure.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Flexibility}
 
+Microservices, when properly designed, are less susceptible to vendor lock-in. When you decide you want to switch one of the third-party components, you don't have to do the entire painful migration all at once. Microservices design takes into account that you need to use interfaces, so the only part that requires modification is the interface between your microservice and the third-party component.
+
+The components may also migrate one by one, some still using the software from the old provider. This means you can separate the risk of introducing breaking changes in many places at once. What's more, you can combine this with the canary deployments pattern to manage risk with even more granularity.
+
+This flexibility is not related just to single services. It may also mean different databases, different queueing and messaging solutions, or even entirely different cloud platforms. While different cloud platforms typically offer different services and APIs to use them, with a microservices architecture, you can start migrating your  workload piece by piece and test it independently on a new platform.
+
+When rewrites are necessary due to performance issues, scalability, or available dependencies, it is much faster to rewrite a microservice than a monolith.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Integration with legacy systems}
+
+Microservices are not necessarily an all-or-nothing approach. If your application is welltested and migration to microservices may create a lot of risks, there's no pressure to dismantle the working solution altogether. It is even better to split only the parts that require further development and introduce them as microservices that the original monolith will use.
+
+By following this approach, you will gain the benefits of the agile release cycle associated with microservices, while at the same time avoiding creating a new architecture from scratch and basically rebuilding an entire application. If something is already working well, it's better to focus on how to add new features without breaking the good parts, rather than starting from scratch. Be careful here, as starting from scratch is often used as an ego boost!
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Distributed development}
 
+The times of development teams being small and colocated are long gone. Remote work and distributed development are a fact even in traditional office-based companies. Giants such as IBM, Microsoft, and Intel have people from different locations working together on a single project.
+
+Microservices allow for smaller and more agile teams, which makes distributed development much easier. When it's no longer necessary to facilitate communication between a group of 20 or more people, it's also easier to build self-organized teams that require less external management.
+
 \subsubsubsection{13.2.2\hspace{0.2cm}Disadvantages of microservices}
+
+Even if you think you may need microservices due to their benefits, keep in mind that they also have some serious drawbacks. In short, they are definitely not for everyone. Larger companies can generally offset these drawbacks, but smaller companies often don't have this luxury.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Reliance on a mature DevOps approach}
 
+Building and testing microservices should be much faster than performing similar operations on big, monolithic applications. But in order to achieve agile development, this building and testing would need to be performed much more often. 
+
+While it may be sensible to deploy the application manually when you are dealing with a monolith, the same approach will lead to a lot of problems if applied to microservices.
+
+In order to embrace the microservices in your development, you have to ensure that your team has a DevOps mindset and understands the requirements of both building and running the microservice. It's not enough to simply hand the code to someone else and forget about it.
+
+The DevOps mindset will help your team to automate as much as possible. Developing microservices without a continuous integration/continuous delivery pipeline is probably one of the worst possible ideas in software architecture. Such an approach will bring all the other disadvantages of microservices without enabling most of the benefits.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Harder to debug}
+
+Microservices require introducing observability. Without it, when something breaks, you're never sure where to start looking for the potential root cause. Observability is a way to deduce the state of your application without the need to run a debugger or log to the machines your workload is running on.
+
+A combination of log aggregation, application metrics, monitoring, and distributed tracing is a prerequisite to manage microservices-based architecture. This is especially true once you consider that autoscaling and self-healing may even prevent you from accessing individual services if they start crashing.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Additional overhead}
 
+Microservices should be lean and agile. And that's usually true. However, microservicesbased architecture usually requires additional overhead. The first layer of overhead is related to the additional interfaces used for microservices communication. RPC libraries and API providers and consumers have to be multiplied not only by the number of microservices but also by the number of their replicas. Then there are auxiliary services, such as databases, message queues, and so on. Those services also include observability facilities that usually consist of both storage facilities and individual collectors that gather data.
+
+The costs that you optimize with better scaling may be outweighed by the costs required to run the entire fleet of services that don't bring immediate business value. What's more, it may be hard for you to justify these costs (both in terms of infrastructure and development overhead) to the stakeholders.
+
 \subsubsubsection{13.2.3\hspace{0.2cm}Design patterns for microservices}
+
+A lot of general design patterns apply to microservices as well. There are also some design patterns that are typically associated with microservices. The patterns presented here are useful for both greenfield projects as well as migration from monolithic applications.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Decomposition patterns}
 
+These patterns relate to the ways in which microservices are decomposed. We want to ensure the architecture is stable and the services are loosely coupled. We also want to make sure that services are cohesive and testable. Finally, we want autonomous teams to fully own one or more services.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Decomposition by business capability}
+
+One of the decomposition patterns requires decomposition by business capability. Business capability relates to what a business does in order to produce value. Examples of business capabilities are merchant management and customer management. Business capabilities are often organized in a hierarchy.
+
+The main challenge when applying this pattern is to correctly identify the business capabilities. This requires an understanding of the business itself and may benefit from cooperation with a business analyst.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Decomposition by subdomain}
 
+A different decomposition pattern is related to the Domain-Driven Design (DDD) approach. To define services, it is necessary to identify DDD subdomains. Just like business capability, identifying subdomains requires knowledge of the business context.
+
+The main difference between the two approaches is that with decomposing by business capability, the focus is more on the organization of the business (its structure), whereas with decomposing by subdomain, the focus is on the problems that the business tries to solve.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Database per service pattern}
+
+Storing and handling data is a complex issue in every software architecture. Wrong choices may impact scalability, performance, or maintenance costs. With microservices, there's an added complexity coming from the fact that we want the microservices to be loosely coupled.
+
+This leads to a design pattern where each microservice connects to its own database so it is independent of any changes introduced by the other services. While this pattern adds some overhead, its additional benefit is that you can optimize the schema and indexes for each microservice individually.
+
+Since databases tend to be pretty huge pieces of infrastructure, this approach may not be feasible, so sharing a database between microservices is an understandable trade-off.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Deployment strategies}
 
+With microservices running on multiple hosts, you will probably wonder which is the better way to allocate resources. Let's compare the two possible approaches.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Single service per host}
+
+Using this pattern, we allow each host to only serve a particular type of microservice. The main benefit is that you can tweak the machine to better fit the desired workload and services are well isolated. When you provide extra-large memory or fast storage, you'll be sure that it is used only for the microservice that needs it. The service is also unable to consume more resources than provisioned.
+
+The downside of this approach is that some of the hosts may be under-utilized. One possible workaround is to use the smallest possible machines that still satisfy the microservice requirements and scale them when necessary. This workaround, however, does not solve the issue of additional overhead on the host itself.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Multiple services per host}
 
+An opposite approach is hosting multiple services per host. This helps to optimize the utilization of the machines but it also comes with some drawbacks. First of all, different microservices may require different optimizations, so hosting them on a single host will still be impossible. What's more, with this approach, you lose control of the host allocation, so the problems in one microservice may cause outages in a colocated microservice even if the latter would be otherwise unaffected.
+
+Another problem is the dependency conflict between the microservices. When the microservices are not isolated from one another, the deployment has to take into account different possible dependencies. This model is also less secure.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Observability patterns}
+
+In the previous section, we mentioned that microservices come at a price. This price includes the requirement to introduce observability or risk losing the ability to debug your applications. Here are some patterns related to observability.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Log aggregation}
 
+Microservices use logging just like monolithic applications. Instead of storing the logs locally, the logs are aggregated and forwarded to a central facility. This way, the logs are available even if the service itself is down. Storing logs in a centralized manner also helps correlate data coming from different microservices.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Application metrics}
+
+To make decisions based on data, you first need some data to act on. Collecting application metrics helps to understand the application behavior as used by the actual users, and not in synthetic tests. The approaches to collect those metrics are push (where an application actively calls the performance monitoring service) and pull (where the performance monitoring service regularly checks the configured endpoints).
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Distributed tracing}
 
+Distributed tracing helps not only to investigate performance issues but also to gain better insight into the application behavior under real-world traffic. Unlike logging, which collects pieces of information from a single point, tracing is concerned with the entire life cycle of a single transaction, starting at the point where it originates from a user action.
+
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Health check APIs}
 
+Since microservices are often targets of automation, they need to have the ability to communicate their internal state. Even if the process is present in the system, it doesn't mean the application is operational. The same goes for an open network port; the application may be listening, but it is not yet able to respond. Health check APIs provide a way for external services to determine whether the application is ready to process the workload. Self-healing and autoscaling use health checks to determine when an intervention is needed. The base premise is that a given endpoint (such as /health) returns an HTTP code 200 when the application behaves as expected and a different code (or does not return at all) if any problem is found.
 
+Now that all the pros, cons, and patterns are known to you, we'll show you how you can split the monolithic application and turn it into microservices part by part. The presented approaches are not limited to just microservices; they may be useful in other cases as well, including monolithic applications.
 
 
 

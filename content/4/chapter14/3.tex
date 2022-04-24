@@ -1,0 +1,401 @@
+
+Application containers are the focus of this section. While OS containers mostly follow system programming principles, application containers bring new challenges and patterns. Also, they provide specialized build tools to deal with those challenges. The primary tool we will consider is Docker, as it's the current de facto standard for building and running application containers. We will also present some alternative approaches to building application containers.
+
+Unless otherwise noted, whenever we use the word "containers" from now on, it relates to "application containers."
+
+In this section, we will focus on different approaches to using Docker for building and deploying containers.
+
+\subsubsubsection{14.3.1\hspace{0.2cm}Container images explained}
+
+Before we describe container images and how to build them, it is vital to understand the distinction between containers and container images. There is often confusion between the terms, especially during informal conversations.
+
+The difference between a container and a container image is the same as between a running process and an executable file.
+
+Container images are static: They're snapshots of a particular filesystem and associated metadata. The metadata describes, among other things, what environmental variables are set during runtime or which program to run when the container is created from the image. 
+
+Containers are dynamic: They are running a process contained within the container image. We can create containers from the container images and we can also create container images by snapshotting a running container. The container image build process consists, in fact, of creating several containers, executing commands inside them, and snapshotting them after the command finishes.
+
+To distinguish between the data introduced by the container image and the data generated during runtime, Docker uses union mount filesystems to create different filesystem layers.
+
+These layers are also present in the container images. Typically, each build step of the container image corresponds to a new layer in the resulting container image.
+
+\subsubsubsection{14.3.2\hspace{0.2cm}Using Dockerfiles to build an application}
+
+The most common way to build an application container image using Docker is to use a Dockerfile. Dockerfile is an imperative language describing the operations required to produce the resulting image. Some of the operations create new filesystem layers; others operate on metadata.
+
+We will not go into details and specifics related to Dockerfiles. Instead, we will show different approaches to containerizing a C++ application. For this, we need to introduce some syntax and concepts related to Dockerfiles.
+
+Here is an example of a very simple Dockerfile:
+
+\begin{tcblisting}{commandshell={}}
+FROM ubuntu:bionic
+
+RUN apt-get update && apt-get -y install build-essentials gcc
+
+CMD /usr/bin/gcc
+\end{tcblisting}
+
+Typically, we can divide a Dockerfile into three parts:
+
+\begin{itemize}
+\item 
+Importing the base image (the FROM instruction)
+
+\item 
+Performing operations within the container that will result in a container image (the RUN instruction)
+
+\item 
+Metadata used during runtime (the CMD command)
+\end{itemize}
+
+The latter two parts may well be interleaved, and each of them may comprise one or more instructions. It is also possible to omit any of the later parts as only the base image is mandatory. This does not mean you cannot start with an empty filesystem. There is a special base image named scratch exactly for this purpose. Adding a single statically linked binary to an otherwise empty filesystem could look like the following:
+
+\begin{tcblisting}{commandshell={}}
+FROM scratch
+
+COPY customer /bin/customer
+
+CMD /bin/customer
+\end{tcblisting}
+
+In the first Dockerfile, the steps we take are the following:
+
+\begin{enumerate}
+\item 
+Import the base Ubuntu Bionic image.
+
+\item
+Run a command inside the container. The results of the command will create a new filesystem layer inside the target image. This means the packages installed with apt-get will be available in all the containers based on this image.
+
+\item
+Set the runtime metadata. When creating a container based on this image, we want to run GCC as the default process.
+\end{enumerate}
+
+To build an image from a Dockerfile, you will use the docker build command. It takes one required argument, the directory containing the build context, which means the Dockerfile itself and other files you want to copy inside the container. To build a Dockerfile from a current directory, use docker build.
+
+This will build an anonymous image, which is not very useful. Most of the time, you want to use named images. There is a convention to follow when naming container images and that's what we'll cover in the next section.
+
+\subsubsubsection{14.3.3\hspace{0.2cm}Naming and distributing images}
+
+Each container image in Docker has a distinctive name consisting of three elements: the name of the registry, the name of the image, a tag. Container registries are object repositories holding container images. The default container registry for Docker is docker.io. When pulling an image from this registry, we may omit the registry name.
+
+Our previous example with ubuntu:bionic has the full name of docker.io/ubuntu:bionic. In this example, ubuntu is the name of the image, while bionic is a tag that represents a particular version of an image.
+
+When building an application based on containers, you will be interested in storing all the registry images. It is possible to host your private registry and keep your images there or use a managed solution. Popular managed solutions include the following:
+
+\begin{enumerate}
+\item 
+Docker Hub
+
+\item 
+quay.io
+
+\item 
+GitHub
+
+\item 
+Cloud providers (such as AWS, GCP, or Azure)
+\end{enumerate}
+
+Docker Hub is still the most popular one, though some public images are migrating to quay.io. Both are general-purpose and allow the storage of public and private images. GitHub or cloud providers will be mainly attractive to you if you are already using a particular platform and want to keep your images close to the CI pipeline or the deployment targets. It is also helpful if you want to reduce the number of individual services you use. 
+
+If none of the solutions appeal to you, hosting your own local registry is also very easy and requires you to run a single container.
+
+To build a named image, you need to pass the -t argument to the docker build command. For example, to build an image named dominicanfair/merchant:v2.0.3, you will use docker build -t dominicanfair/merchant:v2.0.3 ..
+
+\subsubsubsection{14.3.4\hspace{0.2cm}Compiled applications and containers}
+
+When building container images for applications in interpreted languages (such as Python or JavaScript), the approach is mostly the same:
+
+\begin{enumerate}
+\item 
+Install dependencies.
+
+\item 
+Copy source files to the container image.
+
+\item 
+Copy the necessary configuration.
+
+\item 
+Set the runtime command.
+\end{enumerate}
+
+For compiled applications, however, there's an additional step of compiling the application first. There are several possible ways to implement this step, each of them with their pros and cons.
+
+The most obvious approach is to install all the dependencies first, copy the source files, and then compile the application as one of the container build steps. The major benefit is that we can accurately control the toolchain's contents and configuration and therefore have a portable way to build an application. However, the downside is too big to ignore: the resulting container image contains a lot of unnecessary files. After all, we will need neither source code nor the toolchain during runtime. Due to the way overlay filesystems work, it is impossible to remove the files after being introduced in a previous layer. What is more, the source code in the container may prove to be a security risk if an attacker manages to break into the container.
+
+Here's how it can look:
+
+\begin{tcblisting}{commandshell={}}
+FROM ubuntu:bionic
+
+RUN apt-get update && apt-get -y install build-essentials gcc cmake
+
+ADD . /usr/src
+
+WORKDIR /usr/src
+
+RUN mkdir build && \
+    cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build . && \
+    cmake --install .
+    
+CMD /usr/local/bin/customer
+\end{tcblisting}
+
+Another obvious approach, and the one we discussed earlier, is building the application on the host machine and only copying the resulting binaries inside the container image. This requires fewer changes to the current build process when one is already established. The main drawback is that you have to match the same set of libraries on your build machines as you do in your containers. If you're running, for example, Ubuntu 20.04 as your host operating system, your containers will have to be based on Ubuntu 20.04 as well. Otherwise, you risk incompatibilities. With this approach, it is also necessary to configure the toolchain independently of the container.
+
+Just like this:
+
+\begin{tcblisting}{commandshell={}}
+FROM scratch
+
+COPY customer /bin/customer
+
+CMD /bin/customer
+\end{tcblisting}
+
+A slightly more complicated approach is to have a multi-stage build. With multi-stage builds, one stage may be dedicated to setting up the toolchain and compiling the project, while another stage copies the resulting binaries to their target container image. This has several benefits over the previous solutions. First of all, the Dockerfiles now control both the toolchain and the runtime environment, so every step of the build is thoroughly documented. Second of all, it is possible to use the image with the toolchain to ensure compatibility between development and the Continuous Integration/Continuous Deployment (CI/CD) pipeline. This way also makes it easier to distribute upgrades and fixes to the toolchain itself. The major downside is that the containerized toolchain may not be as comfortable to use as a native one. Also, build tools are not particularly well-suited to application containers, which require that there's one process running per container. This may lead to unexpected behavior whenever some of the processes crash or are forcefully stopped.
+
+A multi-stage version of the preceding example would look like this:
+
+\begin{tcblisting}{commandshell={}}
+FROM ubuntu:bionic AS builder
+
+RUN apt-get update && apt-get -y install build-essentials gcc cmake
+
+ADD . /usr/src
+
+WORKDIR /usr/src
+
+RUN mkdir build && \
+    cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build .
+    
+FROM ubuntu:bionic
+
+COPY --from=builder /usr/src/build/bin/customer /bin/customer
+
+CMD /bin/customer
+\end{tcblisting}
+
+The first stage, starting at the first FROM command sets up the builder, adds the sources, and builds the binaries. Then, the second stage, starting at the second FROM command, copies the resulting binary from the previous stage without copying the toolchain or the sources.
+
+\subsubsubsection{14.3.5\hspace{0.2cm}Targeting multiple architectures with manifests}
+
+Application containers with Docker are typically used on x86\_64 (also known as AMD64) machines. If you are only targeting this platform, you have nothing to worry about. However, if you are developing IoT, embedded, or edge applications, you may be interested in multi-architecture images. 
+
+Since Docker is available on many different CPU architectures, there are several ways to approach image management on multiple platforms.
+
+One way to handle images built for different targets is by using the image tags to describe a particular platform. Instead of merchant:v2.0.3, we could have merchant:v2.0.3-aarch64. Although this approach may seem to be the easiest to implement, it is, in fact, a bit problematic.
+
+Not only do you have to change the build process to include the architecture in the tagging process. When pulling the images to run them, you will also have to take care to manually append the expected suffix everywhere. If you are using an orchestrator, you won't be able to share the manifests between the different platforms in a straightforward way, as the tags will be platform-specific.
+
+A better way that doesn't require modifying the deployment step is to use manifest-tool (https://github.com/estesp/manifest-tool). The build process at first looks similar to the one suggested previously. Images are built separately on all the supported architectures and pushed to the registry with a platform suffix in their tags. After all the images are pushed, manifest-tool merges the images to provide a single multi-architecture one. This way, each supported platform is able to use the exact same tag.
+
+An example configuration for manifest-tool is provided here:
+
+\begin{tcblisting}{commandshell={}}
+image: hosacpp/merchant:v2.0.3
+manifests:
+  - image: hosacpp/merchant:v2.0.3-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  - image: hosacpp/merchant:v2.0.3-arm32
+    platform:
+      architecture: arm
+      os: linux
+  - image: hosacpp/merchant:v2.0.3-arm64
+    platform:
+      architecture: arm64
+      os: linux
+\end{tcblisting}
+
+Here, we have three supported platforms, each with their respective suffix (hosacpp/merchant:v2.0.3-amd64, hosacpp/merchant:v2.0.3-arm32, and hosacpp/merchant:v2.0.3-arm64). Manifest-tool combines the images built for each platform and produces a hosacpp/merchant:v2.0.3 image that we can use everywhere.
+
+Another possibility is to use Docker's built-in feature called Buildx. With Buildx, you can attach several builder instances, each of which targets a required architecture. What's interesting is that you don't need to have native machines to run the builds; you can also use the QEMU emulation or cross-compilation in a multi-stage build. Although it is much more powerful than the previous approach, Buildx is also quite complicated. At the time of writing, it requires Docker experimental mode and Linux kernel 4.8 or later. It requires you to set up and manage builders and not everything behaves in an intuitive way. It's possible it will improve and become more stable in the near future.
+
+An example code to prepare the build environment and build a multi-platform image may look like the following:
+
+\begin{tcblisting}{commandshell={}}
+# create two build contexts running on different machines
+docker context create \
+    --docker host=ssh://docker-user@host1.domifair.org \
+    --description="Remote engine amd64" \
+    node-amd64
+docker context create \
+    --docker host=ssh://docker-user@host2.domifair.org \
+    --description="Remote engine arm64" \
+    node-arm64
+
+# use the contexts
+docker buildx create --use --name mybuild node-amd64
+docker buildx create --append --name mybuild node-arm64
+
+# build an image
+docker buildx build --platform linux/amd64,linux/arm64 .
+\end{tcblisting}
+
+As you can see, this may be a little confusing if you're used to the regular docker build command.
+
+\subsubsubsection{14.3.6\hspace{0.2cm}Alternative ways to build application containers}
+
+Building container images with Docker requires the Docker daemon to be running. The Docker daemon requires root privileges, which may pose security problems in some setups. Even though the Docker client that does the building may be run by an unprivileged user, it is not always feasible to install the Docker daemon in the build environment.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Buildah}
+
+Buildah is an alternative tool to build container images that can be configured to run without root access. Buildah can work with regular Dockerfiles, which we discussed earlier. It also presents its own command-line interface that you can use in shell scripts or other automation you find more intuitive. One of the previous Dockerfiles rewritten as a shell script using the buildah interface will look like this:
+
+\begin{tcblisting}{commandshell={}}
+#!/bin/sh
+
+ctr=$(buildah from ubuntu:bionic)
+
+buildah run $ctr -- /bin/sh -c 'apt-get update && apt-get install -y buildessential gcc'
+
+buildah config --cmd '/usr/bin/gcc' "$ctr"
+
+buildah commit "$ctr" hosacpp-gcc
+
+buildah rm "$ctr"
+\end{tcblisting}
+
+One interesting feature of Buildah is that it allows you to mount the container image filesystem into your host filesystem. This way, you can use your host's commands to interact with the contents of the image. If you have software you don't want (or can't due to licensing restrictions) put within the container, it's still possible to invoke it outside of the container when using Buildah.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Ansible-bender}
+
+Ansible-bender uses Ansible playbooks and Buildah to build container images. All of the configuration, including base images and metadata, is passed as a variable within the playbook. Here is our previous example converted to Ansible syntax:
+
+\begin{tcblisting}{commandshell={}}
+---
+- name: Container image with ansible-bender
+  hosts: all
+  vars:
+    ansible_bender:
+      base_image: python:3-buster
+    
+      target_image:
+        name: hosacpp-gcc
+        cmd: /usr/bin/gcc
+tasks:
+- name: Install Apt packages
+  apt:
+    pkg:
+      - build-essential
+      - gcc
+\end{tcblisting}
+
+As you see, the ansible\_bender variable is responsible for all the configuration specific to containers. The tasks presented below are executed inside the container based on base\_image.
+
+One thing to note is that Ansible requires a Python interpreter present in the base image. This is why we had to change ubuntu:bionic used in previous examples to python:3-buster. ubuntu:bionic is an Ubuntu image without a Python interpreter preinstalled.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Others}
+
+There are also other ways to build container images. You can use Nix to create a filesystem image and then put it inside the image using Dockerfile's COPY instruction, for example. Going further, you can prepare a filesystem image by any other means and then import it as a base container image using docker import.
+
+Choose whichever solution fits your particular needs. Keep in mind that building with a Dockerfile using docker build is the most popular approach and hence it is the bestdocumented one and the best supported. Going with Buildah is more flexible and allows you to better fit creating container images into your build process. Finally, ansiblebender may be a good solution if you're already heavily invested in Ansible and you want to reuse already available modules.
+
+\subsubsubsection{14.3.7\hspace{0.2cm}Integrating containers with CMake}
+
+In this section, we'll demonstrate how to create a Docker image by working with CMake.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Configuring the Dockerfile with CMake}
+
+First, and foremost, we'll need a Dockerfile. Let's use yet another CMake input file for this:
+
+\begin{lstlisting}[style=styleCMake]
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.in
+			   ${PROJECT_BINARY_DIR}/Dockerfile @ONLY)
+\end{lstlisting}
+
+Note that we're using PROJECT\_BINARY\_DIR to not overwrite any Dockerfiles created by other projects in the source tree if our project is part of a bigger one.
+
+Our Dockerfile.in file will look as follows:
+
+\begin{tcblisting}{commandshell={}}
+FROM ubuntu:latest
+ADD Customer-@PROJECT_VERSION@-Linux.deb .
+RUN apt-get update && \
+    apt-get -y --no-install-recommends install ./Customer-
+@PROJECT_VERSION@-Linux.deb && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/* Customer-@PROJECT_VERSION@-Linux.deb
+ENTRYPOINT ["/usr/bin/customer"]
+EXPOSE 8080
+\end{tcblisting}
+
+First, we specify that we'll take the latest Ubuntu image, install our DEB package on it along with its dependencies, and then tidy up. It's important to update the package manager cache in the same step as installing the package to avoid issues with stale caches due to how layers in Docker work. Cleanup is also performed as part of the same RUN command (in the same layer) so that the layer size is smaller. After installing the package, we make our image run the customer microservice when it is started. Finally, we tell Docker to expose the port that it will be listening on.
+
+Now, back to our CMakeLists.txt file.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Integrating containers with CMake}
+
+For CMake-based projects, it is possible to include a build step responsible for building the containers. For that, we need to tell CMake to find the Docker executable and bail out if it doesn't. We can do this using the following:
+
+\begin{lstlisting}[style=styleCMake]
+find_program(Docker_EXECUTABLE docker)
+	if(NOT Docker_EXECUTABLE)
+		message(FATAL_ERROR "Docker not found")
+	endif()
+\end{lstlisting}
+
+Let's revisit the example from one of Chapter 7, Building and Packaging. There, we built a binary and a Conan package for the customer application. Now, we want to package this application as a Debian archive and build a Debian container image with a pre-installed package for the customer application.
+
+To create our DEB package, we need a helper target. Let's use CMake's add\_custom\_target functionality for this:
+
+\begin{lstlisting}[style=styleCMake]
+add_custom_target(
+	customer-deb
+	COMMENT "Creating Customer DEB package"
+	COMMAND ${CMAKE_CPACK_COMMAND} -G DEB
+	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+	VERBATIM)
+add_dependencies(customer-deb libcustomer)
+\end{lstlisting}
+
+Our target invokes CPack to create just the one package that's interesting for us and omitting the rest. We want the package to be created in the same directory as the Dockerfile for convenience. The VERBATIM keyword is recommended as, with it, CMake will escape problematic characters. If it's not specified, the behavior of your scripts may vary across different platforms.
+
+The add\_dependencies call will make sure that before CMake builds the customer-deb target, libcustomer is already built. As we now have our helper target, let's use it when creating the container image:
+
+\begin{lstlisting}[style=styleCMake]
+add_custom_target(
+	docker
+	COMMENT "Preparing Docker image"
+	COMMAND ${Docker_EXECUTABLE} build ${PROJECT_BINARY_DIR}
+	-t dominicanfair/customer:${PROJECT_VERSION} -t
+	dominicanfair/customer:latest
+	VERBATIM)
+add_dependencies(docker customer-deb)
+\end{lstlisting}
+
+As you can see, we invoke the Docker executable we found earlier in the directory containing our Dockerfile and DEB package, to create an image. We also tell Docker to tag our image as both the latest and with the version of our project. Finally, we ensure the DEB package will be built when we invoke our Docker target.
+
+Building the image is as simple as make docker if make is the generator you chose. If you prefer the full CMake command (for example, to create generator-agnostic scripts), the invocation is cmake -\,-build . -\,-target docker.
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,162 @@
+
+The last topic that we would like to cover in this chapter is GitOps. Even though the term sounds new and trendy, the idea behind it is not entirely novel. It's an extension of the wellknown Continuous Integration/Continuous Deployment (CI/CD) pattern. Or maybe an extension is not a good description.
+
+While CI/CD systems usually aim to be very flexible, GitOps seeks to minimize the number of possible integrations. The two main constants are Git and Kubernetes. Git is used for version control, release management, and environment separation. Kubernetes is used as a standardized and programmable deployment platform.
+
+This way, the CI/CD pipeline becomes almost transparent. It's the opposite approach to that of imperative code handling all the stages of the build. To allow such a level of abstraction, you will typically need the following:
+
+\begin{itemize}
+\item 
+Infrastructure as Code to allow the automated deployment of all the necessary environments
+
+\item 
+A Git workflow with feature branches and pull requests or merge requests
+
+\item 
+A declarative workflow configuration, which is already available in Kubernetes
+\end{itemize}
+
+\subsubsubsection{15.6.1\hspace{0.2cm}The principles of GitOps}
+
+Since GitOps is an extension of the established CI/CD pattern, it may not be very clear to distinguish between the two. Here are some of the GitOps principles that differentiate this approach from general-purpose CI/CD.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Declarative description}
+
+The main difference between a classical CI/CD system and GitOps lies in the mode of operation. Most CI/CD systems are imperative: they consist of a sequence of steps to be taken in order for a pipeline to succeed.
+
+Even the pipeline's notion is imperative as it implies an object that has an entry, a set of connections, and a sink. Some of the steps may be performed in parallel, but a process has to stop and wait for the depending step to finish whenever there is a dependency.
+
+In GitOps, the configuration is declarative. This refers to the entire state of your system – the applications, their configuration, monitoring, and dashboards. It is all treated as code, giving it the same features as regular application code.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{The system's state versioned in Git}
+
+Since the state of your system is written in code, you derive some benefits from that fact. Features such as easier auditing, code reviews, and version control are now applicable not just to the application code. The consequence is that in case anything goes wrong, reverting back to a working state requires a single git revert command.
+
+You can use the power of Git's signed commits and SSH and GPG keys to give control over different environments. By adding a gating mechanism that makes sure only the commits meeting required standards can be pushed to the repository, you also eliminate many accidental errors that may result from running commands manually using ssh or kubectl.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Auditable}
+
+Everything that you store in your version control systems becomes auditable. Before introducing a new code, you perform a code review. When you notice a bug, you can revert the change that introduced it or get back to the last working version. Your repository becomes the single point of truth regarding your entire system.
+
+It's already useful when applied to the application code. However, extending the ability to audit configuration, helper services, metrics, dashboards, and even deployment strategies makes it even more powerful. You no longer have to ask yourself, "OK, so why did this configuration end up in production?" All you have to do is check the Git log.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Integrated with established components}
+
+Most CI/CD tools introduce proprietary configuration syntax. Jenkins uses Jenkins DSL. Each of the popular SaaS solutions uses YAML, but the YAML files are incompatible with each other. You can't switch from Travis to CircleCI or from CircleCI to GitLab CI without rewriting your pipelines.
+
+This has two drawbacks. One is the obvious vendor lock-in. The other is the need to learn the configuration syntax to use the given tool. Even if most of your pipeline is already defined elsewhere (shell scripts, Dockerfiles, or Kubernetes  manifests), you still need to write some glue code to instruct the CI/CD tool to use it.
+
+It's different with GitOps. Here, you don't write explicit instructions or use proprietary syntax. Instead, you reuse other common standards, such as Helm or Kustomize. There's less to learn, and the migration process is much more comfortable. Also, GitOps tools usually integrate well with other components from the CNCF ecosystem, so you can get your deployment metrics stored in Prometheus and auditable with Grafana.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Configuration drift prevention}
+
+Configuration drift happens when a given system's current state differs from the desired state as described in the repository. Multiple causes are contributing to the configuration drift.
+
+For example, let's consider a configuration management tool with a VM-based workload. All of the VMs start in the same state. As the CM runs for the first time, it brings the machines to the desired state. But if an auto-update agent is running on those machines by default, this agent may update some of the packages on its own, without considering the desired state from the CM. Moreover, as network connectivity may be fragile, some of the machines may update to a newer version of a package, while others won't.
+
+One of the updated packages may be incompatible with the pinned package that your application requires in extreme cases. Such a situation will break the entire CM workflow and leave your machine in an unusable state.
+
+With GitOps, an agent is always running inside your system that keeps track of the current state and the desired state of the system. If the current state suddenly differs from the desired one, an agent may fix it or issue an alert regarding configuration drift.
+
+Preventing configuration drift adds another layer of self-healing to your system. If you're running Kubernetes, you already have self-healing on the pod level. Whenever a pod fails, another one is recreated in its place. If you are using a programmable infrastructure underneath (such as a cloud provider or OpenStack on-premises), you also have selfhealing capabilities of your nodes. With GitOps, you get the self-healing for workloads and its configuration.
+
+\subsubsubsection{15.6.2\hspace{0.2cm}The benefits of GitOps}
+
+As you can imagine, the described features of GitOps afford several benefits. Here are some of them.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Increased productivity}
+
+CI/CD pipelines already automate a lot of usual tasks. They reduce lead time by helping get more deployments. GitOps adds a feedback loop that prevents configuration drift and allows self-healing. This means that your team can ship quicker and worry less about introducing potential problems as they are easy to revert. This, in turn, means that the development throughput increases and you can introduce new features faster and with more confidence.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Better developer experience}
+
+With GitOps, developers don't have to worry about building containers or using kubectl to control the cluster. Deploying new features requires just the use of Git, which is already a familiar tool in most environments.
+
+This also means that onboarding is quicker since new hires don't have to learn a lot of new tools in order to be productive. GitOps uses standard and consistent components, so introducing changes to the operations side should not impact developers.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Higher stability and reliability}
+
+Using Git to store the state of your system means you have access to an audit log. This log contains a description of all the changes introduced. If your task tracking system integrates with Git (which is a good practice), you can typically tell which business feature is related to the system's change.
+
+With GitOps, there is less need to allow manual access to the nodes or the entire cluster, which reduces the chance of accidental errors originating from running an invalid command. Those random errors that get into the system are easily fixed by using Git's powerful revert feature.
+
+Recovery from a severe disaster (such as losing the entire control plane) is also a lot easier. All it requires is setting up a new clean cluster, installing a GitOps operator there, and pointing it to the repository with your configuration. After a short while, you have an exact replica of your previous production system, all without manual intervention.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Improved security}
+
+A reduced need to give access to the cluster and nodes means improved security. There is less to worry about in terms of lost or stolen keys. You avoid a situation where someone retains access to your production environment even though this person is no longer working on the team (or in the company).
+
+When it comes to access to the system, the single point of truth is handled by the Git repository. Even if a malicious actor decides to introduce a backdoor into your system, the change required will undergo a code review. Impersonating another developer is also more challenging when your repository uses GPG-signed commits with strong verification.
+
+So far, we've mainly covered the benefits from the development and operations point of view. But GitOps also benefits the business. It affords business observability in the system, something that was hard to achieve before.
+
+It's easy to track the features present in a given release as they are all stored in Git. Since Git commits a link to the task tracker, business people can get preview links to see how the application looks in various development stages. 
+
+It also gives clarity that allows the following common questions to be answered:
+
+\begin{itemize}
+\item 
+What's running in production?
+
+\item 
+Which tickets have been resolved with the last release?
+
+\item 
+Which change might be responsible for service degradations?
+\end{itemize}
+
+The questions for all those answers may even be presented in a friendly dashboard. Naturally, the dashboard itself can be stored in Git as well.
+
+\subsubsubsection{15.6.3\hspace{0.2cm}GitOps tools}
+
+The GitOps space is a new and growing one. There are already tools that can be considered stable and mature. Here are some of the most popular ones.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{FluxCD}
+
+FluxCD is an opinionated GitOps operator for Kubernetes. Selected integrations provide core functionality. It uses Helm charts and Kustomize to describe the resources.
+
+Its integration with Prometheus adds observability to the deployment process. To help with maintenance, FluxCD features a CLI.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{ArgoCD}
+
+Unlike FluxCD, it offers a broader choice of tools to use. This might be useful if you're already using Jsonnet or Ksonnet for your configuration. Like FluxCD, it integrates with Prometheus and features a CLI.
+
+At the time of writing this book, ArgoCD is a more popular solution than FluxCD.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Jenkins X}
+
+Contrary to what the name might suggest, Jenkins X doesn't have much in common with the well-known Jenkins CI system. It is backed by the same company, but the entire concepts of Jenkins and Jenkins X are totally different.
+
+While the other two tools are purposefully small and self-contained, Jenkins X is a complex solution with many integrations and a broader scope. It supports the triggering of custom build tasks, making it look like a bridge between a classic CI/CD system and GitOps.
+
+
+
+
+
+
+
+

@@ -1,0 +1,301 @@
+
+Each microservice you build needs to follow the general architectural design patterns. The main distinction between microservices and traditional applications is the need for implementing observability for the former.
+
+This section focuses on some approaches to observability. We describe here several open source solutions that you might find useful when designing your system.
+
+\subsubsubsection{13.4.1\hspace{0.2cm}Logging}
+
+Logging is a topic that should be familiar to you even if you've never designed microservices. Logs (or log files) store the information about the events happening in a system. The system may mean your application, the operating system your application runs on, or the cloud platform you use for deployment. Each of these components may provide logs.
+
+Logs are stored as separate files because they provide a permanent record of all the events taking place. When the system becomes unresponsive, we want to query the logs and figure out the possible root cause of the outage.
+
+This means that logs also provide an audit trail. Because the events are recorded in chronological order, we are able to understand the state of the system by examining the recorded historical state.
+
+To help with debugging, logs are usually human-readable. There are binary formats for logs, but such formats are rather rare when using files to store the logs.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Logging with microservices}
+
+This approach to logging itself doesn't differ much from the traditional approach. Rather than using text files to store the logs locally, microservices usually print logs to stdout. A unified logging layer is then used to retrieve the logs and process them. To implement logging, you need a logging library that you can configure to suit your needs.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Logging in C++ with spdlog}
+
+One of the popular and fast logging libraries for C++ is spdlog. It's built using C++11 and can be used either as a header-only library or as a static library (which reduces compile time).
+
+Some interesting features of spdlog include the following:
+
+\begin{itemize}
+\item 
+Formatting
+
+\item 
+Multiple sinks:
+\begin{itemize}
+\item 
+Rotating files
+
+\item 
+Console
+
+\item 
+Syslog
+
+\item 
+Custom (implemented as a single function)
+\end{itemize}
+
+\item 
+Multi-threaded and single-threaded versions
+
+\item 
+Optional asynchronous mode
+\end{itemize}
+
+One feature that might be missing from spdlog is the direct support for Logstash or Fluentd. If you want to use one of these aggregators, it is still possible to configure spdlog with file sink output and use Filebeat or Fluent Bit to forward the file contents to the appropriate aggregator.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Unified logging layer}
+
+Most of the time, we won't be able to control all of the microservices that we use. Some of them will use one logging library, while others would use a different one. On top of that, the formats will be entirely different and so will their rotation policies. To make things worse, there are still operating system events that we want to correlate with application events. This is where the unified logging layer comes into play.
+
+One of the unified logging layer’s purposes is to collect logs from different sources. Such unified logging layer tools provide many integrations and understand different logging formats and transports (such as file, HTTP, and TCP).
+
+The unified logging layer is also capable of filtering the logs. We may want filtering to satisfy compliance, anonymize the personal details of our customers, or protect the implementation details of our services.
+
+To make it easier to query the logs at a later time, the unified logging layer can also perform translation between formats. Even if the different services that you use store the logs in JSON, CSV, and the Apache format, the unified logging layer solution is able to translate them all to JSON to give them structure.
+
+The final task of the unified logging layer is forwarding the logs to their next destination. Depending on the complexity of the system, the next destination may be a storage facility or another filtering, translation, and forwarding facility.
+
+Here are some interesting components that let you build the unified logging layer.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Logstash}
+
+Logstash is one of the most popular unified logging layer solutions. Currently, it is owned by Elastic, the company behind Elasticsearch. If you've heard of the ELK stack (now known as the Elastic Stack), Logstash is the "L" in the acronym.
+
+Logstash was written in Ruby and then has been ported to JRuby. This unfortunately means that it is rather resource-intensive. For this reason, it is not advisable to run Logstash on each machine. Rather, it is meant to be used mainly as a log forwarder with lightweight Filebeat deployed to each machine and performing just the collection.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Filebeat}
+
+Filebeat is part of the Beats family of products. Their aim is to provide a lightweight alternative to Logstash that may be used directly with the application.
+
+This way, Beats provide low overhead that scales well, whereas a centralized Logstash installation performs all the heavy lifting, including translation, filtering, and forwarding.
+
+Apart from Filebeat, the other products from the Beats family are as follows:
+
+\begin{itemize}
+\item 
+Metricbeat for performance
+
+\item 
+Packetbeat for network data
+
+\item 
+Auditbeat for audit data
+
+\item 
+Heartbeat for uptime monitoring
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Fluentd}
+
+Fluentd is the main competitor of Logstash. It is also the tool of choice of some cloud providers.
+
+Thanks to its modular approach with the use of plugins, you can find plugins for data sources (such as Ruby applications, Docker containers, SNMP, or MQTT protocols), data outputs (such as Elastic Stack, SQL Database, Sentry, Datadog, or Slack), and several other kinds of filters and middleware.
+
+Fluentd should be lighter on resources than Logstash, but it is still not a perfect solution for running at scale. The counterpart to Filebeat that works with Fluentd is called Fluent Bit.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Fluent Bit}
+
+Fluent Bit is written in C and provides a faster and lighter solution that plugs into Fluentd. As a log processor and forwarder, it also features many integrations for inputs and outputs.
+
+Besides log collection, Fluent Bit can also monitor CPU and memory metrics on Linux systems. It might be used together with Fluentd or it can forward directly to Elasticsearch or InfluxDB.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Vector}
+
+While Logstash and Fluentd are stable, mature, and tried solutions, there are also newer propositions in the unified logging layer space.
+
+One of them is Vector, which aims to handle all of the observability data in a single tool. To differentiate from the competition, it focuses on performance and correctness. This is also reflected in the choice of technology. Vector uses Rust for the engine and Lua for scripting (as opposed to the custom domain-specific languages used by Logstash and Fluentd).
+
+At the moment of writing, it hasn't yet reached a stable 1.0 version, so at this point, it shouldn't be considered production-ready.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Log aggregation}
+
+Log aggregation solves another problem that arises from too much data: how to store and access the logs. While the unified logging layer makes logs available even in the event of machine outage, it is the task of log aggregation to help us quickly find the information that we are looking for.
+
+The two possible products that allow storing, indexing, and querying huge amounts of data are Elasticsearch and Loki.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Elasticsearch}
+
+Elasticsearch is the most popular solution for self-hosted log aggregation. This is the "E" in the (former) ELK Stack. It features a great search engine based on Apache Lucene.
+
+As the de facto standard in its niche, Elasticsearch has a lot of integrations and has great support both from the community and as a commercial service. Some cloud providers offer Elasticsearch as a managed service, which makes it easier to introduce Elasticsearch in your application. Other than that, Elastic, the company that makes Elasticsearch, offers a hosted solution that is not tied to any particular cloud provider.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Loki}
+
+Loki aims to address some of the shortcomings found in Elasticsearch. The focus area for Loki is horizontal scalability and high availability. It’s built from the ground up as a cloudnative solution.
+
+The design choices for Loki are inspired by both Prometheus and Grafana. This shouldn't be a surprise since it is developed by the team responsible for Grafana.
+
+While Loki should be a stable solution, it is not as popular as Elasticsearch, which means some integrations might be missing and the documentation and  community support won't be on the same level as for Elasticsearch. Both Fluentd and Vector have plugins that support Loki for log aggregation.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Log visualization}
+
+The last piece of the logging stack we want to consider is log visualization. This helps us to query and analyze the logs. It presents the data in an accessible way so it can be inspected by all the interested parties, such as operators, developers, QA, or business.
+
+Log visualization tools allow us to create dashboards that make it even easier to read the data we are interested in. With that, we are able to explore the events, search for correlations, and find outlying data from a simple user interface.
+
+There are two major products dedicated to log visualization.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Kibana}
+
+Kibana is the final element of the ELK Stack. It provides a simpler query language on top of Elasticsearch. Even though you can query and visualize different types of data with Kibana, it is mostly focused on logs.
+
+Like the rest of the ELK Stack, it is currently the de facto standard when it comes to visualizing logs.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Grafana}
+
+Grafana is another data visualization tool. Until recently, it was mostly focused on timeseries data from performance metrics. However, with the introduction of Loki, it may now also be used for logs.
+
+One of its strengths is that it’s built with pluggable backends in mind, so it’s easy to switch the storage to fit your needs.
+
+\subsubsubsection{13.4.2\hspace{0.2cm}Monitoring}
+
+Monitoring is the process of collecting performance-related metrics from the system. When paired with alerting, monitoring helps us understand when our system behaves as expected and when an incident happens.
+
+The three types of metrics that would interest us the most are as follows:
+
+\begin{itemize}
+\item 
+Availability, which lets us know which of our resources are up and running, and which of them have crashed or became unresponsive.
+
+\item 
+Resource utilization gives us insight into how the workload fits into the system.
+
+\item 
+Performance, which shows us where and how to improve service quality.
+\end{itemize}
+
+The two models of monitoring are push and pull. In the former, each monitored object (a machine, an application, and a network device) pushes data to the central point periodically. In the latter, the objects present the data at the configured endpoints and the monitoring agent scrapes the data regularly.
+
+The pull model makes it easier to scale. This way, multiple objects won't be clogging the monitoring agent connection. Instead, multiple agents may  collect the data whenever ready, thus better utilizing the available resources.
+
+Two monitoring solutions that feature C++ client libraries are Prometheus and InfluxDB. Prometheus is an example of a pull-based model and it focuses on collecting and storing time-series data. InfluxDB by default uses a push model. Besides monitoring, it is also popular for the Internet of Things, sensor networks, and home automation.
+
+Both Prometheus and InfluxDB are typically used with Grafana for visualizing data and managing dashboards. Both have alerting built-in, but they can also integrate with the external alerting system through Grafana.
+
+\subsubsubsection{13.4.3\hspace{0.2cm}Tracing}
+
+Traces provide information that is generally lower-level to that of event logs. Another important distinction is that traces store the ID of every single transaction so it is easy to  visualize the entire workflow. This ID is commonly known as the trace ID, transaction ID, or correlation ID.
+
+Unlike event logs, traces are not meant to be human-readable. They are processed by a tracer. When implementing tracing, it is necessary to use a tracing solution that integrates with all the possible elements of the system: frontend applications, backend applications, and databases. This way, tracing helps to pinpoint the exact cause of lagging performance.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{OpenTracing}
+
+One of the standards in distributed tracing is OpenTracing. This standard was proposed by the authors of Jaeger, one of the open-source tracers.
+
+OpenTracing supports many different tracers apart from Jaeger and it supports many different programming languages. The most important ones include the following:
+
+\begin{itemize}
+\item 
+Go
+
+\item 
+C++
+
+\item 
+C\#
+
+\item 
+Java
+
+\item 
+JavaScript
+
+\item 
+Objective-C
+
+\item 
+PHP
+
+\item 
+Python
+
+\item 
+Ruby
+\end{itemize}
+
+The most important feature of OpenTracing is that it is vendor-neutral. This means that once we instrument our application, we won’t need to modify the entire codebase to switch to a different tracer. This way, it prevents vendor lock-in.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Jaeger}
+
+Jaeger is a tracer that can be used with various backends, including Elasticsearch, Cassandra, and Kafka.
+
+It is natively compatible with OpenTracing, which shouldn't be a surprise. Since it is a Cloud Native Computing Foundation-graduated project, it has great community support, which also translates to good integration with other services and frameworks.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{OpenZipkin}
+
+OpenZipkin is the main competitor for Jaeger. It has been on the market for a longer time. Although this should mean it is a more mature solution, its popularity is fading when compared to Jaeger. Particularly, the C++ in OpenZipkin isn't actively maintained, which may cause future problems with maintenance.
+
+\subsubsubsection{13.4.4\hspace{0.2cm}Integrated observability solutions}
+
+If you don't want to build the observability layer on your own, there are some popular commercial solutions that you might consider. They all operate in a software-as-a-service model. We won't go into a detailed comparison here, as their offerings may change drastically after the writing of this book.
+
+These services are as follows:
+
+\begin{itemize}
+\item 
+Datadog
+
+\item 
+Splunk
+
+\item 
+Honeycomb
+\end{itemize}
+
+In this section, you have seen implementing observability in Microservices. Next, we'll move on to learn how to connect microservices. 
+
+
+
+
+
+
+
+
+
+
+
+
+

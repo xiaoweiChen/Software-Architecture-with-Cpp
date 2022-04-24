@@ -1,0 +1,56 @@
+\begin{enumerate}
+\item
+What is event sourcing?
+\begin{itemize}
+\item 
+This is an architectural pattern that relies on keeping track of events that change the state of the system instead of keeping track of the state per se. It brings benefits such as lower latency, free audit logs, and debugability.
+\end{itemize}
+
+\item 
+What are the practical consequences of the CAP theorem?
+\begin{itemize}
+\item 
+As network partitions happen, if you want a distributed system, you'll need to choose between consistency and availability. In cases of partitions, you can either return stale data, an error, or risk timeouts.
+\end{itemize}
+
+\item 
+What can you use Netflix's Chaos Monkey for?
+\begin{itemize}
+\item 
+It can help you prepare for unexpected downtime of your services.
+\end{itemize}
+
+\item 
+Where can caching be applied?
+\begin{itemize}
+\item 
+Either on your client's side, in front of web servers, databases, or applications, or on a host near your potential client, depending on your needs.
+\end{itemize}
+
+\item 
+How do you prevent your app from going down when a whole data center does?
+
+\begin{itemize}
+\item 
+By using geodes.
+\end{itemize}
+
+\item 
+Why use an API Gateway?
+\begin{itemize}
+\item 
+To simplify client code, as it doesn't need to hardcode the addresses of your service instances.
+\end{itemize}
+
+\item How can Envoy help you to achieve various architectural goals?	
+\begin{itemize}
+\item 
+It aids your system's fault tolerance by providing backpressure, circuit breaking, automatic retries, and outlier detection.
+
+\item 
+It aids deployability by allowing canary releases and blue-green deployments.
+
+\item 
+It also offers load balancing, tracing, monitoring, and metrics.
+\end{itemize}
+\end{enumerate}

@@ -1,0 +1,43 @@
+\begin{enumerate}
+\item
+What are the rules of three, five, and zero?
+\begin{itemize}
+\item 
+Best practices to follow for writing types with unsurprising semantics and fewer bugs.
+\end{itemize}
+
+\item
+When do we use niebloids versus hidden friends?
+\begin{itemize}
+\item 
+Niebloids "disable" ADL, while hidden friends rely on it to be found. The former can therefore speed up compilation (fewer overloads to consider), while the latter can help you implement customization points.
+\end{itemize}
+
+\item
+How can Arrays interfaces be improved to be more production-ready?
+\begin{itemize}
+\item 
+begin, end, and their constant and reverse equivalents should be added so it can be used like a proper container. Traits such as value\_type, pointer, and iterator can be useful to reuse it in generic code. Sprinkling the members with constexpr and noexcept could aid safety and performance. The const overload for operator[] is also missing.
+\end{itemize}
+
+\item
+What are fold expressions?
+\begin{itemize}
+\item 
+Expressions that fold, or reduce, a parameter pack over a binary functor. In other words, statements that apply a given operation to all the passed variadic template arguments so that a single value (or void) is produced.
+\end{itemize}
+
+\item
+When shouldn't you use static polymorphism?
+\begin{itemize}
+\item 
+When you need to provide the consumers of your code with a way to add more types at runtime.
+\end{itemize}
+
+\item
+How can we save on one more allocation in the winking out example?
+\begin{itemize}
+\item 
+By avoiding the resizing of the vector when adding elements.
+\end{itemize}
+\end{enumerate}

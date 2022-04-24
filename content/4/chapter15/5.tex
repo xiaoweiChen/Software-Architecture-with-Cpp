@@ -1,0 +1,88 @@
+
+Microservices and cloud-native design come with their own set of problems. Communication between different services, observability, debugging, rate limiting, authentication, access control, and A/B testing may be challenging even with a limited number of services. When the number of services rises, so does the complexity of the aforementioned requirements.
+
+That's where a service mesh enters the fray. In short, a service mesh trades off some resources (necessary to run the control plane and sidecars) for an automated and centrally controlled solution to the aforementioned challenges.
+
+\subsubsubsection{15.5.1\hspace{0.2cm}Introducing a service mesh}
+
+All the requirements we mentioned in the introduction to this chapter used to be coded within the application itself. As it turns out, many may be abstracted as they are shared across many different applications. When your application consists of many services, adding new features to all of them starts to be costly. With a service mesh, you may control these features from a single point instead.
+
+Since a containerized workflow already abstracts some of the runtime and some networking, a service mesh takes the abstraction to another level. This way, the application within a container is only aware of what happens at the application level of the OSI networking model. The service mesh handles lower levels.
+
+Setting up a service mesh allows you to control all network traffic in a new way and gives you better insights into this traffic. The dependencies become visible, as does the flow, shape, and amount of traffic.
+
+Not only is the flow of traffic handled by the service mesh. Other popular patterns, such as circuit breaking, rate limiting, or retries, don't have to be implemented by each application and configured separately. This is also a feature that can be outsourced to the service mesh. Similarly, A/B testing or canary deployments are the use cases that a service mesh is able to fulfill.
+
+One of the benefits of the service mesh, as previously mentioned, is greater control. Its architecture typically consists of a manageable edge proxy for external traffic and internal proxies usually deployed as sidecars along each microservice. This way, the networking policies can be written as code and stored alongside all the other configuration in a single place. Rather than having to switch on mutual TLS encryption for two of the services you want to connect, you only have to enable the feature once in our service mesh configuration.
+
+Next, we'll cover some of the service mesh solutions.
+
+\subsubsubsection{15.5.2\hspace{0.2cm}Service mesh solutions}
+
+All of the solutions described here are self-hosted.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Istio}
+
+Istio is a powerful collection of service mesh tools. It allows you to connect microservices through the deployment of Envoy proxies as sidecar containers. Because Envoy is programmable, the Istio control plane's configuration changes are communicated to all the proxies, which then reconfigure themselves accordingly.
+
+The Envoy proxies are, among other things, responsible for handing encryption and authentication. With Istio, enabling mutual TLS between your services requires a single switch in the configuration for the majority of the time. If you don't want mTLS between all your services, you may also select those that demand this additional protection while allowing unencrypted traffic between everything else.
+
+Istio also helps with observability. First of all, the Envoy proxies export proxy-level metrics compatible with Prometheus. There are also service-level metrics and control plane metrics exported by Istio. Next, there are distributed traces that describe the traffic flow within the mesh. Istio can serve the traces to different backends: Zipkin, Jaeger, Lightstep, and Datadog. Finally, there are Envoy access logs, which show every call in a format similar to Nginx.
+
+It's possible to visualize your mesh using Kiali, an interactive web interface. This way, you can see a graph of your services, including information such as whether the encryption is enabled, what the size of the flow between different services is, or what's the health check status of each of them is.
+
+The authors of Istio claim that this service mesh should be compatible with different technologies. At the time of writing, the best documented, best integrated, and best tested is the integration with Kubernetes. Other supported environments are on-premises, generalpurpose clouds, Mesos, and Nomad with Consul.
+
+If you work in an industry concerned with compliance (such as financial institutions), then Istio can help in these aspects.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Envoy}
+
+While Envoy is not a service mesh in itself, it is worth mentioning in this section due to its use in Istio.
+
+Envoy is a service proxy that acts much like Nginx or HAProxy. The main difference is that it can be reconfigured on the fly. This happens programmatically via an API and does not require the configuration file to be changed and the daemon to then be reloaded.
+
+Interesting facts regarding Envoy are its performance and popularity. According to tests performed by SolarWinds, Envoy beats the competition when it comes to performance as a service proxy. This competition includes HAProxy, Nginx, Traefik, and AWS Application Load Balancer. Envoy is much younger than the established leaders in this space, such as Nginx, HAProxy, Apache, and Microsoft IIS, but this didn't stop Envoy from entering the top 10 list of most-used web servers, according to Netcraft.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Linkerd}
+
+Before Istio became synonymous with a service mesh, this field was represented by Linkerd. There is some confusion regarding the naming, as the original Linkerd project was designed to be platform-agnostic and targeted the Java VM. This meant that it was resource-heavy and often sluggish. The newer version, called Linkerd2, has been rewritten to address these issues. Linkerd2, as opposed to the original Linkerd, is only focused on Kubernetes.
+
+Both Linkerd and Linkerd2 use their own proxy solution instead of relying on an existing project such as Envoy. The rationale for that is that a dedicated proxy (versus a generalpurpose Envoy) offers better security and performance. An interesting feature of Linkerd2 is that the company that developed it also offers paid support.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Consul service mesh}
+
+A recent addition to the service mesh space is the Consul service mesh. This is a product from HashiCorp, a well-established cloud company known for such tools as Terraform, Vault, Packer, Nomad, and Consul.
+
+Just like the other solutions, it features mTLS and traffic management. It's advertised as a multi-cloud, multi-data center, and multi-region mesh. It integrates with different platforms, data plane products, and observability providers. At the time of writing, the reality is a bit more modest as the main supported platforms are Nomad and Kubernetes, while the supported proxies are either the built-in proxy or Envoy.
+
+If you are considering using Nomad for your application, then the Consul service mesh may be a great choice and a good fit as both are HashiCorp products.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

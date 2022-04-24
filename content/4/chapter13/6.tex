@@ -1,0 +1,40 @@
+
+One of the significant benefits of microservices is that they scale more efficiently than monoliths. Given the same hardware infrastructure, you could theoretically be able to get more performance out of microservices than monoliths.
+
+In practice, the benefits are not that straightforward. Microservices and related helpers also provide overhead that for smaller-scale applications may be less performant than an optimal monolith.
+
+Remember that even if something looks good "on paper," it doesn't mean it will fly. If you want to base your architectural decisions on scalability or performance, it is better to prepare calculations and experiments. This way, you'll act based on data, not just emotion.
+
+\subsubsubsection{13.6.1\hspace{0.2cm}Scaling a single service per host deployment}
+
+For a single service per host deployment, scaling a microservice requires adding or removing additional machines that host the microservice. If your application is running on a cloud architecture (public or private), many providers offer a concept known as autoscaling groups.
+
+Autoscaling groups define a base virtual machine image that will run on all grouped instances. Whenever a critical threshold is reached (for example, 80\% CPU use), a new instance is created and added to the group. Since autoscaling groups run behind a load balancer, the increasing traffic then gets split between both the existing and the new instances, thus reducing the mean load on each one. When the spike in traffic subsides, the scaling controller shuts down the excess machines to keep the costs low.
+
+Different metrics can act as triggers for the scaling event. The CPU load is one of the easiest to use, but it may not be the most accurate one. Other metrics, such as the number of messages in a queue, may better fit your application.
+
+Here's an excerpt from a Terraform configuration for a scaler policy:
+
+\begin{lstlisting}[style=styleCXX]
+autoscaling_policy {
+	max_replicas = 5
+	min_replicas = 3
+	cooldown_period = 60
+	cpu_utilization {
+		target = 0.8
+	}
+}
+\end{lstlisting}
+
+It means that at any given time, there will be at least three instances running and at most five instances. The scaler will trigger once the CPU load hits at least an 80\% average for all the group instances. When that happens, a new instance is spun up. The metrics from the new machine will only be collected after it has been running for at least 60 seconds (the cooldown period).
+
+\subsubsubsection{13.6.2\hspace{0.2cm}Scaling multiple services per host deployment}
+
+This mode of scaling is also suitable for multiple services per host deployment. As you can probably imagine, this isn't the most efficient method. Scaling an entire set of services based only on a reduced throughput of a single one is similar to scaling monoliths.
+
+If you're using this pattern, a better way to scale your microservices is to use an orchestrator. If you don't want to use containers, Nomad is a great choice that works with a lot of different execution drivers. For containerized workloads, either Docker Swarm or Kubernetes will help you. Orchestrators are a topic that we'll come back to in the next two chapters.
+
+
+
+
+

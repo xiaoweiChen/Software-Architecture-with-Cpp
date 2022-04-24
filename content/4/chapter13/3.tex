@@ -1,0 +1,160 @@
+
+
+There are a lot of opinions concerning monolithic applications. Some architects believe that monoliths are inherently evil because they don't scale well, are tightly coupled, and are hard to maintain. There are others who claim that the performance benefits coming from monoliths counterbalance their shortcomings. It's a fact that tightly coupled components require much less overhead in terms of networking, processing power, and memory than their loosely coupled counterparts.
+
+As each application has unique business requirements and operates in a unique environment when it comes to stakeholders, there is no universal rule regarding which approach is better suited. Even more confusing is the fact that after the initial migration from monoliths to microservices, some companies started consolidating microservices into macroservices. This was because the burden of maintaining thousands of separate software instances proved to be too big to handle.
+
+The choice of one architecture over another should always come from the business requirements and careful analysis of different alternatives. Putting ideology before pragmatism usually results in a lot of waste within an organization. When a team tries to adhere to a given approach at all costs, without considering different solutions or diverse external opinions, that team is no longer fulfilling its obligations to deliver the right tools for the right job.
+
+If you are developing or maintaining a monolith, you may consider improving its scalability. The techniques presented in this section aim to solve this problem while also making your application easier to migrate to microservices if you decide so.
+
+The three primary causes of bottlenecks are as follows:
+
+\begin{itemize}
+\item 
+Memory
+
+\item 
+Storage
+
+\item 
+Computing
+\end{itemize}
+
+We will show you how to approach each of them to develop scalable solutions based on microservices.
+
+\subsubsubsection{13.3.1\hspace{0.2cm}Outsourcing memory management}
+
+One of the ways to help microservices scale is to outsource some of their tasks. One such task that may hinder scaling efforts is memory management and caching data.
+
+For a single monolithic application, storing cached data directly in the process memory is not a problem as the process will be the only one accessing the cache anyway. But with several replicas of a process, this approach starts to show some problems.
+
+What if one replica has already computed a piece of a workload and stored it in a local cache? The other replica is unaware of this fact and has to compute it again. This way, your application wastes both computational time (as the same task has to be performed multiple times) and memory (as the results are also stored with each replica separately).
+
+To mitigate such challenges, consider switching to an external in-memory store rather than managing the cache internally within an application. Another benefit of using an external solution is that the life cycle of your cache is no longer tied to the life cycle of your application. You can restart and deploy new versions of your application and the values already stored in the cache are preserved.
+
+This may also result in shorter startup times as your application no longer needs to perform the computing during startup. Two popular solutions for in-memory cache are Memcached and Redis.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Memcached}
+
+Memcached, released in 2003, is the older product of the two. It's a general-purpose,  distributed key-value store. The original goal of the project was to offload databases used in web applications by storing the cached values in memory. Memcached is distributed by design. Since version 1.5.18, it is possible to restart the Memcached server without losing the contents of the cache. This is possible through the use of RAM disk as a temporary storage space.
+
+It uses a simple API that can be operated via telnet or netcat or using bindings for many popular programming languages. There aren't any bindings specifically for C++, but it's possible to use the C/C++ libmemcached library.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Redis}
+
+Redis is a newer project than Memcached with the initial version released in 2009. Since then, Redis has replaced the usage of Memcached in many cases. Just like Memcached, it is a distributed, general-purpose, in-memory key-value store.
+
+Unlike Memcached, Redis also features optional data durability. While Memcached operates on keys and values being simple strings, Redis also supports other data types, such as the following:
+
+\begin{itemize}
+\item 
+Lists of strings
+
+\item 
+Sets of strings
+
+\item 
+Sorted sets of strings
+
+\item 
+Hash tables where keys and values are strings
+
+\item 
+Geospatial data (since Redis 3.2)
+
+\item 
+HyperLogLogs
+\end{itemize}
+
+The design of Redis makes it a great choice for caching session data, caching web pages, and implementing leaderboards. Apart from that, it may also be used for message queueing. The popular distributed task queue library for Python, Celery, uses Redis as one of the possible brokers, along with RabbitMQ and Apache SQS.
+
+Microsoft, Amazon, Google, and Alibaba all offer Redis-based managed services as part of their cloud platforms.
+
+There are many implementations of a Redis client in C++. Two interesting ones are the redis-cpp library (https://github.com/tdv/redis-cpp) written using C++17 and QRedisClient (https://github.com/uglide/qredisclient) using the Qt toolkit.
+
+The following example of redis-cpp usage taken from the official documentation illustrates how to use it to set and get some data in the store:
+
+\begin{lstlisting}[style=styleCXX]
+#include <cstdlib>
+#include <iostream>
+#include <redis-cpp/execute.h>
+#include <redis-cpp/stream.h>
+int main() {
+	try {
+		auto stream = rediscpp::make_stream("localhost", "6379");
+		
+		auto const key = "my_key";
+		
+		auto response = rediscpp::execute(*stream, "set", key,
+										"Some value for 'my_key'", "ex",
+										"60");
+		
+		std::cout << "Set key '" << key << "': "
+				  << response.as<std::string>()
+				  << std::endl;
+		
+		response = rediscpp::execute(*stream, "get", key);
+		std::cout << "Get key '" << key << "': "
+				  << response.as<std::string>()
+				  << std::endl;
+	} catch (std::exception const &e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
+}
+\end{lstlisting}
+
+As you can see, the library handles processing different data types. The example sets the value to a list of strings.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Which in-memory cache is better?}
+
+For most applications, Redis would be a better choice nowadays. It has a better user community, a lot of different implementations, and is well-supported. Other than that, it features snapshots, replication, transactions, and the pub/sub model. It is possible to embed Lua scripts with Redis and the support for geospatial data makes it a great choice for geoenabled web and mobile applications.
+
+However, if your main goal is to cache the results of database queries in web applications, Memcached is a simpler solution with much less overhead. This means it should use the resources better as it doesn't have to store type metadata or perform conversions between different types.
+
+\subsubsubsection{13.3.2\hspace{0.2cm}Outsourcing storage}
+
+Another possible limitation when introducing and scaling microservices is storage. Traditionally, local block devices have been used for storing objects that don't belong to the database (such as static PDF files, documents, or images). Even nowadays, block storage is still very popular with both local block devices and network filesystems such as NFS or CIFS.
+
+While NFS and CIFS are the domain of Network-Attached Storage (NAS), there are also  protocols related to a concept operating on a different level: Storage Area Network (SAN). Some of the popular ones are iSCSI, Network Block Device (NBD), ATA over Ethernet, Fibre Channel Protocol, and Fibre Channel over Ethernet.
+
+A different approach features clustered filesystems designed for distributed computing: GlusterFS, CephFS, or Lustre. All of these, however, operate as block devices exposing the same POSIX file API to the user.
+
+A fresh point of view on storage has been proposed as part of Amazon Web Services. Amazon Simple Storage Service (S3) is object storage. An API provides access to objects stored in buckets. This is different from the traditional filesystem as there is no distinction between files, directories, or inodes. There are buckets and keys that point to objects and objects are binary data stored by the service.
+
+\subsubsubsection{13.3.3\hspace{0.2cm}Outsourcing computing}
+
+One of the principles of microservices is that a process should only be responsible for doing a single piece of the workflow. A natural step while migrating from monoliths to microservices would be to define possible long-running tasks and split them into individual processes.
+
+This is the concept behind task queues. Task queues handle the entire life cycle of managing tasks. Instead of implementing threading or multiprocessing on your own, with task queues, you delegate the task to be performed, which is then asynchronously handled by the task queue. The task may be performed on the same machine as the originating process but it may also run on a machine with dedicated requirements.
+
+The tasks and their results are asynchronous, so there is no blocking in the main process. Examples of popular task queues in web development are Celery for Python, Sidekiq for Ruby, Kue for Node.js, and Machinery for Go. All of them can be used with Redis as a broker. Unfortunately, there aren't any similar mature solutions available for C++.
+
+If you are seriously considering taking this route, one possible approach would be to implement a task queue directly in Redis. Redis and its API provide the necessary primitives to support such a behavior. Another possible approach is to use one of the existing task queues, such as Celery, and invoke them by directly calling Redis. This, however, is not advised, as it depends on the implementation details of the task queue rather than the documented public API. Yet another approach is to interface the task queue using bindings provided by SWIG or similar methods.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

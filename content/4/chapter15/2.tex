@@ -1,0 +1,96 @@
+
+
+Whereas it is possible to migrate an existing application to run in the cloud, such migration won't make the application cloud-native. It would be running in the cloud, but the architectural choices would still be based on the on-premises model.
+
+In short, cloud-native applications are distributed by nature, loosely coupled, and are scalable. They're not tied to any particular physical infrastructure and don't require the developers to even think about specific infrastructure. Such applications are usually webcentric.
+
+In this chapter, we'll go over some examples of cloud-native building blocks and describe some cloud-native patterns.
+
+\subsubsubsection{15.2.1\hspace{0.2cm}Cloud-Native Computing Foundation}
+
+One proponent of cloud-native design is the Cloud Native Computing Foundation (CNCF), which hosts the Kubernetes project. CNCF is home to various technologies, making it easier to build cloud-native applications independent of the cloud vendor. Examples of such technologies include the following:
+
+\begin{itemize}
+\item 
+Fluentd, a unified logging layer
+
+\item 
+Jaeger, for distributed tracing
+
+\item 
+Prometheus, for monitoring
+
+\item 
+CoreDNS, for service discovery
+\end{itemize}
+
+Cloud-native applications are typically built with application containers, often running on top of the Kubernetes platform. However, this is not a requirement, and it's entirely possible to use many of the CNCF frameworks outside Kubernetes and containers.
+
+\subsubsubsection{15.2.2\hspace{0.2cm}Cloud as an operating system}
+
+The main trait of cloud-native design is to treat the various cloud resources as the building blocks of your application. Individual virtual machines (VMs) are seldom used in cloudnative design. Instead of targeting a given operating system running on some instances, with a cloud-native approach, you target either the cloud API directly (for example, with FaaS) or some intermediary solution such as Kubernetes. In this sense, the cloud becomes your operating system, as the POSIX API no longer limits you.
+
+As containers changed the approach to building and distributing software, it is now possible to free yourself from thinking about the underlying hardware infrastructure. Your software is not working in isolation, so it's still necessary to connect different services, monitor them, control their life cycle, store data, or pass the secrets. This is something that Kubernetes provides and it's one of the reasons why it became so popular.
+
+As you can probably imagine, cloud-native applications are web- and mobile-first. Desktop applications can also benefit from having some cloud-native components, but it's a less common use case.
+
+It's still possible to use hardware and other low-level access in cloud-native applications. If your workload requires the use of the GPU, this should not prevent you from going cloudnative. What's more, cloud-native applications can be built on-premises if you want access to custom hardware unavailable elsewhere. The term is not limited to the public cloud, but rather to the way of thinking about different resources.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Load balancing and service discovery}
+
+Load balancing is an essential part of distributed applications. It not only spreads the incoming requests across a cluster of services, which is essential for scaling, but can also help the responsiveness and availability of the applications. A smart load balancer can gather metrics to react to patterns in incoming traffic, monitor the state of the servers in its cluster, and forward requests to the less loaded and faster responding nodes – avoiding the currently unhealthy ones.
+
+Load balancing brings more throughput and less downtime. By forwarding requests to many servers, a single point of failure is eliminated, especially if multiple load balancers are used, for example, in an active-passive scheme.
+
+Load balancers can be used anywhere in your architecture: you can balance the requests coming from the web, requests done by web servers to other services, requests to cache or database servers, and whatever else suits your requirements.
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
+\hspace*{0.7cm}There are a few things to remember when introducing load balancing. One of them is session persistence—make sure all requests from the same customer go to the same server, so the carefully chosen pink stilettos won't disappear from their basket in your e-commerce site. Sessions can get tricky with load balancing: take extra care to not mix sessions, so customers won't suddenly start being logged into each other's profiles – countless companies stumbled upon this error before, especially when adding caching into the mix. It's a great idea to combine the two; just make sure it is done the right way.
+\end{tcolorbox}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Reverse proxies}
+
+Even if you want to deploy just one instance of your server, it might be a good idea to add yet another service in front of it instead of the load balancer—a reverse proxy. While a proxy usually acts on behalf of the client sending some requests, a reverse proxy acts on behalf of the servers handling those requests, hence the name.
+
+Why use it, you ask? There are several reasons and uses for such a proxy:
+
+\begin{itemize}
+\item 
+Security: The address of your server is now hidden, and the server can be protected by the proxy's DDoS prevention capabilities.
+
+\item 
+Flexibility and scalability: You can modify the infrastructure hidden behind the proxy in any way you want and when you want.
+
+\item 
+Caching: Why bother the server if you already know what answer it will give?
+
+\item 
+Compression: Compressing data will reduce the bandwidth needed, which may be especially useful for mobile users with poor connectivity. It can also lower your networking costs (but will likely cost you compute power).
+
+\item 
+SSL termination: Reduce the backend server's load by taking its burden to encrypt and decrypt network traffic.
+\end{itemize}
+
+An example of a reverse proxy is NGINX. It also provides load balancing capabilities, A/B testing, and much more. One of its other capabilities is service discovery. Let's see how it can be helpful.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Service Discovery}
+
+As the name suggests, Service Discovery (SD) allows for automatically detecting instances of specific services in a computer network. Instead of hardcoding a domain name or IP where the service should be hosted, the caller must only be pointed to a service registry. Using this approach, your architecture gets a lot more flexible, as now all the services you use can be easily found. If you design a microservice-based architecture, introducing SD really goes a long way.
+
+There are several approaches to SD. In client-side discovery, the caller contacts the SD instance directly. Each service instance has a registry client, which registers and de-registers the instance, handles heartbeats, and others. While quite straightforward, in this approach, each client has to implement the service discovery logic. Netflix Eureka is an example of a service registry commonly used in this approach.
+
+An alternative is to use server-side discovery. Here, a service registry is also present, along with the registry clients in each service instance. The callers, however, don't contact it directly. Instead, they connect to a load balancer, for example, the AWS Elastic Load Balancer, which, in turn, either calls a service registry or uses its built-in service registry before dispatching the client calls to specific instances. Aside from AWS ELB, NGINX and Consul can be used to provide server-side SD capabilities.
+
+We now know how to find and use our services efficiently, so let's learn how best to deploy them.
+
+
+
+
+
+

@@ -1,0 +1,218 @@
+
+Kubernetes is an extensible open source platform for automating and managing container applications. It is sometimes referred to as k8s since it starts with 'k,' ends with 's,' and there are eight letters in the middle.
+
+Its design is based on Borg, a system used internally by Google. Some of the features present in Kubernetes are as follows:
+
+\begin{itemize}
+\item 
+Autoscaling of applications
+
+\item 
+Configurable networking
+
+\item 
+Batch job execution
+
+\item 
+Unified upgrading of applications
+
+\item 
+The ability to run highly available applications on top of it
+
+\item 
+The declarative configuration
+\end{itemize}
+
+There are different ways to run Kubernetes in your organization. Choosing one over the other requires you to analyze additional costs and benefits related to them.
+
+\subsubsubsection{15.3.1\hspace{0.2cm}Kubernetes structure}
+
+While it is possible to run Kubernetes on a single machine (for example, using minikube, k3s, or k3d), it is not recommended to do so in production. Single-machine clusters have limited functionality and no failover mechanisms. A typical size for a Kubernetes cluster is six machines or more. Three of the machines then form the control plane. The other three are worker nodes.
+
+The minimum requirement of three machines comes from the fact that this is the minimal number to provide high availability. It is possible to have the control plane nodes also available as worker nodes, although this is not encouraged.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Control plane}
+
+In Kubernetes, you rarely interact with individual worker nodes. Instead, all the API requests go to the control plane. The control plane then decides on the actions to take based on the requests, and then it communicates with the worker nodes.
+
+The interaction with the control plane can take several forms:
+
+\begin{itemize}
+\item 
+Using the kubectl CLI
+
+\item 
+Using a web dashboard
+
+\item 
+Using the Kubernetes API from inside an application other than kubectl
+\end{itemize}
+
+Control plane nodes usually run the API server, scheduler, a configuration store (etcd), and possibly some additional processes to handle the specific needs. For example, Kubernetes clusters deployed in a public cloud such as Google Cloud Platform have cloud controllers running on control plane nodes. The cloud controller interacts with the cloud provider's API to replace the failed machines, provision load balancers, or assign external IP addresses.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Worker nodes}
+
+The nodes that form the control plane and the worker pool are the actual machines the workload will run on. They may be physical servers that you host on-premises, VMs hosted privately, or VMs from your cloud provider.
+
+Every node in a cluster runs at least the three programs as listed follows:
+
+\begin{itemize}
+\item 
+A container runtime (for example, Docker Engine or cri-o) that allows the machine to handle the application containers
+
+\item 
+A kubelet, which is responsible for receiving requests from the control plane and manages the individual containers based on those requests
+
+\item 
+A kube-proxy, which is responsible for networking and load balancing on the node level
+\end{itemize}
+
+\subsubsubsection{15.3.2\hspace{0.2cm}Possible approaches to deploying Kubernetes}
+
+As you may have realized from reading the previous section, there are different possible ways to deploy Kubernetes.
+
+One of them is to deploy it to bare-metal servers hosted on-premises. One of the benefits is that this may be cheaper for large-scale applications than what the cloud providers offer. This approach has one major drawback—you will require an operator to provide the additional nodes whenever necessary.
+
+To mitigate this issue, you can run a virtualization appliance on top of your bare-metal servers. This makes it possible to use the Kubernetes built-in cloud controller to provision the necessary resources automatically. You still have the same control over the costs, but there's less manual work. Virtualization adds some overhead, but in most cases, this should be a fair trade-off.
+
+If you are not interested in hosting the servers yourself, you can deploy Kubernetes to run on top of VMs from a cloud provider. By choosing this route, you can use some of the existing templates for optimal setup. There are Terraform and Ansible modules available to build a cluster on popular cloud platforms.
+
+Finally, there are the managed services available from the major cloud players. You only have to pay for the worker nodes in some of them, while the control plane is free of charge.
+
+Why would you choose self-hosted Kubernetes over the managed services when operating in a public cloud? One of the reasons may be a specific version of Kubernetes that you require. Cloud providers are typically a bit slow when it comes to introducing updates.
+
+\subsubsubsection{15.3.3\hspace{0.2cm}Understanding the Kubernetes concepts}
+
+Kubernetes introduces some concepts that may sound unfamiliar or be confusing if you hear them for the first time. When you learn their purpose, it should be easier to grasp what makes Kubernetes special. Here are some of the most common Kubernetes objects:
+
+\begin{itemize}
+\item 
+A container, specifically, an application container, is a method of distributing and running a single application. It contains the code and configuration necessary to run the unmodified application anywhere.
+
+\item 
+A Pod is a basic Kubernetes building block. It is atomic and consists of one or more containers. All the containers inside the pod share the same network interfaces, volumes (such as persistent storage or secrets), and resources (CPU and memory).
+
+\item 
+A deployment is a higher-level object that describes the workload and its life cycle features. It typically manages a set of pod replicas, allows for rolling upgrades, and manages the rollbacks in case of failure. This is what makes it easy to scale and manage the life cycle of Kubernetes applications.
+
+\item 
+A DaemonSet is a controller similar to a deployment in that it manages where the pods are distributed. While deployments are concerned with keeping a given number of replicas, DaemonSets spreads the pods across all worker nodes. The primary use case is to run a system-level service, such as a monitoring or logging agent on each node.
+
+\item 
+Jobs are designed for one-off tasks. Pods in deployments restart automatically when the containers inside them terminate. They are suitable for all the alwayson services that listen on network ports for requests. However, deployments are unsuited for batch jobs, such as thumbnail generation, which you want to run only when required. Jobs create one or more pods and watch them until they complete a given task. When a specific number of successful pods terminate, the job is considered complete.
+
+\item 
+CronJobs, as the name suggests, are the jobs that are run periodically within the cluster.
+
+\item 
+Services represent a particular function performed within a cluster. They have a network endpoint associated with them (which is usually load balanced). Services may be performed by one or more pods. The life cycle of services is independent of the life cycles of the many pods. Since pods are transient, they may be created and destroyed at any time. Services abstract the individual pods to allow for high availability. Services have their own IP addresses and DNS names for ease of use.
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Declarative approach}
+
+We've covered the differences between declarative and imperative approaches earlier in Chapter 9, Continuous Integration/Continuous Deployment. Kubernetes takes the  declarative approach. Instead of giving instructions regarding the steps that need to be taken, you provide the resources that describe your cluster's desired state. It is up to the control plane to allocate internal resources so that they fulfill your needs.
+
+It is possible to add the resources using the command line directly. This can be quick for testing, but you want to have a trail of the resources you created most of the time. Thus, most people work with manifest files, which provide a coded description of the resources required. Manifests are typically YAML files, but it is also possible to use JSON.
+
+Here's an example YAML manifest with a single Pod:
+
+\begin{tcblisting}{commandshell={}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-server
+  labels:
+    app: dominican-front
+spec:
+  containers:
+    - name: webserver
+      image: nginx
+      ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+\end{tcblisting}
+
+The first line is mandatory, and it tells which API version will be used in the manifest. Some resources are only available in extensions, so this is the information for the parser on how to behave. 
+
+The second line describes what resource we are creating. Next, there is metadata and the specification of the resource.
+
+A name is mandatory in metadata as this is the way to distinguish one resource from another. If we wanted to create another pod with the same name, we would get an error stating that such a resource already exists. The label is optional and useful when writing selectors. For example, if we wanted to create a service that allows connection to the pod, we would use a selector matching label app with a value equal to dominican-front.
+
+The specification is also the mandatory part as it describes the actual content of the resource. In our example, we list all the containers that are running inside the pod. To be precise, one container named webserver using an image, nginx, from Docker Hub. Since we want to connect to the Nginx web server from the outside, we also expose the container port 80 on which the server is listening. The name in the port description is optional.
+
+\subsubsubsection{15.3.4\hspace{0.2cm}Kubernetes networking}
+
+Kubernetes allows for pluggable network architectures. Several drivers exist that may be used depending on requirements. Whichever driver you select, some concepts are universal. The following are the typical networking scenarios.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Container-to-container communication}
+
+A single pod may host several different containers. Since the network interface is tied to the pod and not to the containers, each container operates in the same networking namespace. This means various containers may address one another using localhost networking.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Pod-to-pod communication}
+
+Each pod has an internal cluster-local IP address assigned. The address does not persist once the pod has been deleted. One pod can connect to another's exposed ports when it knows the other's address as they share the same flat network. You can think of pods as VMs hosting containers with regard to this communication model. This is rarely used as the preferred method is pod-to-service communication.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Pod-to-service communication}
+
+Pod-to-service communication is the most popular use case for communication within the cluster. Each service has an individual IP address and a DNS name assigned to it. When a pod connects to a service, the connection is proxied to one of the pods in the group selected by the service. Proxying is a task of the kube-proxy tool described earlier.
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{External-to-internal communication}
+
+External traffic typically comes to the cluster via the means of load balancers. These are either tied to or handled by specific services or ingress controllers. When the externally exposed services handle the traffic, it behaves like pod-to-service communication. With the ingress controller, you have additional features available that allow for routing, observability, or advanced load balancing.
+
+\subsubsubsection{15.3.5\hspace{0.2cm}When is using Kubernetes a good idea?}
+
+Introducing Kubernetes within an organization requires some investment. There are many benefits provided by Kubernetes, such as autoscalability, automation, or deployment scenarios. However, these benefits may not justify the necessary investment.
+
+This investment concerns several areas:
+
+\begin{itemize}
+\item 
+Infrastructure costs: The costs associated with running the control plane and the worker nodes may be relatively high. Additionally, the costs may rise if you want to use various Kubernetes expansions, such as GitOps or a service mesh (described later). They also require additional resources to run and provide more overhead on top of your application's regular services. Apart from the nodes themselves, you should also factor in other costs. Some of the Kubernetes features work best when deployed to a supported cloud provider. This means that in order to benefit from those features, you'd have to go down one of the following routes:
+
+\begin{enumerate}[label=\alph*]
+\item 
+Move your workload to the specifically supported cloud
+
+\item
+Implement your own drivers for a cloud provider of your choice
+
+\item
+Migrate your on-premises infrastructure to a virtualized API-enabled environment such as VMware vSphere or OpenStack.
+\end{enumerate}
+
+\item 
+Operations costs: The Kubernetes cluster and associated services require maintenance. Even though you get less maintenance for your applications, this benefit is slightly offset by the cost of keeping the cluster running.
+
+\item 
+Education costs: Your entire product team has to learn new concepts. Even if you have a dedicated platform team that will provide developers with easy-to-use tools, developers would still require a basic understanding of how the work they do influences the entire system and which API they should use.
+\end{itemize}
+
+Before you decide on introducing Kubernetes, consider first whether you can afford the initial investment it requires.
+
+
+
+
+
+
+
+
+
+
+
+

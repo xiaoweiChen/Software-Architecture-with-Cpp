@@ -1,0 +1,36 @@
+
+Containers fit very well with CI/CD pipelines. Since they mostly require no further dependencies other than the container runtime itself, they can be easily tested. Worker machines don't have to be provisioned to fulfill the testing needs, so adding more nodes is much easier. What is more, all of them are general-purpose so that they may act both as builders, test runners, and even deployment executors without any prior configuration.
+
+Another great benefit of using containers in CI/CD is the fact that they are isolated from one another. This means multiple copies running on the same machine should not interfere. That is true unless the tests require some resources from the host operating system, such as port forwarding or volume mounting. Therefore it's best to design tests so that such resources are not necessary (or at least they don't clash). Port randomization is a helpful technique to avoid clashes, for example.
+
+\subsubsubsection{14.4.1\hspace{0.2cm}Runtime libraries inside containers}
+
+The choice of containers may influence the choice of a toolchain and, therefore, C++ language features available to the application. Since containers are typically Linux-based, the system compiler available is usually GNU GCC with glibc as a standard library. However, some Linux distributions popular with containers, such as Alpine Linux, are based on a different standard library, musl.
+
+If you are targeting such a distribution, make sure the code you'll be using, whether developed in-house or from third-party providers, is compatible with musl. The main advantage of both musl and Alpine Linux is that it results in much smaller container images. For example, a Python image built for Debian Buster is around 330 MB, the slimmed-down Debian version is around 40 MB, while the Alpine version is only around 16 MB. Smaller images mean less wasted bandwidth (for uploads and downloads) and quicker updates.
+
+Alpine may also introduce some unwanted traits, such as longer build times, obscure bugs, or reduced performance. If you want to use it to reduce the size, run proper tests to make sure the application behaves without problems.
+
+To reduce your images' size even more, you may consider ditching the underlying operating system altogether. What we mean by operating system here is all the userland tools ordinarily present in a container, such as a shell, package manager, and shared libraries. After all, if your application is the only thing that's going to be running, everything else is unnecessary.
+
+It is typical for Go or Rust applications to provide a static build that is self-sufficient and can form a container image. While this might not be as straightforward in C++, it is worth considering.
+
+There are a few drawbacks related to decreasing the image size as well. First of all, if you decide to go with Alpine Linux, keep in mind it is not as popular as, say, Ubuntu, Debian, or CentOS. Although it is often a platform of choice for container developers, it's very unusual for any other purpose.
+
+This means that there might be new compatibility problems, mostly stemming from the fact it's not based on the de facto standard glibc implementation. If you rely on third-party components, the provider may not offer support for this platform.
+
+If you decide to go down the single statically linked binary inside the container image route, there are also some challenges to consider. First of all, you are discouraged from statically linking glibc as it makes internal use of dlopen to handle Name Service Switch (NSS) and iconv. If your software relies on DNS resolving or character set conversion, you'll have to provide a copy of glibc and the relevant libraries anyway.
+
+Another point to consider is that shell and package managers are often used for debugging containers that misbehave. When one of your containers is acting strangely, you may start another process inside the container and figure out what is happening inside by using standard UNIX tools such as ps, ls, or cat. To run such an application inside the container, it has to be present in the container image first. Some workarounds allow the operator to inject debugging binaries inside the running container, but none of them are well-supported at the moment.
+
+\subsubsubsection{14.4.2\hspace{0.2cm}Alternative container runtimes}
+
+Docker is the most popular way to build and run containers, but since the container standard is open, there are also alternative runtimes that you may use. The main replacement for Docker that offers a similar user experience is Podman. Together with Buildah, described in the previous section, they are tools aimed to replace Docker altogether.
+
+The added benefit is that they don't require an additional daemon running on a host machine, as Docker does. Both also have support (although it is not yet mature) for rootless operations, which makes them a better fit for security-critical operations. Podman accepts all the commands you would expect the Docker CLI to take, so you can simply use it as an alias this way.
+
+Another approach to containers that aims to provide better security is the Kata Containers initiative. Kata Containers uses lightweight virtual machines to leverage the hardware virtualization required for an additional level of isolation between the containers and the host operating system.
+
+Cri-O and containerd are also popular runtimes used by Kubernetes.
+
+
