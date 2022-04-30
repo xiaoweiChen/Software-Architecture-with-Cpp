@@ -2,15 +2,15 @@
 	\zihao{0} 前言
 \end{flushright}
 
-Modern C++ allows you to write high-performing applications in a high-level language without sacrificing readability and maintainability. There's more to software architecture than just language, though. We're going to show you how to design and build applications that are robust and scalable and that perform well.
+现代C++可以在不降低可读性和可维护性的情况下，编写高性能应用程序。软件架构不仅仅是语言，本书将展示如何设计和构建健壮、可扩展，且性能良好的应用程序。
 
-Complete with step-by-step explanations of essential concepts, practical examples, and selfassessment questions, you will begin by understanding the importance of architecture, looking at a case study of an actual application.
+我们将从理解体系结构的重要性开始，逐步了解基本概念、示例和具体问题后，再对实际应用的案例进行研究。
 
-You'll learn how to use established design patterns at the level of a single application, exploring how to make your applications robust, secure, performant, and maintainable. You'll then build higher-level services that connect multiple single applications using patterns such as service-oriented architecture, microservices, containers, and serverless technology.
+将了解在独立应用程序中使用已有的设计模式，并探索可使应用程序更健壮、更安全、高性能和可维护的方式，再使用面向服务的体系结构、微服务、容器和无服务器技术等模式，对多个独立应用程序进行连接的高级服务。
 
-By the end of this book, you will be able to build distributed services using modern C++ and associated tools to deliver solutions that your clients will recommend.
+阅读完本书，将能使用现代C++和相关工具构建分布式服务，并以客户推荐的解决方案进行交付。
 
-Are you interested in becoming a software architect or looking to learn more about modern trends in architecture? If so, this book should help you!
+有兴趣成为一名软件架构师，或者了解更多关于体系结构的趋势吗？如果答案是“是”，那么这本书应该对你有所帮助!
 
 
 \hspace*{\fill} \\ %插入空行
@@ -21,48 +21,44 @@ Are you interested in becoming a software architect or looking to learn more abo
 \hspace*{\fill} \\ %插入空行
 \textbf{本书内容}
 
-\textit{第1章，Importance of Software Architecture and Principles of Great Design}。looks at why we
-design software in the first place.
+\textit{第1章，软件架构的重要性和设计原则}。首先，为什么要设计软件。
 
-\textit{第2章，Architectural Styles}。covers the different approaches you can take in terms of
-architecture.
+\textit{第2章，架构风格}。介绍了在体系结构方面可以使用的方法。
 
-\textit{第3章，Functional and Nonfunctional Requirements}。explores understanding the needs of clients.
+\textit{第3章，功能和非功能需求}。探索客户的需求。
 
-\textit{第4章，Architectural and System Design}。is all about creating effective software solutions.
+\textit{第4章，架构与系统设计}。创建有效的软件解决方案。
 
-\textit{第5章，Leveraging C++ Language Features}。gets you speaking native C++.
+\textit{第5章，利用C++特性}。使用C++。
 
-\textit{第6章，Design Patterns and C++}。focuses on modern C++ idioms and useful code constructs.
+\textit{第6章，设计模式和C++}。重点关注现代C++的习惯用法和代码构造。
 
-\textit{第7章，Building and Packaging}。 is about getting code to production.
+\textit{第7章，构建和打包}。将代码投入产线。
 
-\textit{第8章，Writing Testable Code}。teaches you how to find bugs before the clients do.
+\textit{第8章，编写测试代码}。如何在客户之前找到错误。
 
-\textit{第9章，Continuous Integration and Continuous Deployment}。introduces the modern way of automating software releases.
+\textit{第9章，持续集成和持续部署}。自动化软件发布的方法。
 
+\textit{第10章，代码和部署的安全性}。确保系统不被破坏。
 
-\textit{第10章，Security in Code and Deployment}。is where you will learn how to make sure it's hard to break your systems.
+\textit{第11章，性能}。查看性能(必须滴!)。C++很快——还能更快？
 
-\textit{第11章，Performance}。looks at performance (of course!). C++ should be fast – can it be even faster?
+\textit{第12章，面向服务的体系结构}。基于服务构建系统。
 
+\textit{第13章，设计微服务}。专注于一件事——设计微服务。
 
-\textit{第12章，Service-Oriented Architecture}。sees you building systems based on services.
+\textit{第14章，容器}。为构建、打包和运行应用程序提供了统一的接口。
 
-\textit{第13章，Designing Microservices}。focuses on doing one thing only – designing microservices.
-
-\textit{第14章，Containers}。gives you a unified interface to build, package, and run applications.
-
-\textit{第15章，Cloud-Native Design}。goes beyond traditional infrastructure to explore cloud native design.
+\textit{第15章，原生云设计}。超越传统基础设施，探索原生云上的设计。
 
 \hspace*{\fill} \\ %插入空行
 \textbf{编译环境}
 
-The code examples in this book are mostly written for GCC 10. They should work with Clang or Microsoft Visual C++ as well, though certain features from C++20 may be missing in older versions of the compilers. To get a development environment as close to the authors' as possible, we advise you to use Nix (\url{https://nixos.org/download.html}) and direnv (\url{https://direnv.net/}) in a Linux-like environment. These two tools should configure the compilers and supporting packages for you if you run direnv allow in a directory containing examples.
+本书中的代码示例主要是为GCC 10编写的，使用Clang或Microsoft Visual C++编译器应该也没什么问题，不过在较老的编译器中可能缺少C++20的某些特性。为了获得一个尽可能接近作者的开发环境，我们建议你在一个类似Linux的环境中使用Nix (\url{https://nixos.org/download.html})和direnv (\url{https://direnv.net/})。如果在一个包含示例的目录中运行\texttt{direnv allow}，这两个工具应该会为你配置编译器和相关的依赖包。
 
-Without Nix and direnv, we can't guarantee that the examples will work correctly. If you're on macOS, Nix should work just fine. If you're on Windows, the Windows Subsystem for Linux 2 is a great way to have a Linux development environment with Nix.
+没有Nix和direnv的话，就不能保证示例将正确地工作。如果使用macOS, Nix应该可以正常工作。如果在Windows上，Windows子系统Linux 2中一个Linux开发环境，可以与Nix一起使用。
 
-To install both tools, you have to run the following:
+要安装这两个工具，可以运行以下命令:
 
 \begin{tcblisting}{commandshell={}}
 # Install Nix
@@ -81,15 +77,14 @@ cd Hands-On-Software-Architecture-with-Cpp
 direnv allow
 \end{tcblisting}
 
-
-After executing the preceding command, Nix should download and install all the necessary dependencies. This might take a while but it helps to ensure we're using exactly the same tools.
+执行上述命令后，Nix应该下载并安装所有依赖项。这可能需要一些时间，但它有助于确保你与作者使用的是完全相同的工具。
 
 \textbf{如果你正在使用这本书的数字版本，我们建议自己输入代码或通过GitHub库访问代码(链接在下一节中提供)。这样做将帮助您避免与复制和粘贴代码相关的任何潜在错误}
 
 \hspace*{\fill} \\ %插入空行
 \textbf{下载示例}
 
-可以从GitHub网站\url{https://	github.com/PacktPublishing/Software-Architecture-with-Cpp}下载本书的示例代码文件。如果代码有更新，会在现有的GitHub库中更新。
+可以从GitHub网站\url{https://github.com/PacktPublishing/Software-Architecture-with-Cpp}下载本书的示例代码文件。如果代码有更新，会在现有的GitHub库中更新。
 
 我们还有其他的代码包，还有丰富的书籍和视频目录，都在\url{https://github.com/PacktPublishing/}。去看看吧!
 
