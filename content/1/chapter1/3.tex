@@ -1,19 +1,20 @@
 
-Actually, a better question would be: why is caring about your architecture important? As we mentioned earlier, regardless of whether you put conscious effort into building it or not, you will end up with some kind of architecture. If after several months or even years of development you still want your software to retain its qualities, you need to take some steps earlier in the process. If you won't think about your architecture, chances are it won't ever present the required qualities.
+实际上，应该这样问：为什么要关心架构重要性？无论是否有意识地去构建，最终都会得到某种类型的架构。如果在几个月，甚至几年的开发之后，仍希望软件保证质量，那么需要在过程的早期采取一些措施。如果不考虑架构，那么很可能永远不会呈现预想的品质。
 
-So, in order for your product to meet the business requirements and attributes such as performance, maintainability, scalability, or others, you need to take care of its architecture, and it is best if you do it as early as you can in the process. Let's now discuss two things that each good architect wants to protect their projects from.
+因此，为了让产品满足业务需求和性能、可维护性、可扩展性(等)，就需要关注其架构，最好尽早这样做。现在，我们来聊聊优秀架构师不能接受的两件事。
 
-\subsubsubsection{1.3.1\hspace{0.2cm}Software decay}
+\subsubsubsection{1.3.1\hspace{0.2cm}软件腐烂}
 
-Even after you did the initial work and had a specific architecture in mind, you need to continuously monitor how the system evolves and whether it still aligns with its users' needs, as those may also change during the development and lifetime of your software. Software decay, sometimes also called erosion, occurs when the implementation decisions don't correspond to the planned architecture. All such differences should be treated as technical debt.
+Even after you did the initial work and had a specific architecture in mind, you need to continuously monitor how the system evolves and whether it still aligns with its users' needs, as those may also change during the development and lifetime of your software. Software decay, sometimes also called erosion, occurs when the implementation decisions don't correspond to the planned architecture. All such differences should be treated as technical debt.
 
-\subsubsubsection{1.3.2\hspace{0.2cm}Accidental architecture}
+\subsubsubsection{1.3.2\hspace{0.2cm}随意架构}
 
 Failing to track if the development adheres to the chosen architecture or failing to intentionally plan how the architecture should look will often result in a so-called accidental architecture, and it can happen regardless of applying best practices in other areas, such as testing or having any specific development culture. 
 
 There are several anti-patterns that suggest your architecture is accidental. Code resembling a big ball of mud is the most obvious one. Having god objects is another important sign of this. Generally speaking, if your software is getting tightly coupled, perhaps with circular dependencies, but wasn't like that in the first place, it's an important signal to put more conscious effort into how the architecture looks.
 
-Let's now describe what an architect must understand to deliver a viable solution.
+Let's now describe what an architect must understand to deliver a viable solution.
+
 
 
 

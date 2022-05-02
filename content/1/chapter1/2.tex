@@ -1,34 +1,35 @@
-Let's begin by defining what software architecture actually is. When you create an application, library, or any software component, you need to think about how the elements you write will look and how they will interact with each other. In other words, you're designing them and their relations with their surroundings. Just like with urban architecture, it's important to think about the bigger picture to not end up in a haphazard state. On a small scale, every single building looks okay, but they don't combine into a sensible bigger picture – they just don't fit together well. This is what's called accidental architecture and it is one of the outcomes you want to avoid. However, keep in mind that whether you're putting your thoughts into it or not, when writing software you are creating an architecture.
+先从定义软件架构是什么开始。在创建应用程序、库或软件组件时，需要考虑所编写的元素的表现方式，以及交互方式。换句话说，在设计它们以及与周围环境的关系时，就需要像建设城市一样，要规划更大的蓝图，要从大局出发，不要陷入杂乱无章的状态。小范围内，每一栋建筑看起来都不错，但它们并不能组成一个更大的整体——它们只是不太适合，这就是所谓的\textit{随意架构}，这需要避免。请记住，无论是否将自己的想法放入其中，在编写软件时，都是在构建一个架构。
 
-So, what exactly should you be creating if you want to mindfully define the architecture of your solution? The Software Engineering Institute has this to say:
+如果想要谨慎地定义解决方案的架构，需要创建什么呢？软件工程学如是说:
 
 \begin{center}
 \tt
-The software architecture of a system is the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both.
+系统的软件架构是系统运行所需的组件，它包括软件元素、元素间的关系，以及元素的属性。
 \end{center}
 
-This means that in order to define an architecture thoroughly, we should think about it from a few perspectives instead of just hopping into writing code.
+这样，为了定义一个架构，需要从不同的角度来考虑，而非直接开始写代码。
 
-\subsubsubsection{1.2.1\hspace{0.2cm}Different ways to look at architecture}
+\subsubsubsection{1.2.1\hspace{0.2cm}从不同的角度来看待架构}
 
-There are several scopes that can be used to look at architecture:
+这里提供几个思考的角度：
 
 \begin{itemize}
 \item 
-Enterprise architecture deals with the whole company or even a group of companies. It takes a holistic approach and is concerned about the strategy of whole enterprises. When thinking about enterprise architecture, you should be looking at how all the systems in a company behave and cooperate with each other. It's concerned about the alignment between business and IT.
+企业架构涉及整个公司，甚至是集团公司。其采取整体的方法，只关注企业的战略。在考虑企业架构时，应该了解公司中的所有系统的行为和相互合作的模式。其对业务和IT之间的一致性相当敏感。
 
 \item 
-Solution architecture is less abstract than its enterprise counterpart. It stands somewhere in the middle between enterprise and software architecture. Usually, solution architecture is concerned with one specific system and the way it interacts with its surroundings. A solution architect needs to come up with a way to fulfill a specific business need, usually by designing a whole software system or modifying existing ones.
+解决方案架构不像企业架构那样抽象，它介于企业架构和软件架构之间。通常，解决方案架构与特定的系统，以及与周围环境交互的方式有关。解决方案架构师需要想出一种方法来满足特定的业务需求，通常的方法是通过设计整个软件系统或修改现有的系统。
 
 \item
-Software architecture is even more concrete than solution architecture. It concentrates on a specific project, the technologies it uses, and how it interacts with other projects. A software architect is interested in the internals of the project's components.
+软件架构比解决方案架构更加具体，其集中于一个特定的项目，使用特定的技术，以及关注如何与其他项目进行交互。这里，软件架构师感兴趣的是项目组件的内部结构。
 
 \item
-Infrastructure architecture is, as the name suggests, concerned about the infrastructure that the software will use. It defines the deployment environment and strategy, how the application will scale, failover handling, site reliability, and other infrastructure-oriented aspects.
+基础设施架构。顾名思义，关注的是软件使用的基础设施。其定义了部署环境和策略、应用程序如何扩展、故障转移处理、站点可靠性以及其他面向基础设施的方面。
 
 \end{itemize}
 
-Solution architecture is based on both software and infrastructure architectures to satisfy the business requirements. In the following sections, we will talk about both those aspects to prepare you for both small- and large-scale architecture design. Before we jump into that, let's also answer one fundamental question: why is architecture important?
+解决方案架构基于软件和基础设施架构，从而满足业务需求。在后续的内容平中，我们将对这两种架构进行讨论，以便之后为小型和大型的架构设计做准备。在开始之前，先回答一个问题:为什么架构很重要？
+
 
 
 

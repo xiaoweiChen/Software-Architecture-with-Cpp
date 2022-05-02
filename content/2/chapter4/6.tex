@@ -206,10 +206,9 @@ The last step will be to define our network:
 \begin{tcblisting}{commandshell={}}
   networks:
     example_network: {}
-
 \end{tcblisting}
 
-And we're done. You can now run the service using \textit{docker-compose up --build} and point your browser to the endpoints we specified.
+And we're done. You can now run the service using \textit{docker-compose up -\,-build} and point your browser to the endpoints we specified.
 
 Using a sidecar proxy has one more benefit: even if your service will die, the sidecar is usually still alive and can respond to external requests while the main service is down. The same applies when your service is redeployed, for example, because of an update. Speaking of which, let's learn how to minimize the related downtime.
 
