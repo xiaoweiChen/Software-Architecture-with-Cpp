@@ -1,16 +1,18 @@
-Let's now move closer to the programming language we'll be using the most throughout this book. C++ is a multi-paradigm language that has been around for a few decades now. During the years since its inception, it has changed a lot. When C++11 came out, Bjarne Stroustrup, the creator of the language, said that it felt like a completely new language. The release of C++20 marks another milestone in the evolution of this beast, bringing a similar revolution to how we write code. One thing, however, stayed the same during all those years: the language's philosophy.
 
-In short, it can be summarized by three rules:
+现在，进一步了解在本书中使用最多的编程语言。C++是一种已经存在了几十年的多范式语言。从创立至今，它已经发生了很大的变化。当C++11问世时，该语言的创造者Bjarne Stroustrup说，它感觉像是一门全新的语言。C++20的发布标志着这头巨兽进化的又一个里程碑，也给编写代码的方式带来了一场革命。然而，这些年来，语言的哲学始终如一，从未改变。
+
+简而言之，可以总结为三条规则:
 
 \begin{itemize}
-\item There should be no language beneath C++ (except assembly).
-\item You only pay for what you use.
-\item Offer high-level abstractions at low cost (there's a strong aim for zero-cost).
+\item C++中不应该有任何其他语言(汇编除外)。
+\item 只为所使的付费。
+\item 以低成本提供高级抽象(零成本是终极的目标)。
 \end{itemize}
 
-Not paying for what you don't use means that, for example, if you want to have your data member created on the stack, you can. Many languages allocate their objects on the heap, but it's not necessary for C++. Allocating on the heap has some cost to it – probably your allocator will have to lock a mutex for this, which can be a big burden in some types of applications. The good part is you can easily allocate variables without dynamically allocating memory each time pretty easily.
+\textit{为使用的东西付费}意味着，可以在堆栈上创建数据成员(许多语言都在堆上分配对象，但C++却不需要这样做)，在堆上分配是有代价的——分配器可能需要锁定互斥量，这在某些类型的应用程序中可能是一个负担。好的方面是，可以方便地分配变量，而不必每次都动态地分配内存。
 
-High-level abstractions are what differentiate C++ from lower-level languages such as C or assembly. They allow for expressing ideas and intent directly in the source code, which plays great with the language's type safety. Consider the following code snippet:
+高级抽象是C++与C或汇编等低级语言的区别，其允许在源代码中直接表达思想和意图，这对语言的类型安全性非常有利。考虑下面的代码片段:
+
 
 \begin{lstlisting}[style=styleCXX]
 struct Duration {
@@ -23,10 +25,11 @@ void example() {
 	
 	auto timeout = 1; // second
 	d.millis_ = timeout; // ouch, we meant 1000 millis but assigned just 1
-}
+}
+
 \end{lstlisting}
 
-A much better idea would be to leverage the type-safety features offered by the language:
+更好的做法是利用该语言提供的类型安全特性:
 
 \begin{lstlisting}[style=styleCXX]
 #include <chrono>
@@ -44,12 +47,13 @@ void example() {
 	auto timeout = 1s; // or std::chrono::seconds(1);
 	d.millis_ =
 		timeout; // okay, converted automatically to milliseconds
-}
+}
 \end{lstlisting}
 
-The preceding abstraction can save us from mistakes and doesn't cost us anything while doing so; the assembly generated would be the same as for the first example. That's why it's called a zero-cost abstraction. Sometimes C++ allows us to use abstractions that actually result in better code than if they were not used. One example of a language feature that, when used, could often result in such benefit is coroutines from C++20.
+前面的抽象可以避免犯错误，并且在这样做的时候不会付出任何代价，生成的汇编与第一个示例相同。这就是C++中为什么有零成本抽象的原因。有时，C++允许使用抽象，从而产生比更好的代码。C++20中的协程就是一个语言特性的例子，在使用时通常会带来这样的好处。
 
-Another great set of abstractions, offered by the standard library, are algorithms. Which of the following code snippets do you think is easier to read and easier to prove bug-free? Which expresses the intent better?
+标准库提供的另一组很棒的抽象是算法。你认为下列哪一段代码更容易阅读，更容易证明没有错误？哪个更好地表达了意图？
+
 
 \begin{lstlisting}[style=styleCXX]
 // Approach #1
@@ -64,14 +68,15 @@ int count_dots(const char *str, std::size_t len) {
 // Approach #2
 int count_dots(std::string_view str) {
 	return std::count(std::begin(str), std::end(str), '.');
-}
+}
+
 \end{lstlisting}
 
-Okay, the second function has a different interface, but even it if was to stay the same, we could just create \texttt{std::string\_view} from the pointer and the length. Since it's such a lightweight type, it should be optimized away by your compiler.
+OK，第二个函数有一个不同的接口，但即使它保持不变，也可以通过指针和长度创建\texttt{std::string\_view}。由于它是轻量级的类型，编译器应该对其进行优化。
 
-Using higher-level abstractions leads to simpler, more maintainable code. The C++ language has strived to provide zero-cost abstractions since its inception, so build upon that instead of redesigning the wheel using lower levels of abstraction.
+使用更高层次的抽象可以得到更简单、更易于维护的代码。C++从一开始就致力于提供零成本的抽象，所以可以在此基础上进行构建，而不是重新设计轮子。
 
-Speaking of simple and maintainable code, the next section introduces some rules and heuristics that are invaluable on the path to writing such code.
+谈到简单和可维护的代码，下一节将介绍一些在编写此类代码的过程中非常宝贵的规则和方法。
 
 
 

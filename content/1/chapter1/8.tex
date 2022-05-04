@@ -1,16 +1,16 @@
 
-Coupling and cohesion are two terms that go hand in hand in software. Let's see what each of them means and how they relate to each other.
+耦合和内聚是软件中密切相关的两个术语。来看看它们的含义，以及它们之间的关系。
 
 
-\subsubsubsection{1.8.1\hspace{0.2cm}Coupling}
+\subsubsubsection{1.8.1\hspace{0.2cm}耦合}
 
-Coupling is a measure of how strongly one software unit depends on other units. A unit with high coupling relies on many other units. The lower the coupling, the better.
+耦合是软件单元对其他单元依赖程度的度量。具有高耦合的单元依赖于许多其他单元。所以耦合度越低越好。
 
-For example, if a class depends on private members of another class, it means they're tightly coupled. A change in the second class would probably mean that the first one needs to be changed as well, which is why it's not a desirable situation. 
+如果一个类依赖于另一个类的私有成员，这意味着它们是紧密耦合的。第二个类的变化可能意味着第一个类也需要改变，这就是为什么高耦合不是一个理想的状态。
 
-To weaken the coupling in the preceding scenario, we could think about adding parameters for the member functions instead of directly accessing other classes' private members.
+为了弱化前面场景中的耦合，可以考虑为成员函数添加参数，而不是直接访问其他类的私有成员。
 
-Another example of tightly coupled classes is the first implementation of the Project and developer classes in the dependency inversion section. Let's see what would happen if we were to add yet another developer type:
+紧密耦合的另一个例子是依赖倒置部分中的\texttt{Project}和\texttt{developer}类的第一个实现。如果添加另一个开发者类型会发生什么:
 
 
 \begin{lstlisting}[style=styleCXX]
@@ -34,7 +34,7 @@ private:
 };
 \end{lstlisting}
 
-It looks like instead of just adding the \textit{MiddlewareDeveloper} class, we had to modify the public interface of the \textit{Project} class. This means they're tightly coupled and that this implementation of the \textit{Project} class actually breaks the OCP. For comparison, let's now see how the same modification would be applied to the implementation using dependency inversion:
+看起来不仅仅是添加了\texttt{MiddlewareDeveloper}类，还必须修改\texttt{Project}类的公共接口。这意味着它们是紧密耦合的，并且\texttt{Project}类的实现实际上破坏了OCP。为了进行比较，看看如何使用依赖关系倒置将相同的修改应用于实现:
 
 
 \begin{lstlisting}[style=styleCXX]
@@ -45,11 +45,9 @@ public:
 private:
 	void developMiddleware();
 };
-
 \end{lstlisting}
 
-No changes to the \textit{Project} class were required, so now the classes are loosely coupled. All we needed to do was to add the \textit{MiddlewareDeveloper} class. Structuring our code this way allows for smaller rebuilds, faster development, and easier testing, all with less code that's easier to maintain. To use our new class, we only need to modify the calling code:
-
+不需要更改\texttt{Project}类，所以现在这些类是松散耦合的，所需要做的就是添加\texttt{MiddlewareDeveloper}类。以这种方式构造代码就能保证更小范围的重构、更快的开发和更容易的测试，所有这些都需要更少的代码，并且更容易维护。要使用的新类，只需要修改调用代码:
 
 \begin{lstlisting}[style=styleCXX]
 using MyProject = Project<FrontEndDeveloper, MiddlewareDeveloper,
@@ -61,18 +59,15 @@ auto new_project = MyProject{{alice, charlie, bob}};
 new_project.deliver();
 \end{lstlisting}
 
-This shows coupling on a class level. On a larger scale, for instance, between two services, the low coupling can be achieved by introducing techniques such as message queueing. The services wouldn't then depend on each other directly, but just on the message format. If you're having a microservice architecture, a common mistake is to have multiple services use the same database. This causes coupling between those services as you cannot freely modify the database schema without affecting all the microservices that use it.
+这显示了类级别上的耦合。在更大的范围内，如两个服务之间，可以通过引入消息队列等技术来实现低耦合。这样，服务就不会直接相互依赖，而只依赖于消息格式。如果有一个微服务架构，常见的错误是让多个服务使用相同的数据库。因为无法自由地修改数据库模式而不影响使用它的微服务，从而导致了这些服务之间的耦合。
 
-Let's now move on to cohesion.
+\subsubsubsection{1.8.2\hspace{0.2cm}内聚}
 
-\subsubsubsection{1.8.2\hspace{0.2cm}Cohesion}
+内聚是对软件单元的元素之间关联程度的度量。在一个高度内聚的系统中，同一模块中的组件所提供的功能是紧密相关的。这感觉就像这些组件是一体的。
 
-Cohesion is a measure of how strongly a software unit's elements are related. In a highly cohesive system, the functionality offered by components in the same module is strongly related. It feels like such components just belong together.
+在类级别上，一个方法操作的字段越多，它与类的内聚性就越强。这意味着最常见的低内聚数据类型是那些大型单片数据类型。当类中有太多内容时，很可能就会缺乏凝聚力，也会破坏SRP。这使得这些类很难维护，并且容易出现Bug。
 
-On a class level, the more fields a method manipulates, the more cohesive it is to the class. This means that the most commonly spotted low-cohesion data types are those big monolithic ones. When there's too much going on in a class, it most probably is not cohesive and breaks the SRP, too. This makes such classes hard to maintain and bug-prone.
-
-Smaller classes can be incohesive as well. Consider the following example. It may seem trivial, but posting real-life scenarios, often hundreds if not thousands of lines long, would be impractical:
-
+较小的类也可能不具有凝聚力，考虑下面的示例。这可能看起来没什么，但真实的场景中，通常是数百甚至数千行:
 
 \begin{lstlisting}[style=styleCXX]
 class CachingProcessor {
@@ -91,8 +86,7 @@ private:
 };
 \end{lstlisting}
 
-We can see that our processor actually does three types of work: the actual work, the caching of the results, and managing listeners. A common way to increase cohesion in such scenarios is to extract a class or even multiple ones:
-
+可以看到处理器实际上执行三种类型的工作:实际工作、缓存结果和管理监听器。在这种情况下，增加内聚的常见方法是提取一个或多个类:
 
 \begin{lstlisting}[style=styleCXX]
 class WorkResultsCache {
@@ -103,6 +97,7 @@ public:
 private:
 	// ...
 };
+
 class ResultNotifier {
 public:
 	void addListener(const Listener &listener);
@@ -111,6 +106,7 @@ public:
 private:
 	// ...
 };
+
 class CachingProcessor {
 public:
 	explicit CachingProcessor(ResultNotifier &notifier);
@@ -121,21 +117,19 @@ private:
 	ResultNotifier notifier_;
 	// ...
 };
-
 \end{lstlisting}
 
-Now each part is done by a separate, cohesive entity. Reusing them is now possible without much hassle. Even making them a template class should require little work. Last but not least, testing such classes should be easier as well.
+现在，每个部分都是由一个独立的、内聚的实体完成的。重用它们没什么问题，也不会有太多麻烦。甚至将它们变成模板类也不需要太多的工作，测试这样的类也应该更容易。
 
-Putting this on a component or system level is straightforward – each component, service, and system you design should be concise and focus on doing one thing and doing it right:
-
+将其置于组件或系统级别上会非常简单——设计的每个组件、服务和系统都应该简洁，专注于做一件事，并且把它做好:
 
 \begin{center}
 \includegraphics[width=0.9\textwidth]{content/1/chapter1/images/2.jpg}\\
-Figure 1.2 – Coupling versus cohesion
+图1.2 - 耦合与内聚
 \end{center}
 
-Low cohesion and high coupling are usually associated with software that's difficult to test, reuse, maintain, or even understand, so it lacks many of the quality attributes usually desired to have in software.
+低内聚和高耦合通常与难以测试、重用、维护甚至理解的软件相应的关联性，因此它缺乏软件中通常需要的许多质量属性。
 
-Those terms often go together because often one trait influences the other, regardless of whether the unit we talk about is a function, class, library, service, or even a whole system. To give an example, usually, monoliths are highly coupled and low cohesive, while distributed services tend to be at the other end of the spectrum. 
+这两个术语经常同时出现，因为通常一个特征影响另一个特征，不管谈论的单位是功能、类、库、服务，甚至是整个系统。通常情况下，单体服务是高度耦合和低内聚的，而分布式服务则处于另一个极端。
 
-This concludes our introductory chapter. Let's now summarize what we've learned.
+现在让我们总结一下所学的知识。

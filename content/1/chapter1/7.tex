@@ -1,33 +1,36 @@
 
-There are many principles to keep in mind when writing code. When writing objectoriented code, you should be familiar with the quartet of abstraction, encapsulation, inheritance, and polymorphism. Regardless of whether your writing C++ in a mostly objectoriented programming manner or not, you should keep in mind the principles behind the two acronyms: SOLID and DRY.
+编写代码时要记住许多原则。在编写面向对象的代码时，应该熟悉抽象、封装、继承和多态这四个方面。无论是否以面向对象的编程方式编写C++，都应该牢记两个首字母缩写词：SOLID和DRY背后的原则。
 
-SOLID is a set of practices that can help you write cleaner and less bug-prone software. It's an acronym made from the first letters of the five concepts behind it:
+SOLID是一组可以帮助编写更干净、更少Bug软件的实践。它是由五个概念的首字母组成的缩写(译注：中文术语翻译源于 \url{https://blog.csdn.net/louzp_ustc/article/details/83272914}):
 
 \begin{itemize}
-\item Single responsibility principle
-\item Open-closed principle
-\item Liskov substitution principle
-\item Interface segregation
-\item Dependency Inversion
+\item 单一职责原则(Single responsibility principle)
+\item 开放封闭原则(Open-closed principle)
+\item 子可替父原则(Liskov substitution principle)
+\item 接口隔离原则(Interface Segregation Principle)
+\item 依赖倒置原则(Dependency Inversion Principle)
 \end{itemize}
 
-We assume you already have the idea of how those principles relate to object-oriented programming, but since C++ is not always object-oriented, let's look at how they apply to different areas.
+假设读者们已经了解了这些原则与面向对象编程的关系，由于C++并不总是面向对象的，那么先来看看它是如何应用于不同领域的。
 
-Some of the examples use dynamic polymorphism, but the same would apply to static polymorphism. If you're writing performance-oriented code (and you probably are if you chose C++), you should know that using dynamic polymorphism can be a bad idea in terms of performance, especially on the hot path. Further on in the book, you'll learn how to write statically polymorphic classes using the \textbf{Curiously Recurring Template Pattern (CRTP)}.
+有些例子使用了动态多态，但这同样适用于静态多态。如果正在编写面向性能的代码(如果选择了C++，很可能就是这样)，那么就性能而言，使用动态多态可能不是一个好主意，特别是在热路径上。在其他书中，将会进一步学习如何使用\textbf{\href{https://ctj12461.netlify.app/2019/179eb0e9.html}{奇特重现模板模式}(Curiously Recurring Template Pattern, CRTP)}编写静态多态类。
 
-\subsubsubsection{1.7.1\hspace{0.2cm}Single responsibility principle}
 
-In short, the Single Responsibility Principle (SRP) means each code unit should have exactly one responsibility. This means writing functions that do one thing only, creating types that are responsible for a single thing, and creating higher-level components that are focused on one aspect only. 
+\subsubsubsection{1.7.1\hspace{0.2cm}单一职责原则}
 
-This means that if your class manages some type of resources, such as file handles, it should do only that, leaving parsing them, for example, to another type.
+简而言之，单一职责原则(SRP)意味着每个代码单元应该只有一个职责。这意味着编写只做一件事的函数，创建负责一件事的类型，以及创建专注一个方面的高级组件。
 
-Often, if you see a function with "And" in its name, it's violating the SRP and should be refactored. Another sign is when a function has comments indicating what each section of the function (sic!) does. Each such section would probably be better off as a distinct function.
+如果使用类管理某种类型的资源(例如文件句柄)，它应该只做这一个工作，而将解析工作交给其他类型。
 
-A related topic is the principle of least knowledge. In its essence, it says that no object should know no more than necessary about other objects, so it doesn't depend on any of their internals, for example. Applying it leads to more maintainable code with fewer interdependencies between components.
+通常，如果看到一个函数的名称中有“And”，那么它就违反了SRP，应该进行重构。另一个标志是当函数有注释指出函数的每个部分(原文如此!)是做什么的时候，每个部分拆分为不同的函数可能会更好。
 
-\subsubsubsection{1.7.2\hspace{0.2cm}Open-closed principle}
+相关的主题的知识最小化原则。任何对象都不应该知道其他对象的相关信息，所以它不依赖于其他对象的内部信息。遵循这个原则可以使代码更易于维护，组件之间的依赖更少。
 
-The Open-Closed Principle (OCP) means that code should be open for extension but closed for modification. Open for extension means that we could extend the list of types the code supports easily. Closed for modification means existing code shouldn't change, as this can often cause bugs somewhere else in the system. A great feature of C++ demonstrating this principle is \textit{operator<<} of \textit{ostream}. To extend it so that it supports your custom class, all you need to do is to write code similar to the following:
+
+\subsubsubsection{1.7.2\hspace{0.2cm}开放封闭原则}
+
+开放封闭原则(OCP)意味着代码应该对扩展开放，但对修改关闭。开放扩展意味着可以轻松扩展代码支持的类型列表。关闭修改意味着现有代码不应更改，因为这通常会导致系统中其他地方的错误。C++演示这一原理的重要特性是\texttt{operator<<}的\texttt{ostream}。要扩展它，使它支持自定义类，就需要编写(类似)以下代码:
+
 
 \begin{lstlisting}[style=styleCXX]
 std::ostream &operator<<(std::ostream &stream, const MyPair<int, int>
@@ -35,10 +38,12 @@ std::ostream &operator<<(std::ostream &stream, const MyPair<int, int>
 	stream << mp.firstMember() << ", ";
 	stream << mp.secondMember();
 	return stream;
-}
+}
+
 \end{lstlisting}
 
-Note that our implementation of \textit{operator<<} is a free (non-member) function. You should prefer those to member functions if possible as it actually helps encapsulation. For more details on this, consult the article by Scott Meyers in the Further reading section at the end of this chapter. If you don't want to provide public access to some field that you wish to print to \textit{ostream}, you can make \textit{operator<<} a friend function, like so:
+注意这里\texttt{operator<<}的实现是一个自由(非成员)函数。如果可能的话，应该选择自由函数，而不是成员函数，因为这有助于进行封装。有关这方面的细节，请参阅本章末尾的扩展阅读部分Scott Meyers的文章。如果想是使用\texttt{ostream}打印一些非公共访问的成员，可以将相应的\texttt{operator<<}函数设置为友元函数，像这样:
+
 
 \begin{lstlisting}[style=styleCXX]
 class MyPair {
@@ -54,15 +59,16 @@ std::ostream &operator<<(std::ostream &stream, const MyPair &mp) {
 }
 \end{lstlisting}
 
-Note that this definition of OCP is slightly different from the more common one related to polymorphism. The latter is about creating base classes that can't be modified themselves, but are open for others to inherit from them.
+注意，OCP的这个定义与与多态相关的常见定义略有不同。后者是关于创建基类的，这些基类本身不能修改，但可以继承。
 
-Speaking of polymorphism, let's move on to the next principle as it is all about using it correctly.
+说到多态，就继续下一个原则，因为它是关于正确使用多态的。
 
-\subsubsubsection{1.7.3\hspace{0.2cm}Liskov substitution principle}
 
-In essence, the \textbf{Liskov Substitution Principle (LSP)} states that if a function works with a pointer or reference to a base object, it must also work with a pointer or reference to any of its derived objects. This rule is sometimes broken because the techniques we apply in source code do not always work in real-world abstractions.
+\subsubsubsection{1.7.3\hspace{0.2cm}子可替父原则}
 
-A famous example is a square and a rectangle. Mathematically speaking, the former is a specialization of the latter, so there's an "is a" relationship from one to the other. This tempts us to create a \textit{Square} class that inherits from the \textit{Rectangle} class. So, we could end up with code like the following:
+\textbf{子可替父原则(LSP)}规定，如果一个函数使用指向基对象的指针或引用，那么必须使用指向其派生对象的指针或引用。这一规则有时会打破，在源代码中应用的技术，在实际抽象中并不总是有效。
+
+一个著名的例子是正方形和矩形。从数学角度讲，前者是后者的特化，所以两者之间是“is a”的关系。那就可以创建一个\texttt{Square}类，继承于\texttt{Rectangle}类。因此，有如下代码:
 
 \begin{lstlisting}[style=styleCXX]
 class Rectangle {
@@ -81,44 +87,45 @@ public:
 	double area() override;
 	void setWidth(double width) override;
 	void setHeight(double height) override;
-};
+};
+
 \end{lstlisting}
 
-How should we implement the members of the \textit{Square} class? If we want to follow the LSP and save the users of such classes from surprises, we can't: our square would stop being a square if we called \textit{setWidth}. We can either stop having a square (not expressible using the preceding code) or modify the height as well, thus making the square look different than a rectangle.
+应该如何实现\texttt{Square}类的成员？如果想要遵循LSP，并避免让这些类的使用者感到意外，但这不可能。如果调用\texttt{setWidth}，正方形将不再是正方形。所以，这里只能停止使用正方形(使用前面的代码是无法表达的)，或修改高度，从而使正方形看起来不同于矩形。
 
-If your code violates the LSP, it's likely that you're using an incorrect abstraction. In our case, \textit{Square} shouldn't inherit from \textit{Rectangle} after all. A better approach could be making the two implement a \textit{GeometricFigure} interface.
+如果代码违反了LSP，很可能使用了错误的抽象。在例子中，\texttt{Square}不应该继承于\texttt{Rectangle}。更好的方法是让两者分别对\texttt{GeometricFigure}接口进行实现。
 
-Since we are on the topic of interfaces, let's move on to the next item, which is also related to them.
+既然要讨论接口的话题，就继续下一个原则吧。
 
-\subsubsubsection{1.7.4\hspace{0.2cm}Interface segregation principle}
+\subsubsubsection{1.7.4\hspace{0.2cm}接口隔离原则}
 
-The interface segregation principle is just about what its name suggests. It is formulated as follows:
+接口隔离原则顾名思义。公式如下:
 
 \noindent
-\hspace*{0.8cm}\textit{No client should be forced to depend on methods that it does not use.}
+\hspace*{0.8cm}\textit{用户需要自主选择想要使用的方法。}
 
-That sounds pretty obvious, but it has some connotations that aren't that obvious. Firstly, you should prefer more but smaller interfaces to a single big one. Secondly, when you're adding a derived class or are extending the functionality of an existing one, you should think before you extend the interface the class implements.
+这听起来很简单，但内涵并不是简单。首先，比起单一的大界面，应该更倾向于小界面。其次，当需要添加派生类或扩展现有类的功能时，需要在扩展类实现的接口之前进行考虑。
 
-Let's show this on an example that violates this principle, starting with the following interface:
+用一个违背这一原则的例子来说明这一点:
 
 \begin{lstlisting}[style=styleCXX]
 class IFoodProcessor {
 public:
 	virtual ~IFoodProcessor() = default;
 	virtual void blend() = 0;
-};
+};
 \end{lstlisting}
 
-We could have a simple class that implements it:
+可以用一个简单的类来实现它:
 
 \begin{lstlisting}[style=styleCXX]
 class Blender : public IFoodProcessor {
 public:
 	void blend() override;
-};
+};
 \end{lstlisting}
 
-So far so good. Now say we want to model another, more advanced food processor and we recklessly tried to add more methods to our interface:
+到目前为止还不错。现在，假设想要建立另一个更先进的食品处理器模型，所以需要在界面中添加更多方法:
 
 \begin{lstlisting}[style=styleCXX]
 class IFoodProcessor {
@@ -134,10 +141,10 @@ public:
 	void blend() override;
 	void slice() override;
 	void dice() override;
-};
+};
 \end{lstlisting}
 
-Now we have an issue with the \textit{Blender} class as it doesn't support this new interface – there's no proper way to implement it. We could try to hack a workaround or throw \textit{std::logic\_error}, but a much better solution would be to just split the interface into two, each with a separate responsibility:
+现在\texttt{Blender}类有一个问题，因为它不支持这个新接口——没有合适的方法来实现它。可以尝试破解一个工作区，或者抛出\texttt{std::logic\_error}，但更好的解决方案是将界面分成两个，每个都有单独的职责:
 
 \begin{lstlisting}[style=styleCXX]
 class IBlender {
@@ -154,17 +161,17 @@ public:
 };
 \end{lstlisting}
 
-Now our \textit{AnotherFoodProcessor} can just implement both interfaces, and we don't need to change the implementation of our existing food processor.
+现在\texttt{AnotherFoodProcessor}可以实现这两个接口，并且不需要更改现有食品处理器的实现。
 
-We have one last SOLID principle left, so let's learn about it now.
+还剩下最后一个SOLID原则，现在就来看看吧。
 
-\subsubsubsection{1.7.5\hspace{0.2cm}Dependency inversion principle}
+\subsubsubsection{1.7.5\hspace{0.2cm}依赖倒置原则}
 
-Dependency inversion is a principle useful for decoupling. In essence, it means that highlevel modules should not depend on lower-level ones. Instead, both should depend on abstractions.
+依赖倒置是对解耦有用的原则，说明高级模块不应该依赖于低级模块。相反，两者都应该依赖于抽象。
 
-C++ allows two ways to inverse the dependencies between your classes. The first one is the regular, polymorphic approach and the second uses templates. Let's see how to apply both of them in practice.
+C++允许两种方法来倒置类之间的依赖关系。第一种是多态，第二种是模板。看看如何在实践中进行应用。
 
-Assume you're modeling a software development project that is supposed to have frontend and backend developers. A simple approach would be to write it like so:
+假设正在为一个软件开发项目建模，该项目有前端和后端的开发人员。一个简单写法:
 
 \begin{lstlisting}[style=styleCXX]
 class FrontEndDeveloper {
@@ -186,10 +193,10 @@ public:
 private:
 	FrontEndDeveloper fed_;
 	BackEndDeveloper bed_;
-};
+};
 \end{lstlisting}
 
-Each developer is constructed by the \textit{Project} class. This approach is not ideal, though, since now the higher-level concept, \textit{Project}, depends on lower-level ones – modules for individual developers. Let's see how applying dependency inversion using polymorphism changes this. We can define our developers to depend on an interface as follows:
+每个开发人员都是由\texttt{Project}类构造的。但这种方法并不理想，因为现在的高级概念\texttt{Project}依赖于较低级的概念——单个开发人员的模块。如何使用多态应用依赖倒置来改变这一点？可以这样定义开发人员，并依赖于一个接口:
 
 \begin{lstlisting}[style=styleCXX]
 class Developer {
@@ -210,10 +217,10 @@ public:
 	void develop() override { developBackEnd(); }
 	private:
 	void developBackEnd();
-};
+};
 \end{lstlisting}
 
-Now, the \textit{Project} class no longer has to know the implementations of the developers. Because of this, it has to accept them as constructor arguments:
+现在，\texttt{Project}类不再需要知道开发人员的开发过程实现。因此，必须接受它们作为构造函数的参数:
 
 \begin{lstlisting}[style=styleCXX]
 class Project {
@@ -233,11 +240,12 @@ private:
 };
 \end{lstlisting}
 
-In this approach, \textit{Project} is decoupled from the concrete implementations and instead depends only on the polymorphic interface named \textit{Developer}. The "lower-level" concrete classes also depend on this interface. This can help you shorten your build time and allows for much easier unit testing – now you can easily pass mocks as arguments in your test code.
+这种方法中，\texttt{Project}与具体的实现解耦，而只依赖于名为\texttt{Developer}的多态接口，“低级”的具体类也依赖于这个接口。这可以缩短构建时间，并且更容易进行单元测试——现在可以在测试代码中将mock作为参数进行传递。
 
-Using dependency inversion with virtual dispatch comes at a cost, however, as now we're dealing with memory allocations and the dynamic dispatch has overhead on its own. Sometimes C++ compilers can detect that only one implementation is being used for a given interface and will remove the overhead by performing devirtualization (often you need to mark the function as \textit{final} for this to work). Here, however, two implementations are used, so the cost of dynamic dispatch (commonly implemented as jumping through \textbf{virtual method tables}, or \textbf{vtables} for short) must be paid.
+因为们要处理内存分配，而动态调度本身也有开销，所以在虚拟调度中使用依赖倒置是有代价的。有时C++编译器可以检测到一个给定接口只使用了一个实现，并通过执行反虚拟化来消除开销(通常需要将函数标记为\texttt{final})。然而，这里使用了两种实现，因此必须支付动态调度的成本(通常实现通过\textbf{虚函数表}(或简称\textbf{vtables})进行跳转)。
 
-There is another way of inverting dependencies that doesn't have those drawbacks. Let's see how this can be done using a variadic template, a generic lambda from C++14, and \textit{variant}, either from C++17 or a third-party library such as Abseil or Boost. First are the developer classes:
+还有一种没有上述缺点的倒置依赖方法。来看看如何使用可变模板(C++14的泛型Lambda)和\texttt{variant}(C++17或第三方库，如Abseil或Boost)来进行实现。首先是开发者类:
+
 
 \begin{lstlisting}[style=styleCXX]
 class FrontEndDeveloper {
@@ -255,7 +263,7 @@ private:
 };
 \end{lstlisting}
 
-Now we don't rely on an interface anymore, so no virtual dispatch will be done. The \textit{Project} class will still accept a vector of \textit{Developers}:
+现在不再依赖于接口，所以不会进行虚拟分派。\texttt{Project}类仍然接受\texttt{Developers}组:
 
 \begin{lstlisting}[style=styleCXX]
 template <typename... Devs>
@@ -274,46 +282,47 @@ public:
 
 private:
 	Developers developers_;
-};
+};
 \end{lstlisting}
 
-If you're not familiar with \textit{variant}, it's just a class that can hold any of the types passed as template parameters. Because we're using a variadic template, we can pass however many types we like. To call a function on the object stored in the variant, we can either extract it using \textit{std::get} or use \textit{std::visit} and a callable object – in our case, the generic lambda. It shows how duck-typing looks in practice. Since all our developer classes implement the \textit{develop} function, the code will compile and run. If your developer classes would have different methods, you could, for instance, create a function object that has overloads of \textit{operator()} for different types.
+如果不熟悉\texttt{variant}，就当它是一个可以保存作为模板参数传递的类即可。因为使用的是可变参数模板，所以可以传递任何类型。要调用存储在变量中的对象的函数，可以使用\texttt{std::get}提取，或者使用\texttt{std::visit}和可调用对象——在例子中，是Lambda。它展示了duck-typing在实践中的样子。因为所有的开发者类都实现了\texttt{develop}函数，所以代码将编译并运行。如果开发者类有不同的方法，可以创建一个函数对象，为不同的类型重载\texttt{operator()}就好。
 
-Because \textit{Project} is now a template, we have to either specify the list of types each time we create it or provide a type alias. You can use the final class like so:
+因为\texttt{Project}现在是一个模板，必须在每次创建它时指定类型列表，或者提供一个类型别名。可以像这样使用:
 
 \begin{lstlisting}[style=styleCXX]
 using MyProject = Project<FrontEndDeveloper, BackEndDeveloper>;
 auto alice = FrontEndDeveloper{};
 auto bob = BackEndDeveloper{};
 auto new_project = MyProject{{alice, bob}};
-new_project.deliver();
+new_project.deliver();
 \end{lstlisting}
 
-This approach is guaranteed to not allocate separate memory for each developer or use a virtual table. However, in some cases, this approach results in less extensibility, since once the variant is declared, you cannot add another type to it.
+这种方法不会为每个开发者分配单独的内存或使用虚拟表。然而，在某些情况下，一旦声明了变体，就不能向其添加其他类型，所以这种方法降低了类的可扩展性。
 
-As the last thing to mention about dependency inversion, we'd like to note that there is a similarly named idea called dependency injection, which we even used in our examples. It's about injecting the dependencies through constructors or setters, which can be beneficial to code testability (think about injecting mock objects, for example). There are even whole frameworks for injecting dependencies throughout whole applications, such as Boost.DI. Those two concepts are related and often used together.
+关于依赖倒置的最后一点是，要注意有一个类似的概念，叫做依赖注入，已经在例子中使用了。它是通过构造函数或setter注入依赖关系的，这有利于代码的可测试性(例如，考虑注入模拟对象)。甚至还有在整个应用程序中注入依赖的完整框架，比如Boost.DI。这两个概念是相关的，经常一起使用。
 
-\subsubsubsection{1.7.6\hspace{0.2cm}The DRY rule}
+\subsubsubsection{1.7.6\hspace{0.2cm}DRY规则}
 
-DRY is short for "don't repeat yourself." It means you should avoid code duplication and reuse when it's possible. This means you should extract a function or a function template when your code repeats similar operations a few times. Also, instead of creating several similar types, you should consider writing a template.
+DRY是“不要重复自己”的缩写，应该在可能的情况下避免代码段重复和重用。当代码多次重复类似的操作时，应该提取为函数或函数模板。此外，应该考虑编写一个模板，而不是创建几个类似的类。
 
-It's also important not to reinvent the wheel when it's not necessary, that is, not to repeat others' work. Nowadays there are dozens of well-written and mature libraries that can help you with writing high-quality software faster. We'd like to specifically mention a few of them:
+同样重要的是，在非必要时不要做重复工作，也就是不要重复别人完成的工作。现在有许多编写良好的成熟库可以帮助我们更快地编写高质量的软件。这里想特别提到是:
+
 
 \begin{itemize}
-\item Boost C++ Libraries (\url{https://www.boost.org/})
-\item Facebook's Folly (\url{https://github.com/facebook/folly})
-\item Electronic Arts' EASTL (\url{https://github.com/electronicarts/EASTL})
-\item Bloomberg's BDE (\url{https://github.com/bloomberg/bde})
-\item Google's Abseil (\url{https://abseil.io/})
-\item The Awesome Cpp list (\url{https://github.com/fffaraz/awesome-cpp}) with
-dozens more
+\item Boost C++库(\url{https://www.boost.org/})
+\item Facebook的Folly(\url{https://github.com/facebook/folly})
+\item Electronic Art的EASTL(\url{https://github.com/electronicarts/EASTL})
+\item Bloomberg的BDE(\url{https://github.com/bloomberg/bde})
+\item Google的Abseil (\url{https://abseil.io/})
+\item 超棒的Cpp名单 (\url{https://github.com/fffaraz/awesome-cpp})有几十个之多
+
 \end{itemize}
 
-Sometimes duplicating code can have its benefits, however. One such scenario is developing microservices. Of course, it's always a good idea to follow DRY inside a single microservice, but violating the DRY rule for code used in multiple services can actually be worth it. Whether we're talking about model entities or logic, it's easier to maintain multiple services when code duplication is allowed.
+然而，有时复制代码也有好处，其中的一个方案就是开发微服务。当然，在单个微服务中遵循DRY也是一个好主意，但在多个服务中使用的代码违反DRY规则实际上也是值得的。无论讨论的是模型实体还是逻辑，当允许代码重复时，多个服务的维护都会变得更容易。
 
-Imagine having multiple microservices reusing the same code for an entity. Suddenly one of them needs to modify one field. All the other services now have to be modified as well. The same goes for dependencies of any common code. With dozens or more microservices that have to be modified because of changes unrelated to them, it's often easier for maintenance to just duplicate the code.
+试想，多个微服务重用相同代码。突然，其中一个需要修改一个字段。所有其他服务现在也必须修改，对于公共代码的依赖关系也是如此。如果因与微服务无关的更改，而要修改几十个或更多的微服务，那么复制代码通常更容易进行维护。
 
-Since we're talking about dependencies and maintenance, let's proceed to the next section, which discusses a closely related topic.
+由于讨论的是依赖关系和维护，所以下一节会讨论与此密切相关的话题。
 
 
 
