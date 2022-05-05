@@ -1,21 +1,21 @@
 
-Stateful and stateless are two opposite ways to write software, each with their own pros and cons.
+有状态和无状态是两种完全相反的软件编写方法，每种方法都有各自的优缺点。
 
-As the name suggests, stateful software's behavior depends on its internal state. Let's take a web service, for instance. If it remembers its state, the consumer of the service can send less data in each request, because the service remembers the context of those requests. However, saving on the request size and bandwidth has a hidden cost on the web service's side. If the user sends many requests at the same time, the service now has to synchronize its work. As multiple requests could change the state, at the same time, not having synchronization could lead to data races.
+顾名思义，有状态软件的行为取决于其内部状态，这里我们以Web服务为例。如果它记住了自己的状态，服务的使用者就可以在每个请求中发送更少的数据。然而，在请求大小和带宽上的节省，可能会在Web服务端具有隐藏的成本开销。如果用户同时发送许多请求，服务必须进行同步。因为多个请求可能同时改变状态，所以不同步可能会导致数据竞争。
 
-If the service was stateless, however, then each request coming to it would need to contain all the data needed to process it successfully. This means that the requests would get bigger and use up more bandwidth, but on the other hand, it would allow for better performance and scaling of the service. If you're familiar with functional programming, you would probably find stateless services intuitive. Processing each request can be understood as a call to a pure function. In fact, many of the advantages that stateless programming provides stem from its functional programming roots. Mutable state is the enemy of concurrent code. Functional programming relies on immutable values, even if this means making copies instead of modifying existing objects. Thanks to this, each thread can work independently and no data races are possible. 
+若服务是无状态的，那么每个请求需要包含所需的全部数据。这意味着请求将变得更大，占用更多带宽。但另一方面，将获得更好的性能和服务的扩展性。如果熟悉函数式编程，可能会发现无状态服务很简洁。处理每个请求可以理解为对纯函数的调用，无状态编程提供的许多优势都源于函数式编程。可变状态是并发的敌人，函数式编程依赖于不可变值，这意味着需要复制对象，而不是修改现有对象。因此，每个线程都可以独立工作，不存在数据竞争。
 
-Since there are no race conditions, no locks are required as well, which can be an enormous boost in terms of performance. No locks also mean that you will no longer need to deal with deadlocks. Having pure functions means that your code will be easier to debug, too, since you don't have any side effects. Not having side effects, in turn, is also helpful for compilers, as optimizing code without side effects is a much easier task and can be performed more aggressively. Yet another benefit of writing code in a functional manner is that the sources you write tend to be more terse and expressive, especially when compared to code that heavily depends on the \textbf{Gang of Four (GoF)} design patterns.
+因为没有竞争条件，所以不需要锁，这对性能来说是一个巨大的利好。没有锁还意味着不需要处理死锁。纯函数的代码也更容易调试，反过来对编译器也有帮助，因为没有副作用的优化代码是一项简单的任务。以功能方式编写代码的另一个好处是，编写的源代码往往更简洁和具有表现力，特别是与严重依赖于\textbf{四人帮(GoF)}设计模式的代码相比。
 
-This doesn't necessarily mean that if bandwidth is not an issue, you should always go with stateless. Those decisions can be made on many levels, from single classes or functions to whole applications.
+这并不一定意味着若带宽没有问题，就应该使用无状态。这些决策可以在许多层次上进行，从单个类或函数到整个应用程序。
 
-Take classes, for example. If you're modeling, say, a \textit{Consultant}, it makes sense that the class would contain fields such as the consultant's name, contact data, hourly rate, current and past projects, and whatnot. It is natural for it to be stateful. Now, imagine that you need to calculate the pay they receive for their work. Should you create a \textit{PaymentCalculator} class? Should you add a member or a free function to calculate this? If you go with the class approach, should you pass a \textit{Consultant} as a constructor parameter or a method argument? Should the class have properties such as allowances?
+比如类，如果正在建模，例如：创建一个\textit{Consultant}，那么类将包含诸如顾问的姓名、联系数据、每小时的费率、当前和过去的项目等字段。这是有意义的，它是有状态的是很自然的。现在，假设需要计算其工作所得，还要创建一个\textit{PaymentCalculator}类吗？这时，应该添加一个成员，还是一个自由函数来进行计算？如果使用类，应该传递一个\textit{Consultant}作为构造函数参数，还是方法参数？这个类应该有津贴之类的属性吗？
 
-Adding a member function to calculate the pay would break the \textbf{Single Responsibility Principle (SRP)}, as now the class would then have two responsibilities: calculating the pay and storing the consultant's data (state). This means introducing a free function or a separate class for this purpose should be preferred to having such hybrid classes.
+添加一个成员函数来计算薪酬将打破\textbf{单一职责原则(SRP)}，因为现在这个类将有两个职责：计算薪酬和存储顾问的数据(状态)。这意味着为此引入一个自由函数或单独的类，而不是使用混合类。
 
-Should there be a state in such a class in the first place? Let's discuss the different approaches to our \textit{PaymentCalculator} class.
+首先，在这样的类中必须有这样一个状态吗？让我们讨论一下几种不同的\textit{PaymentCalculator}类。
 
-One approach would be to expose the properties required for calculation purposes:
+一种是公开计算所需的属性:
 
 \begin{lstlisting}[style=styleCXX]
 class PaymentCalculator;
@@ -31,12 +31,12 @@ private:
 	double hours_;
 	double netHourlyRate_;
 	double taxPercentage_;
-};
+};
 \end{lstlisting}
 
-This approach has two cons. The first is that it's not thread-safe; a single instance of such a \textit{PaymentCalculator} class cannot be used in multiple threads without locks. The second is that once our calculations become more complicated, the class will probably start duplicating more fields from our \textit{Consultant} class.
+这种方法有两个缺点。第一，线程不安全。这样的\textit{PaymentCalculator}类的单例不能在没有锁的多线程中使用。第二，当计算变得复杂，这个类可能会开始从\textit{Consultant}类中复制更多的字段。
 
-To eliminate the duplication, we could rework our class to store a Consultant instance like this:
+为了消除重复，可以重新编写类来存储顾问实例，如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 class PaymentCalculator {
@@ -52,9 +52,9 @@ private:
 };
 \end{lstlisting}
 
-Note that since we cannot rebind references easily, we're using a helper class from the \textbf{Guideline Support Library (GSL)} to store a rebindable pointer in a wrapper that automatically ensures we're not storing a null value.
+注意，因为不能轻易地重新绑定引用，所以使用了一个来自\textbf{指南支持库(GSL)}的helper类在包装器中存储一个可重新绑定的指针，从而确保没有存储空值。
 
-This approach still has the disadvantage of not being thread-safe. Can we do any better? It turns out that we can make the class thread-safe by making it stateless:
+这种方法仍然有线程不安全的缺点。这里能做得更好吗？事实证明，可以通过使类无状态，将其变为线程安全的:
 
 \begin{lstlisting}[style=styleCXX]
 class PaymentCalculator {
@@ -63,26 +63,25 @@ public:
 };
 \end{lstlisting}
 
-If there is no state to manage, it doesn't really matter if you decide to create free functions (perhaps in a distinct namespace) or group them as static functions of a class, as we did in the preceding snippet. In terms of classes, it's useful to distinguish between value (entity) types and operation types, as mixing them can lead to SRP violations.
+如果没有要管理的状态，那么可以创建自由函数(可能在不同的命名空间中)，或将它们作为类的静态函数(就像我们在前面的代码片段中所做的那样)，但这都不那么重要。就类而言，区分值(实体)类型和操作类型很有用，因为混合使用可能会违反SRP。
 
-\subsubsubsection{2.2.1\hspace{0.2cm}Stateless and stateful services}
+\subsubsubsection{2.2.1\hspace{0.2cm}无状态和有状态服务}
 
-The same principles that we discussed for classes can be mapped to higher-level concepts, for instance, microservices.
+在类中讨论的相同原则可以映射到更高级的概念，例如：微服务。
 
-What does a stateful service look like? Let's take FTP as an example. If it's not anonymous, it requires the user to pass a username and password to create a session. The server stores this data to identify the user as still connected, so it's constantly storing state. Each time the user changes the working directory, the state gets updated. Each change done by the user is reflected as a change of state, even when they disconnect. Having a stateful service means that depending on the state, you can be returned different results for two identically looking \textit{GET} requests. If the server los s the state, your requests can even stop processing correctly
+有状态服务是什么样子的？以FTP为例，若不是匿名的，则需要用户发送用户名和密码来创建会话。服务器存储这些数据，以识别用户仍然处于连接状态，因此它不断地存储状态。每当用户更改工作目录时，状态就会到更新。用户所做的每个更改都反映为状态的更改，即使断开连接也是如此。使用有状态服务意味着，根据不同的状态，可以为两个看起来相同的\textit{GET}请求返回不同的结果。如果服务器失去状态，请求甚至会停止 处理。
 
-Stateful services can also have issues with incomplete sessions or unfinished transactions and added complexity. How long should you keep the sessions open? How can you verify whether the client has crashed or disconnected? When should we roll back any changes made? While you can come up with answers to those questions, it's usually easier to rely on the consumers of your service communicating with it in a dynamic, "intelligent" way. Since they'll be maintaining some kind of state on their own, having a service that also maintains the state is not only unnecessary but often wasteful.
+有状态服务还可能存在不完整的会话或未完成的事务，以及增加的复杂性的问题。会议应持续多久？如何验证客户端是否崩溃或断开连接？应该何时回滚所做的更改？虽然可以找到这些问题的答案，但通常更容易的是依靠消费者以动态的、“智能的”方式与其进行通信。因为服务将维护某种状态，所以让一个服务去维护状态不仅没有必要，而且也是一种浪费。
 
-Stateless services, as the REST ones described later in the book, take the opposite approach. Each request must contain all the data required in order for it to be successfully processed, so two identical idempotent requests (such as \textit{GET}) will cause identical replies. This is assuming the data stored on the server doesn't change, but data is not necessarily the same thing as state. All that matters is that each request is self-contained.
+无状态服务，如本书后面描述的\textit{REST}，采用了相反的方法。每个请求必须包含所需的全部数据，因此两个相同的幂等请求(例如\textit{GET})将有相同的响应。这是在假定存储在服务器上的数据没有更改的情况下，但是数据不一定与状态相同。重要的是每个请求都是自包含的。
 
-Statelessness is fundamental in modern internet services. The HTTP protocol is stateless, while many service APIs, for example, Twitter's, are stateless as well. REST, which Twitter's API relies on, is designed to be functionally stateless. The whole concept behind this acronym, \textbf{Representational State Transfer (REST)}, carries the notion that all the state required for processing the request must be transferred within it. If this is not the case, you can't say you have a RESTful service. There are, however, some exceptions to the rule, driven by practical needs.
+现代互联网服务的本质也是无状态。HTTP协议是无状态的，而许多服务API(例如Twitter的API)也是无状态的。Twitter的API所依赖的REST设计即为功能无状态的。这个缩写词背后的概念为\textbf{表征状态转移(Representational State Transfer, REST)}，包含了处理请求所需的状态必须传输的概念。如果不这样，就不能拥有REST的服务。然而，由于实际需要，这一规则也有一些例外。
 
-If you're building an online store, you probably want to store information pertaining to your customers, such as their order history and shipping addresses. The client on the customer's side probably stores an authentication cookie, while the server will probably store some user data in a database. The cookie replaces our need for managing a session, as it'd be done in a stateful service.
+如果正在构建一个在线商店，可能希望存储与客户相关的信息，例如：订单历史和送货地址。客户端的客户端可能存储身份验证cookie，而服务器可能将一些用户数据存储在数据库中。cookie代替了管理会话的需要，因为这是在有状态服务中完成的。
 
-Keeping sessions on the server side is a bad approach for services for several reasons: they add a lot of complexity that could be avoided, they make bugs harder to replicate, and most importantly, they don't scale. If you'd want to distribute the load to another server, chances are you'd have trouble replicating the sessions with the load and synchronizing them between servers. All session information should be kept on the client's side.
+对于服务来说，将会话保留在服务器端是一种糟糕的方式，原因有以下几点:增加了许多本可以避免的复杂性，使Bug更难复现，更为重要的是，无法进行扩展。如果想要将负载分配到另一个服务器，那么可能在复制会话和负载，以及在服务器之间同步会话时遇到困难。所以，会话信息都应该都保存在客户端。
 
-This means that if you wish to have a stateful architecture, you need to have a good reason to. Take the FTP protocol, for instance. It has to replicate the changes both on the client side and server side. The user only authenticates to a single, specific server, in order to perform single-stated data transfers. Compare this with services such as Dropbox, where the data is often shared between users and the file access is abstracted away through an API, to see why a stateless model would suit this case better.
-
+如果希望有一个有状态的架构，需要有一个这样做的理由。以FTP协议为例，必须在客户端和服务器端复制更改。为了进行数据传输，用户只对单个特定的服务器进行身份验证。与Dropbox这样的服务相比，数据通常在用户之间共享，文件访问是通过API抽象出来的。接下来了解一下，为什么无状态模型更适合这种情况。
 
 
 
