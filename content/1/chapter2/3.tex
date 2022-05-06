@@ -1,16 +1,17 @@
-The simplest architectural style in which you can develop your application is a monolithic one. This is why many projects are started using this style. A monolithic application is just one big block, meaning that functionally distinguishable parts of the application, such as dealing with I/O, data processing, and the user interface, are all interwoven instead of being in separate architectural components. Another notable example of this architectural style is the Linux kernel. Note that the kernel being monolithic does not stop it from being modular.
+用于开发的最简单架构风格是整体架构，这就是为什么许多项目开始使用这种风格的原因。相应的应用程序是一个大块，这意味着应用程序中可区分的功能(如处理I/O、数据处理和用户界面)是相互交错的，而不是位于架构组件中。这种架构风格的例子是Linux内核，内核是整体的并不妨碍它进行模块化。
 
-It can be easier to deploy such a monolithic application than a multi-component one as there is simply one thing that needs to be deployed. It can also be easier to test, as end-toend testing just requires that you launch a single component. Integration is easier too since, as well as scaling your solution, you can just add more instances behind a load balancer. With all those advantages, why would anyone dread this architectural style? It turns out that despite those advantages, there are also many drawbacks.
+与部署多组件相比，因为只需要部署一个组件，所以部署单组件可能更容易。并且单个组件更容易测试，因为端到端测试只需要启动单个组件。集成也更容易，在扩展解决方案的同时，可以在负载均衡器后面添加更多的实例。有这么多优点，那为什么还会有人害怕这种架构风格呢？事实证明，尽管优点不少，但缺点也很多。
 
-The scalability offered sounds nice in theory, but what if your application has modules with different resource requirements? How about needing to scale just one module from your application? The lack of modularity, an inherent property of monolithic systems, is the source of many flaws associated with this architecture.
+所提供的扩展性从理论上看起来不错，但如果模块有不同的资源需求该怎么办？如果只需要扩展应用程序中的一个模块呢？缺乏模块化(整体系统的固有属性)是此架构许多缺陷的根源。
 
-What's more, the longer you develop a monolithic application, the more problems you'll have in maintaining it. It's a challenge to keep the internals of such an application loosely coupled, as it's so easy to just add yet another dependency between its modules. As such an application grows, it becomes harder and harder to understand it, so the development process will most probably slow down over time because of the added complexity. It can also be hard to maintain \textbf{Design-Driven Development}'s (\textbf{DDD}) bounded contexts when developing monoliths.
+而且，开发整体应用程序的时间越长，维护时遇到的问题就越多。因为在模块之间添加另一个依赖关系非常容易，所以维持这种内部松散的耦合着实是一个挑战。随着应用程序的成长，会变得越来越难以理解。由于增加了复杂性，开发过程很可能会随着时间的推移而变慢。在进行整体开发时，维护\textbf{设计驱动的开发(DDD, Design-Driven Development)}的上下文边界也很难定界定。
 
-Having one big application has drawbacks regarding the deployment and execution sides as well. It will take a lot longer to start such an application than it would take to start more, smaller services. And regardless of what you change in the application, you might not like that it forces you to redeploy the whole application at once. Now, imagine that one of your developers introduces a resource leak in the application. If the leaky code is executed over and over, it will not only bring down its single aspect of the app's functionality, it can also bring down the rest of the application as well.
+大应用在部署和执行方面也有缺点，启动应用所需的时间要比启动更多、更小的服务的时间长得多。无论在应用中做了怎样的更改，可能都不想因其立即重新部署整个应用。现在，假设一个开发人员在应用中引入了一个资源泄漏。如果漏洞代码反复执行，不仅会影响应用程序的功能，还会影响应用的其他部分。
 
-If you're a fan of using bleeding-edge technologies in your project, a monolithic style doesn't bring any great news either. Since you now need to migrate your whole application at once, it's harder to update any libraries or frameworks.
+如果喜欢在项目中使用前沿技术，那么整体化的风格就不那么搭了。由于现在需要一次性迁移整个应用，因此更新库或框架都十分困难。
 
-The preceding explanation suggests that a monolithic architecture is only good for simple and small applications. There is, however, one more situation where it could actually be a good idea to use it. If you care about performance, having a monolith can sometimes help you to squeeze more from your app in terms of latency or throughput when compared to microservices. Inter-process communication will always incur some overhead, which monolithic applications don't need to pay. If you're interested in measurements, see the paper listed in the \textit{Further reading} section of this chapter.
+整体架构只适合于简单和小型的应用程序。然而，在另外一种情况下，使用它可能非常合适。如果关心性能，那么与微服务相比，大块的应用有时可以获得更多的延迟或吞吐量。进程间通信总是会产生一些开销，而整体应用不需要支付这些开销。如果对测量结果感兴趣，请参阅本章\textit{扩展阅读}部分中的文章。
+
 
 
 

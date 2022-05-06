@@ -1,115 +1,116 @@
 
-Because of the drawbacks of monolithic architectures, other approaches have emerged. A common idea is to split your solution into multiple services that communicate with each other. You can then split the development between different teams, each taking care of a separate service. The boundaries of each team's work are clear, unlike in the monolithic architecture style.
+由于整体架构的缺点，应运而生了其他方法。一个常见的想法是将解决方案拆分为多个服务，这些服务相互通信。然后，可以将开发工作分配给不同的团队，每个团队负责单独的服务。每个团队的工作界限都很明确，这与整体架构风格完全不同。
 
-A \textbf{service-oriented architecture}, or \textbf{SOA} for short, means that the business functions are modularized and presented as separate services for the consumer applications to use. Each service should have a self-describing interface and hide any implementation details, such as the internal architecture, technologies, or the programming language used. This allows for multiple teams to develop the services however they like, meaning that under the hood, each can use what suits their needs best. If you have two teams of developers, one proficient in C\# and one in C++, they can develop two services that can easily communicate with one another.
+\textbf{面向服务架构}，或简称为\textbf{SOA}，其业务功能是模块化的，并作为单独的服务提供给消费者应用使用。每个服务都应有一个自描述的接口，并隐藏实现细节，比如：内部架构、技术或编程语言。这允许多个团队以其感觉舒服的方式开发服务，所以在内部，每个团队都可以使用最适合他们的服务。假如有两个开发团队，一个精通C\#，另一个精通C++，他们可以开发两个可以相互通信的服务。
 
-Advocates of SOA came up with a manifesto prioritizing the following:
+SOA的倡导者提出了一个宣言，优先考虑以下几点:
 
 \begin{itemize}
 \item
-Business value over technical strategy
+业务价值 \textit{高于} 技术策略
 
 \item
-Strategic goals over project-specific benefits
+战略目标 \textit{高于} 项目效益
 
 \item
-Intrinsic interoperability over custom integration
+内在操作性 \textit{高于} 定制化集成
 
 \item
-Shared services over purpose-specific implementations
+共享服务 \textit{高于} 目标实现
 
 \item
-Flexibility over optimization
+灵活 \textit{高于} 优化
 
 \item
-Evolutionary refinement over pursuit of initial perfection
+迭代式演进 \textit{高于} 开始即完美
 \end{itemize}
 
-Even though this manifesto doesn't bind you to a specific tech stack, or implementation, or type of services, the two most common types of services are SOAP and REST. Aside from those, recently, there's a third one that has been growing in popularity: gRPC-based. You can find out more about these in the chapters on services-oriened architecture and microservices.
+尽管此宣言没有绑定到特定的技术栈、实现或服务类型，但最常见的两种服务类型是SOAP和REST。除了这些，最近还有第三种越来越受欢迎的类型——基于gRPC的。可以在关于面向服务架构和微服务的章节中找到更多相关信息。
 
-\subsubsubsection{2.4.1\hspace{0.2cm}Microservices}
+\subsubsubsection{2.4.1\hspace{0.2cm}微服务}
 
-As the name suggests, microservices is a software development pattern where an application is split as a collection of loosely-coupled services that communicate using lightweight protocols. The microservices pattern is similar to the UNIX philosophy stating that a program should only have one purpose. According to UNIX philosophy, advanced problems are solved by composing such programs into UNIX pipelines. Similarly, microservice-based systems are composed of many microservices and supporting services.
+顾名思义，微服务是一种软件开发模式，在这种模式中，应用划分为使用轻量级协议进行通信的松耦合服务集合。微服务模式类似于UNIX哲学，即一个程序应该只有一个用途。根据UNIX哲学，高级问题是通过将这些程序组合到UNIX流水线上来解决的。类似地，基于微服务的系统由许多微服务和支持服务组成。
 
-Let's start with an overview of the pros and cons of this architectural style.
+先概述一下这种架构风格的优缺点。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Benefits and disadvantages of microservices}
+\textbf{微服务的利弊}
 
-The small size of services in a microservice architecture means that they're faster to develop, deploy, and understand. As the services are built independently of each other, the time necessary to compile their new versions can be drastically reduced. Thanks to this, it is easier to employ rapid prototyping and development when dealing with this architectural style. This, in turn, makes it possible to reduce the lead-time, meaning that business requirements can be introduced and evaluated much quicker.
+微服务架构中服务的规模较小，这意味着它们的开发、部署和理解速度更快。由于服务是相互独立构建的，因此编译新版本所需的时间不需要很久。由于这一点，在处理这种架构风格时，使用快速原型和开发会更容易。反过来说，这使得缩短交付时间成为可能，从而可以更快地引入和评估业务需求。
 
-Some other benefits of a microservice-based approach include the following:
+基于微服务的方法的其他一些优点包括:
 
 \begin{itemize}
 \item
-Modularity, which is inherent to this architectural style.
+模块化，这是这种架构风格所固有的。
 
 \item
-Better testability.
+良好的可测试性。
 
 \item
-Flexibility when replacing system parts (such as single services, databases, message brokers, or cloud providers).
+替换系统部件(例如单个服务、数据库、消息代理或云提供商)时的灵活性。
 
 \item
-Integration with legacy systems: it is not necessary to migrate an entire application, just the parts that require current development.
+与遗留系统的集成:不需要迁移整个应用，只需迁移需要开发的部分即可。
 
 \item
-Enabling distributed development: independent development teams can work on multiple microservices in parallel.
+支持分布式开发:独立开发团队可以并行地处理多个微服务。
 
 \item
-Scalability: a microservice may be scaled independently of the others.
+可扩展性:微服务可以独立于其他服务进行伸缩。
 \end{itemize}
 
-On the other hand, here are some disadvantages of microservices:
+另一方面，微服务也有一些缺点:
 
 \begin{itemize}
 \item	
-They require a mature DevOps approach and reliance on CI/CD automation.
+需要成熟的DevOps方法和对自动化CI/CD的依赖。
 
 \item
-They are harder to debug, and require better monitoring and distributed tracing.
+更难调试，并且需要更好的监视和分布式跟踪。
 
 \item
-Additional overhead (in terms of auxiliary services) may outweigh the benefits for smaller applications.
+额外的开销(就辅助服务而言)可能会抵消较小的应用所带来的好处。
+
 \end{itemize}
 
-Let's now discuss what are the characteristics of services written in this architectural style.
+现在，了解一下以这种结构风格编写的服务特征。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Characteristics of microservices}
+\textbf{微服务的特点}
 
-Since the microservice style is fairly recent, there is no single definition for microservices. According to Martin Fowler, there are several essential characteristics of microservices, which we will describe next:
+由于微服务风格是最近才出现的，所以对微服务没有确定的定义。根据Martin Fowler的说法，微服务有几个基本特征:
 
 \begin{itemize}
 \item	
-Each service should be an independently replaceable and upgradeable component. This is connected to easier deployment and loose coupling between the services, as opposed to components being libraries in a monolithic application. In the latter case, when you replace one library, you often have to redeploy the whole application.
+每个服务都应该是可替换和可升级的组件。这与服务之间更容易部署和松耦合相关联，而不是将组件作为单一应用程序中的库。后一种情况下，当替换库时，常常要重新部署整个应用。
 
 \item
-Each service should be developed by a cross-functional team, focused on a specific business capability. Ever heard of Conway's law?
+每个服务都应该由一个跨职能团队开发，专注于特定的业务功能。听说过康威定律吗？
 
 \begin{flushleft}
 \tt
-"Any organization that designs a system (defined broadly) will produce a design whose structure is a copy of the organization's communication structure."
+"设计系统的架构受制于产生这些设计的组织的沟通结构。"
 \end{flushleft}
 \begin{flushright}
 \texttt{– Melvyn Conway, 1967}
 \end{flushright}
 
-If you don't have cross-functional teams, you end up with software silos. The lack of communication that comes with them will make you constantly jump through hurdles to successfully deliver.
+如果没有跨职能的团队，最终会陷入软件孤岛。
 
 \item
-Each service should be a product, which is owned by the development team throughout its lifetime. This stays in contrast to the project mentality, where you develop software and just pass it on for someone to maintain.
+每个服务都应该是一个产品，在其生命周期内由开发团队把控，这与项目思维形成了鲜明对比。在项目思维中，你开发软件，然后把它交给别人维护。
 
 \item
-Services should have smart endpoints and use dump pipes, not the other way around. This stands in contrast to traditional services, which often rely on the logic of an \textbf{Enterprise Service Bus (ESB)}, which often manages the routing of messages and transforms them according to business rules. In microservices, you achieve cohesiveness by storing the logic in the service and avoid coupling with messaging components. Using "dumb" message queues, such as ZeroMQ, can help with this goal.
+服务应该有智能终端，并使用转储管道，而不是反过来。这与传统服务不同，传统服务通常依赖于\textbf{企业服务总线(ESB)}逻辑，通常管理消息的路由，并根据业务规则进行转换。在微服务中，通过将逻辑存储在服务，中并避免与消息传递组件耦合，可以实现内聚。使用“哑”消息队列(如ZeroMQ)有助于实现这一目标。
 
 \item
-Services should be governed in a decentralized way. Monoliths are usually written using one specific technology stack. When they're being split into microservices, each one can choose whatever suits its own specific needs best. Governing and assuring that each microservice runs 24/7 is done by a team responsible for this specific service instead of a central department. Companies such as Amazon, Netflix, and Facebook follow this approach and observe that making developers responsible for the flawless execution of their services in production helps to ensure high quality.
+服务应该以分布式方式进行管理，组织中通常使用一种特定的技术栈编写。当划分为微服务时，每个人都可以选择最适合自己需求的服务。管理并确保每个微服务24/7运行是由负责该特定服务的团队完成的，而非中央部门。亚马逊、Netflix和Facebook等公司遵循这一方法，让开发人员对其服务在生产过程中的完美执行负责，有助于确保产品的高质量。
 
 \item
-Services should manage their data in a decentralized way. Instead of having one database for all of them, each microservice can choose a database that best matches its needs. Having decentralized data can lead to some challenges with handling updates, but allows for better scaling. This is why microservices often coordinate in a transaction-free manner and offer eventual consistency.
+服务应该以分布式方式管理它们的数据。每个微服务都可以选择适合其需求的数据库，而不是为所有微服务提供统一的数据库。拥有分布式数据可能会给数据更新带来一些挑战，但这样的实现具有更好的扩展性。这就是为什么微服务经常以无事务的方式进行协调，并提供最终结果的一致性。
 
 \item
 The infrastructure used by services should be managed automatically. To deal with dozens of microservices in an efficient manner, you need to have Continuous Integration and Continuous Delivery in place, as otherwise, deploying your services will be hell. Automated runs of all your tests will save you lots of time and trouble. Implementing Continuous Deployment on top of that will shorten the feedback loop and allow your customers to use your new features faster, too.
@@ -118,7 +119,8 @@ The infrastructure used by services should be managed automatically. To deal wit
 Microservices should be prepared for the failure of other services that they depend on. In a distributed deployment environment with so many moving parts, it's normal for some of them to break from time to time. Your services should be able to handle such failures gracefully. Patterns such as Circuit Breaker or Bulkhead (described later in the book) can help to achieve this. To make your architecture resilient, it's also critical to be able to bring failing services back up efficiently or even to know ahead of time that they're going to crash. Real-time monitoring of latency, throughput, and resource usage is essential for this. Get to know Netflix's Simian Army toolkit as it's invaluable for creating a resilient architecture.
 
 \item
-Architectures based on microservices should be ready to constantly evolve. You should design microservices and the cooperation between them in a manner that allows for easy replacement of a single microservice, or sometimes even groups of them. It's tricky to design the services properly, especially since some of the complexity that was once in the code of one bigger module can now be present as complex communication schemes between services, where it's harder to manage – so-called Spaghetti Integration. This means the experience and skill set of the architect plays a more important role than with traditional services or a monolithic approach.
+Architectures based on microservices should be ready to constantly evolve. You should design microservices and the cooperation between them in a manner that allows for easy replacement of a single microservice, or sometimes even groups of them. It's tricky to design the services properly, especially since some of the complexity that was once in the code of one bigger module can now be present as complex communication schemes between services, where it's harder to manage – so-called Spaghetti Integration. This means the experience and skill set of the architect plays a more important role than with traditional services or a monolithic approach.
+
 
 \end{itemize}
 
@@ -139,7 +141,7 @@ Now, you should have a good understanding of what the characteristics of microse
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Microservices and other architectural styles}
+\textbf{微服务和其他架构风格}
 
 Microservices may be used as an architectural pattern on their own. However, they are often combined with other architectural choices, such as cloud-native computing, serverless applications, and mostly with lightweight application containers.
 
@@ -149,19 +151,21 @@ There are more similarities between microservices and their bigger cousins as th
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Scaling microservices}
+\textbf{扩展微服务}
 
 Microservices scale differently to monolithic applications. In monoliths, the entire functionality is handled by a single process. Scaling the application means replicating this process across different machines. Such scaling doesn't take into account which of the functionalities are heavily used and which do not require additional resources.
 
-With microservices, each functional element is handled as a separate service, which means a separate process. In order to scale a microservices-based application, only the parts that require more resources can be replicated to different machines. Such an approach makes it easier to better use the available resources.
+With microservices, each functional element is handled as a separate service, which means a separate process. In order to scale a microservices-based application, only the parts that require more resources can be replicated to different machines. Such an approach makes it easier to better use the available resources.
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Transitioning to microservices}
+\textbf{过渡到微服务}
 
 Most companies have some kind of existing monolithic code that they don't want to immediately rewrite using microservices, but still want to transition to this kind of architecture. In such cases, it's possible to adapt microservices incrementally, by adding more and more services that interact with the monolith. You can create new functionalities as microservices or just cut out some parts of the monolith and create microservices out of them. 
 
-More details regarding microservices, including how to build your own from scratch, are available in Chapter 13, Designing Microservices.
+More details regarding microservices, including how to build your own from scratch, are available in Chapter 13, Designing Microservices.
+
 
 
 
