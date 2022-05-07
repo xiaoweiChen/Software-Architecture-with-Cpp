@@ -1,36 +1,39 @@
 
-While creating a software system, you should constantly ask yourself whether what you're making is what your customers need. Many times, they won't even know what requirement fulfills their needs best. It's the role of a successful architect to discover the requirements of the product and to make sure they are being met. There are three distinct types of requirements that you need to consider: functional requirements, quality attributes, and constraints. Let's have a look at each of these.
+在创建软件系统时，应该不断地问自己，所做的是否是客户所需要的。很多时候，客户不知道如何才能能满足他们的需求。成功架构师的角色是发现产品的需求，并确保需求得到满足。这里需要考虑三种不同类型的需求:功能需求、质量属性和约束条件。
 
-\subsubsubsection{3.2.1\hspace{0.2cm}Functional requirements}
+\subsubsubsection{3.2.1\hspace{0.2cm}功能需求}
 
-The first group is the functional requirements. These are the ones that define what your system should do, or what functionality it should offer.
+第一组是功能需求。这些定义了系统应该做什么，或者它应该提供什么功能。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}Remember that functionality does not always influence architecture, so you'll have to keep an eye on which of those requirements will actually dictate what your solution will look like.
+\hspace*{0.7cm}请记住，功能并不总是影响体系结构，因此必须注意哪些需求将影响解决方案。
 \end{tcolorbox}
 
-Often, if a functional requirement has some qualities that must be met, it can become architecturally significant. Consider an app for merchants and visitors of the Dominican Fair, an annual event with music, various arts, and shops, happening in the city of Gdańsk. A few examples of functional requirements for it could be the following:
+通常，如果功能需求具有某些必须满足的特性，那么在架构上就很重要。考虑为参加多米尼加博览会(Dominican Fair)的商人和游客开发一款应用程序，该博览会是在Gdańsk举办的年度活动，内容包括音乐、各种艺术和商店。下面是一些功能需求的例子:
 
 \begin{itemize}
-\item \textit{UAs a shopkeeper, I want to filter orders that contain a specific product.}
-\item \textit{Clicking the Subscribe button adds the customer to a list of notified watchers of a selected merchant.}
+\item 
+\textit{作为一个店主，我想过滤包含特定产品的订单。}
+
+\item 
+\textit{单击“订阅”按钮，将客户添加到选定商家的通知列表中。}
 \end{itemize}
 
-The first of those requirements tells us we'll have to have a component for tracking orders and products with search capabilities. Depending on how exactly the UI should appear and what scale our app should be, we could just add a simple page to our app, or it could require features such as Lucene or Elasticsearch. This means that we could be looking at an \textbf{Architecturally Significant Requirement (ASR)}, one that can influence our architecture.
+第一个要求，必须有一个具有搜索功能的跟踪订单和产品的组件。根据UI的显示方式和应用的规模，可以只在应用中添加一个简单的页面，或者可能需要Lucene(一个全文搜索引擎)或Elasticsearch(搜索引擎解决方案)等特性。这意味着个\textbf{体系结构重要需求(ASR)}，可以影响到架构。
 
 The second example is even more straightforward; now we know we need to have a service for subscribing and sending notifications. This is definitely an architecturally significant functional requirement. Let's now look at some \textbf{Non-Functional Requirements (NFRs)} that can also be ASRs.
 
-By the way, the first requirement is actually given as a user story. User stories are requirements given in the following format: "\textit{As a <role>, I can/want to <capability>, so that <benefit>.}" This is a common way to phrase requirements and can help stakeholders and developers find common ground and communicate better.
+By the way, the first requirement is actually given as a user story. User stories are requirements given in the following format: "\textit{As a <role>, I can/want to <capability>, so that <benefit>.}" This is a common way to phrase requirements and can help stakeholders and developers find common ground and communicate better.
 
-\subsubsubsection{3.2.2\hspace{0.2cm}Nonfunctional requirements}
+\subsubsubsection{3.2.2\hspace{0.2cm}非功能需求}
 
-Instead of focusing on what functionality your system should have, nonfunctional requirements focus on how well and under which conditions the system should perform said functionality. This group consists of two main subgroups: \textbf{Quality Attributes (QAs)} and \textbf{constraints}.
+Instead of focusing on what functionality your system should have, nonfunctional requirements focus on how well and under which conditions the system should perform said functionality. This group consists of two main subgroups: \textbf{Quality Attributes (QAs)} and \textbf{constraints}.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Quality attributes}
+\textbf{质量属性}
 
-\textbf{Quality attributes (QAs)} are the traits of your solution, such as performance, maintainability, and user-friendliness. There are dozens, if not hundreds, of different qualities your software can have. Try to focus just on the important ones instead of listing all that come to your mind when choosing which ones your software should have. Examples of quality attribute requirements include the following:
+\textbf{质量属性(QAs)} are the traits of your solution, such as performance, maintainability, and user-friendliness. There are dozens, if not hundreds, of different qualities your software can have. Try to focus just on the important ones instead of listing all that come to your mind when choosing which ones your software should have. Examples of quality attribute requirements include the following:
 
 \begin{itemize}
 \item 
@@ -40,8 +43,8 @@ The system will respond in under 500 ms for 99.9\% of all requests under usual l
 The website will not store customer credit card data used in the payment process (an example of confidentiality).
 
 \item
-When updating the system, if updating any component fails, the system will be rolled back to a state prior to the update (survivability).
- 
+When updating the system, if updating any component fails, the system will be rolled back to a state prior to the update (survivability).
+
 \item 
 As a user of Windows, macOS, and Android, I want to be able to use the system from all of them (portability; try to understand whether it's needed to support platforms such as desktop, mobile, and/or web).
 \end{itemize}
@@ -56,14 +59,14 @@ Some of them can be expressed in the \textbf{Definition of done} or \textbf{Acce
 Others can be expressed directly as user stories, as shown in the last example previously.
 
 \item 
-You can also check them as part of design and code reviews and create automated tests for some of them.
+You can also check them as part of design and code reviews and create automated tests for some of them.
 \end{itemize}
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Constraints}
+\textbf{约束条件}
 
-Constraints are the non-negotiable decisions that you must follow while delivering the project. Those can be design decisions, technological ones, or even political (regarding people or organizational matters). Two other common constraints are \textbf{time} and \textbf{budget}. Examples of constraints could be as follows:
+Constraints are the non-negotiable decisions that you must follow while delivering the project. Those can be design decisions, technological ones, or even political (regarding people or organizational matters). Two other common constraints are \textbf{time} and \textbf{budget}. Examples of constraints could be as follows:
 
 \begin{itemize}
 \item 
@@ -71,12 +74,13 @@ Constraints are the non-negotiable decisions that you must follow while deliveri
 
 \item 
 \textit{Since our company leverages Oracle DB in all its current products, the new product must use it too so we can make the most of our expertise.
-}
+}
 \end{itemize}
 
 nonfunctional requirements are always going to influence your architecture. It's essential not to over-specify them, as having false positives will be a constant burden during product development. It's equally important to not under-specify them as this can later come out in missed sales opportunities or failing to comply with regulatory bodies' requirements.
 
-In the next section, you will learn how to strike a balance between those two extremes and to focus on just those requirements that really matter in your specific case.
+In the next section, you will learn how to strike a balance between those two extremes and to focus on just those requirements that really matter in your specific case.
+
 
 
 
