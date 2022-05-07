@@ -113,58 +113,56 @@ SOA的倡导者提出了一个宣言，优先考虑以下几点:
 服务应该以分布式方式管理它们的数据。每个微服务都可以选择适合其需求的数据库，而不是为所有微服务提供统一的数据库。拥有分布式数据可能会给数据更新带来一些挑战，但这样的实现具有更好的扩展性。这就是为什么微服务经常以无事务的方式进行协调，并提供最终结果的一致性。
 
 \item
-The infrastructure used by services should be managed automatically. To deal with dozens of microservices in an efficient manner, you need to have Continuous Integration and Continuous Delivery in place, as otherwise, deploying your services will be hell. Automated runs of all your tests will save you lots of time and trouble. Implementing Continuous Deployment on top of that will shorten the feedback loop and allow your customers to use your new features faster, too.
+服务使用的基础设施应该自动化管理。为了有效的处理几十个微服务，就需要有持续集成和持续交付，否则部署服务将是地狱般的体验。所有测试的自动化运行将节省大量的时间。在此基础上实施持续部署将缩短反馈循环，并可以让客户更快地使用新特性。
 
 \item
-Microservices should be prepared for the failure of other services that they depend on. In a distributed deployment environment with so many moving parts, it's normal for some of them to break from time to time. Your services should be able to handle such failures gracefully. Patterns such as Circuit Breaker or Bulkhead (described later in the book) can help to achieve this. To make your architecture resilient, it's also critical to be able to bring failing services back up efficiently or even to know ahead of time that they're going to crash. Real-time monitoring of latency, throughput, and resource usage is essential for this. Get to know Netflix's Simian Army toolkit as it's invaluable for creating a resilient architecture.
+微服务应该为依赖服务的失败做好准备。在具有多部件的分布式部署环境中，有一些部件偶尔会出现中断是很正常的现象。服务应该能够优雅地处理此类故障，处理方式例如：断路器或隔板(在后面会进行介绍)有助于对处理方案的实现。为了使架构具有自愈能力，需要能恢复出现故障的服务，甚至提前知道哪些服务即将崩溃，这也是很重要的。对此，实时监控延迟、吞吐量和资源使用情况是至关重要的。可以去了解一下Netflix的Simian Army工具包，它是创建自愈架构特别好的工具。
 
 \item
-Architectures based on microservices should be ready to constantly evolve. You should design microservices and the cooperation between them in a manner that allows for easy replacement of a single microservice, or sometimes even groups of them. It's tricky to design the services properly, especially since some of the complexity that was once in the code of one bigger module can now be present as complex communication schemes between services, where it's harder to manage – so-called Spaghetti Integration. This means the experience and skill set of the architect plays a more important role than with traditional services or a monolithic approach.
-
+基于微服务的框架应该能够不断发展。在设计微服务和其之间的合作时，应该考虑到如何替换单个微服务，甚至是替换一组微服务。恰当地设计服务是一件棘手的事情，特别是因为曾经的代码模块中的复杂性，现在可以作为服务间复杂的通信方案出现，但这就更难管理了——这就是“意大利面集成”(Spaghetti Integration)。这意味着架构师的经验和技能集扮演着与传统服务或整体方法相比，更加重要。
 
 \end{itemize}
 
-On top of that, here are some other characteristics shared by many (but not all) microservices:
+在此基础上，以下是许多(但不是所有)微服务的共同特征:
 
 \begin{itemize}
 \item	
-Using separate processes that communicate over network protocols
+通过网络协议进行通信的独立进程
 	
 \item
-Using technology-agnostic protocols (such as HTTP and JSON)
+使用与技术无关的协议(如HTTP和JSON)
 
 \item
-Keeping services small and with a low runtime overhead
+保持小规模服务，运行时开销低
 \end{itemize}
 
-Now, you should have a good understanding of what the characteristics of microservicebased systems are, so let's see how this approach compares with other architectural styles.
+现在，应该理解了基于微服务的系统特征，接下来，来看看这种方法与其他架构风格的比较。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{微服务和其他架构风格}
 
-Microservices may be used as an architectural pattern on their own. However, they are often combined with other architectural choices, such as cloud-native computing, serverless applications, and mostly with lightweight application containers.
+微服务可以作为架构模式使用。但是，它们经常与其他架构组合使用，例如本地云计算、无服务器应用，并且主要与轻量级应用容器组合使用。
 
-Service-oriented architectures bring loose coupling and high cohesion. Microservices can do it too, when applied correctly. However, it can be somewhat challenging because it requires good intuition to partition the system into the usually vast amount of microservices.
+面向服务的体系结构带来了低耦合和高内聚。如果应用得当，微服务也可以做到这一点。然而，这可能有点难度，因为需要良好的直觉，将系统划分为数量众多的微服务。
 
-There are more similarities between microservices and their bigger cousins as they, too, can have SOAP-, REST-, or gRPC-based messaging and use technologies such as message queues for being event-driven. They also have well-known patterns to help with achieving the required quality attributes, such as fault tolerance (for example, through the isolation of faulty components), but in order to have an efficient architecture, you must decide on your approach to elements such as API gateways, service registries, load balancing, fault tolerance, monitoring, configuration management, and, of course, the technology stack to use.
+微服务与其较大的同类服务之间有很多相似之处，因为它们也可以使用基于SOAP、REST或gRPC的消息传递，并使用消息队列等技术来进行事件驱动。它们也有众所周知的模式来实现所需的质量属性，例如容错(通过隔离故障组件)，但是为了拥有一个高效的架构，必须决定处理组件的方法，如API网关、服务注册、负载平衡、容错、监视、配置管理，当然还有要使用的技术栈。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{扩展微服务}
 
-Microservices scale differently to monolithic applications. In monoliths, the entire functionality is handled by a single process. Scaling the application means replicating this process across different machines. Such scaling doesn't take into account which of the functionalities are heavily used and which do not require additional resources.
+微服务与整体应用的扩展性不同。在整体应用中，整个功能由单个进程处理。扩展应用程序意味着，会在不同的机器上重复这个过程。这种可扩展性不考虑哪些功能会大量使用，哪些功能不需要额外的资源。
 
-With microservices, each functional element is handled as a separate service, which means a separate process. In order to scale a microservices-based application, only the parts that require more resources can be replicated to different machines. Such an approach makes it easier to better use the available resources.
-
+对于微服务，每个功能组件都可以作为单独的服务处理，这就是一个独立的流程。为了扩展基于微服务的应用，只需要将使用更多资源的部分复制到不同的机器上即可。这种方法可以更容易且更好地利用现有资源。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{过渡到微服务}
 
-Most companies have some kind of existing monolithic code that they don't want to immediately rewrite using microservices, but still want to transition to this kind of architecture. In such cases, it's possible to adapt microservices incrementally, by adding more and more services that interact with the monolith. You can create new functionalities as microservices or just cut out some parts of the monolith and create microservices out of them. 
+大多数公司都有某种程度的整体代码，他们不希望立即使用微服务重写这些代码，但仍然希望过渡到这种架构。这样，可以通过渐进式添加与集成块交互的服务，来逐步适应微服务。可以创建新的功能作为微服务，或者只是删除整体的一些部分，然后创建微服务。 
 
-More details regarding microservices, including how to build your own from scratch, are available in Chapter 13, Designing Microservices.
+更多关于微服务的信息，包括如何从零开始构建自己的微服务，可以在第13章中看到。
 
 
 

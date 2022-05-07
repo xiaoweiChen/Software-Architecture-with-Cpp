@@ -1,12 +1,12 @@
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}In this section, by modules, we mean software components that can be loaded and unloaded in runtime. For C++20's modules, refer to Chapter 5, Leveraging C++ Language Features.
+\hspace*{0.7cm}本节中，模块指的是可以在运行时加载和卸载的软件组件。C++20的模块，请参阅第5章。
 \end{tcolorbox}
 
-If you've ever needed to run a component with as little downtime as possible, but for any reason couldn't apply the usual fault-tolerance patterns, such as redundant copies of your service, making this component module-based can come to save your day. Or you may just be attracted by a vision of a modular system with versioning of all the modules, with an easy lookup of all the available services, along with the decoupling, testability, and enhancing teamwork that module-based systems can cause. All of this is why \textbf{Open Service Gateway Initiative (OSGi)} modules were created for Java and got ported to C++ in more than a few frameworks. Examples of architectures using modules include IDEs such as Eclipse, \textbf{Software Defined Networking (SDN)} projects such as OpenDaylight, or home automation software such as OpenHAB.
+如果曾经需要在尽可能少的停机时间内运行一个组件，但由于某种原因不能应用常见的容错模式，比如:服务的冗余副本，那么使用基于组件模块的模式可以解决这个问题。或者只是因模块化系统的愿景而感兴趣，该系统对所有模块可以进行版本控制，并且可以轻松查找所有可用的服务，以及基于模块的系统可能导致的解耦、测试性和增强团队协作。这就是为什么为Java创建了\textbf{开放式服务平台技术(Open Service Gateway Initiative, OSGi)}模块，并在多个框架中移植到C++。使用模块的架构示例包括IDE(如Eclipse)、软件定义网络(如OpenDaylight)项目或家庭自动化软件(如OpenHAB)。
 
-OSGi also allows for automatic dependency management between modules, controlling their initialization and unloading, as well as controlling their discovery. Since it's  serviceoriented, you can think of using OSGi services as something akin to having tiny (micro?) services in one "container". This is why one of the C++ implementations is named C++ Micro Services. To see them in action, refer to their Getting Started guide from the Further reading section.
+OSGi还允许模块之间的依赖关系进行自动化管理，控制它们的初始化和卸载，以及控制它们的运行。由于它是面向服务的，可以将使用OSGi的服务看作在一个“容器”中拥有微型(微型?)服务的东西。这就是其中一个C++实现命名为C++微服务的原因。要了解其实际操作，请参阅扩展阅读部分中的入门指南。
 
-One interesting concept adopted by the C++ Micro Services framework is a new way to deal with singletons. The \textit{GetInstance()} static function will, instead of just passing a static instance object, return a service reference obtained from the bundled context. So effectively, singleton objects will get replaced by services that you can configure. It can also save you from the static deinitialization fiasco, where multiple singletons that depend on each other have to unload in a specific order.
+C++微服务框架使用了一个有趣的概念，一种处理单例的新方法。\textit{GetInstance()}静态函数将不只是传递一个静态实例对象，并且返回一个从绑定的上下文获取的服务引用。因此，可以配置的服务将取代单例对象。还可以避免静态反初始化的失败，即多个依赖于彼此的单例必须按照特定的顺序进行卸载。
 
 
 

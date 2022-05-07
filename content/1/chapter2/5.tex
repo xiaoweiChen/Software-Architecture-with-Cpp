@@ -1,49 +1,49 @@
 
-Event-based systems are those whose architecture revolves around processing events. There are components that generate events, the channels through which the events propagate, and the listeners who react to them, potentially triggering new events too. It's a style that promotes asynchrony and loose coupling, which makes it a good way to increase performance and scalability, as well as an easy solution to deploy.
+基于事件的系统，是那些架构围绕着事件处理的系统。有生成事件的组件、传播事件的通道和响应事件的侦听器，也可能触发新的事件。这种风格更加异步和低耦合，使得其成为提高性能和可扩展性的好方法，同时也是一种易部署的解决方案。
 
-With those advantages, there are also some challenges to solve. One of them is the complexity to create a system of this type. All the queues must be made fault-tolerant so that no events are lost in the middle of being processed. Processing transactions in a distributed way is also a challenge on its own. Using the Correlation ID pattern to track events between processes, along with monitoring techniques, can save you hours of debugging and scratching your head.
+除了这些优势，还有一些挑战需要解决，其中之一是创建这类系统的复杂性。所有队列必须具有容错功能，以便事件在处理过程中不会丢失。以分布式方式处理事务本身也是一个挑战。使用关联ID模式跟踪进程之间的事件，以及监视技术，可以节省调试时间和思考的时间。
 
-Examples of event-based systems include stream processors and data integrations, as well as systems aiming for low latency or high scalability.
+基于事件的系统包括流处理器和数据集成，以及以低延迟或高可扩展性为目标的系统。
 
-Let's now discuss common topologies used in such  systems.
+现在让我们讨论一下此类系统中常见的拓扑结构。
 
-\subsubsubsection{2.5.1\hspace{0.2cm}Common event-based topologies}
+\subsubsubsection{2.5.1\hspace{0.2cm}基于事件的拓扑}
 
-The two main topologies of event-driven architectures are broker-based and mediatorbased. Those topologies differ in how the events flow through the system.
+事件驱动体系结构有两种主要拓扑：基于代理和基于中介。这些拓扑的不同之处在于事件在系统中的走向。
 
-The mediator topology is best used when processing an event that requires multiple tasks or steps that can be performed independently. All events produced initially land in the mediator's event queue. The mediator knows what needs to be done in order to handle the event, but instead of performing the logic itself, dispatches the event to appropriate event processors through each processor's event channel. 
+中介拓扑，最适合用于处理需要多个可独立执行的任务或步骤的事件。最初，产生的所有事件都需要放在中介的事件队列中。中介器知道为了处理事件需要做什么，但不是执行，而是通过每个处理器的事件通道将事件分派给相应的事件处理器。 
 
-If this reminds you of how business processes flow, then you've got good intuition. You can implement this topology in Business Process Management (BPM) or Business Process Execution Language (BPEL). However, you can also implement it using technologies such as Apache Camel, Mule ESB, and others:
-
-\begin{center}
-\includegraphics[width=0.9\textwidth]{content/1/chapter2/images/1.jpg}\\
-Figure 2.1 – The mediator topology
-\end{center}
-
-A broker, on the other hand, is a lightweight component that contains all the queues and doesn't orchestrate the processing of an event. It can require that the recipients subscribe to specific kinds of events and then simply forwards all the ones that are interesting for them. Many message queues rely on brokers, for example, ZeroMQ, which is written in C++ and aims for zero waste and low latency:
+敏感的读者可能会突然想到，这是关于“业务流程是如何流动的”话题。当然，可以在业务流程管理(BPM)或业务流程执行语言(BPEL)中实现此拓扑。并且，也可以使用Apache Camel、Mule ESB等技术来进行实现:
 
 \begin{center}
-\includegraphics[width=0.9\textwidth]{content/1/chapter2/images/2.jpg}\\
-Figure 2.2 – The broker topology
+\includegraphics[width=0.8\textwidth]{content/1/chapter2/images/1.jpg}\\
+图2.1 - 中介拓扑
 \end{center}
 
-Now that you know the two common topologies used in event-based systems, let's learn about a powerful architectural pattern using events at its core.
-
-
-\subsubsubsection{2.5.2\hspace{0.2cm}Event sourcing}
-
-You can think of events as notifications that contain additional data for the notified services to process. There is, however, another way to think of them: a change of state. Think how easy it would be to debug issues with your application logic if you'd be able to know the state in which it was when the bug occurred and what change was requested of it. That's one benefit of event sourcing. In essence, it captures all the changes that happen to the system by simply recording all the events in the sequence they happened.
-
-Often, you'll find that the service no longer needs to persist its state in a database, as storing the events somewhere else in the system is enough. Even if it does, it can be done asynchronously. Another benefit that you derive from event sourcing is a complete audit log for free:
+另一方面，代理是轻量级组件，包含所有队列，不协调事件的处理。它可以要求收件人订阅特定类型的事件，然后简单地转发他们感兴趣的事件。许多消息队列依赖于代理，例如ZeroMQ，用C++编写，目标是零浪费和低延迟:
 
 \begin{center}
-\includegraphics[width=0.9\textwidth]{content/1/chapter2/images/3.jpg}\\
-Figure 2.3 – Event sourcing architecture. Providing a unified view of the application state can allow for consuming it and creating periodic snapshots for faster recovery
+\includegraphics[width=0.8\textwidth]{content/1/chapter2/images/2.jpg}\\
+图2.2 -代理拓扑
 \end{center}
 
-Thanks to the reduced need for data synchronization, event-sourced systems often offer low latency, which makes them a good fit for trading systems and activity trackers, among others.
+现在，已经了解了基于事件的系统中使用的两种常见拓扑，接下来让我们了解以事件为核心的架构模式。
 
-Let's now learn about another popular architectural style.
+\subsubsubsection{2.5.2\hspace{0.2cm}事件源}
+
+可以将事件视为通知，其中包含要处理的通知服务所需的数据。还可以以另一种方式来看——状态的改变。试想一下，如果能够知道错误发生时的状态，以及需要进行的更改，那么用应用程序逻辑调试将会很容易。这是事件源的一个红利。本质上，它通过简单地按照事件发生的顺序记录所有事件，从而捕获发生在系统上的所有更改。
+
+通常，会发现服务不再需要将其状态存到数据库中，因为将事件存储到系统的某个地方就足够了，这样也可以异步完成。从事件源中获得的另一个好处是完全免费的完整审计日志:
+
+\begin{center}
+\includegraphics[width=0.8\textwidth]{content/1/chapter2/images/3.jpg}\\
+图2.3 - 事件源架构提供应用程序状态的统一视图，可以使用该视图并创建定时快照以实现更快的恢复
+\end{center}
+
+由于减少了对数据同步的需求，事件源系统通常提供较低的延迟，所以它们更适合交易系统和活动跟踪器。
+
+接下来，让我们来了解另一种流行的架构风格。
+
 
 
 
