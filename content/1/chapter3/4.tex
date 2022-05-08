@@ -1,62 +1,62 @@
 
-Now that you know what requirements to focus on, let's discuss a few techniques for gathering these requirements.
+已经知道了需要关注哪些需求，就继续讨论收集这些需求所需的技巧。
 
-\subsubsubsection{3.4.1\hspace{0.2cm}Knowing the context}
+\subsubsubsection{3.4.1\hspace{0.2cm}了解背景}
 
-When mining requirements, you should take into account the broader context. You must identify what potential problems may have a negative impact on your product in the future. Those risks often come from the outside. Let's revisit our Uber-like service scenario. An example risk for your service could be a potential change in legislation: you should be aware that some countries may try to change the law to remove you from their market. Uber's way to mitigate those risks is to have local partners cope with regional limitations.
+在挖掘需求时，应该考虑背景。必须确定哪些潜在问题将来可能对产品产生负面影响，这些风险通常来自外部。重新审视一下类似Uber的服务场景，服务可能面临的风险是法律的变化:应该意识到，一些国家可能试图改变法律，将这个产品从他们的市场中移除。Uber缓解这种风险的方法是让当地合作伙伴来应对地区限制。
 
-Future risks aside, you must also be aware of current issues, such as the lack of subject matter experts in the company, or heavy competition on the market. Here's what you can do:
-
-\begin{itemize}
-\item 
-Be aware of and note any assumptions being made. It's best to have a dedicated document for tracking those.
-
-\item 
-Ask questions to clarify or eliminate your assumptions, if possible.
-
-\item 
-You need to consider the dependencies inside your project, as they can influence the development schedule. Other useful areas are the business rules that shape the day-to-day behavior of the company, as your product will likely need to adhere to and possibly enhance those.
-
-\item 
-Moreover, if there's enough data relating to the users or the business, you should try to mine it to get insights and find useful patterns that can help with making decisions regarding the future product and its architecture. If you already have some users but are unable to mine data, it's often useful to just observe how they behave.
-\end{itemize}
-
-Ideally, you could record them when they perform their daily tasks using the currently deployed systems. This way, you could not only automate parts of their work but also change their workflow to a more efficient one entirely. However, remember that users don't like changing their habits, so it's better to introduce changes gradually where possible.
-
-\subsubsubsection{3.4.2\hspace{0.2cm}Knowing existing documentation}
-
-Existing documents can be a great source of information, even though they can also have their issues. You should reserve some time to at least get familiar with all the existing documents related to your work. Chances are that there are some requirements hidden in them. On the other hand, keep in mind that the documentation is never perfect; highly likely it will lack some significant information. You should also be prepared for it to be outdated. There is never one source of truth when it comes to architecture, so aside from reading documents, you should have lots of discussions with the people involved. Nonetheless, reading documents can be a great way of preparing yourself for such discussions.
-
-\subsubsubsection{3.4.3\hspace{0.2cm}Knowing your stakeholders}
-
-To be a successful architect, you must learn to communicate with business people as requirements come, directly or indirectly, from them. Whether they're from your company or a customer, you should get to know the context of their business. For instance, you must know the following:
+除了未来的风险之外，还必须了解当前的问题，例如公司中缺乏相关领域的专家，或市场上激烈的竞争。可以这样做:
 
 \begin{itemize}
 \item 
-What drives the business?
+关注所有的假设，最好有一个专门的文件来跟踪这些。
 
 \item 
-What goals does the company have?
+如果可能的话，通过问题来确认或消除假设。
 
 \item 
-What specific objectives will your product help to achieve?
+需要考虑项目内部的依赖关系，它们可能会影响开发进度。其他有用的领域是塑造公司日常行为的业务规则，因为产品可能需要遵守，并可能增强这些规则。
+
+\item 
+此外，如果有足够多的与用户或业务相关的数据，应该尝试挖掘这些数据，以获得深刻的见解，并找到有用的模式，这些模式有助于做出对产品及其架构的决策。如果已经有一些用户，但无法挖掘数据，那么观察他们的行为就可以了。
 \end{itemize}
 
-Once you are aware of this, it will be much easier to establish a common ground with many people coming from management or executives, as well as gathering more specific requirements regarding your software. If the company cares about the privacy of its users, for instance, it can have a requirement to store as little data about its users as possible and to encrypt it using a key stored only on a user's device. Often, if such requirements come from the company culture, it will be too obvious for some employees to even articulate them. Knowing the context of the business can help you to ask proper questions and help the company in return.
+理想情况下，可以在他们使用部署系统执行日常任务时进行记录。通过这种方式，不仅可以自动化部分工作，而且还可以使工作流程更高效。但要了解用户不喜欢改变习惯，所以最好是逐步引入改变。
 
-Having said that, remember that your stakeholders can, and will, have needs that aren't necessarily directly reflected in the company's objectives. They can have their own ideas for functionality to provide or metrics that the software should achieve. Perhaps a manager promised his employees a chance to learn a new technology or work with a specific one. If this project is important for their career, they can be a strong ally and even convince others as to your decisions.
+\subsubsubsection{3.4.2\hspace{0.2cm}了解现有文档}
 
-Another important group of stakeholders is the people responsible for deploying your software. They can come with their own subgroup of needs, called transition requirements. Examples of those include user and database migration, infrastructure transition, or data conversion, so don't forget to reach out to them to gather these as well.
+现有的文档是一个很好的信息来源，尽管它们可能存在问题。应该预留一些时间，至少熟悉所有与当前工作相关的文档，其可能隐藏了一些需求。另一方面，文档从来都不是完美的，很可能会缺少一些重要的信息。同样，也需要为它已经过时做好心理准备。当涉及到架构时，除了阅读文档之外，应该与相关人员进行咨询。尽管如此，阅读文档是为此类咨询做准备的一种方式。
 
-\subsubsubsection{3.4.4\hspace{0.2cm}Gathering requirements from stakeholders}
+\subsubsubsection{3.4.3\hspace{0.2cm}了解利益相关方}
 
-At this point, you should have a list of stakeholders with their roles and contact information. Now it's time to make use of it: be sure to make time to talk with each stakeholder about what they need from the system and how they envision it. You can hold interviews such as 1:1 meetings or group ones. When talking with your stakeholders, help them to make informed decisions – show the potential outcomes of their answers on the end product.
+要成为一名成功的架构师，必须学会在需求直接或间接地来自业务人员时与他们进行沟通。无论他们是来自你的公司还是客户，都应该了解他们的业务背景。例如，必须知道以下内容:
 
-It's common for stakeholders to say that all of their requirements are equally important. Try to persuade them to prioritize their requirements according to the value they bring to their business. Certainly, there will be some mission-critical requirements, but most probably, the project won't fail if a bunch of others won't be delivered, not to mention any nice-tohaves that will land on your requirements wish list.
+\begin{itemize}
+\item 
+业务的驱动力是什么？
 
-Aside from interviews, you can also organize workshops for them, which could work like brainstorming sessions. In such workshops, once the common ground is established and everybody knows why they're taking part in such a venture, you can start asking everyone for as many usage scenarios as they can think of. Once these have been established, you can proceed with consolidating similar ones, after which you should prioritize and, finally, refine all the stories. Workshops are not just about functional requirements; each usage scenario can have a quality attribute assigned as well. After refining, all the quality attributes should be measurable. The final thing to note is this: you don't need to bring all stakeholders into such events, as they can sometimes take more than a day, depending on the size of the system.
+\item 
+公司的目标是什么？
 
-Now that you know how to mine for requirements using various techniques and sources, let's discuss how to pour your findings into well-crafted documents.
+\item 
+产品将帮助实现哪些目标？
+\end{itemize}
+
+当意识到这一点，需要与来自管理或执行人员的许多人达成了共识，这时收集关于软件更具体的需求将会容易得多，例如：如果公司关心用户的隐私，可以要求存储尽可能少的用户数据，并使用只存储在用户设备上的密钥对数据进行加密。如果这些要求来自于公司文化，那么对一些员工来说，它们就太明显了，甚至可以直接表达清楚。了解业务背景可以有助于提出适当的问题，并反过来帮助公司。
+
+话虽如此，利益相关方的需求不一定直接反映在公司的目标中。对于要提供的功能或软件应该实现的指标，他们可以有自己的想法。也许一个经理承诺给他的员工一个学习新技术或使用特定技术的机会。如果这个项目对他们的职业生涯很重要，他们可以成为架构师强有力的盟友，甚至说服别人接受架构师的决定。
+
+另一组重要的利益相关方是负责部署软件的人员。它们可以带有自己的需求子组，称为过渡需求。这些例子包括用户和数据库迁移、基础设施转换或数据转换，所以不要忘记联系他们，收集这些信息。
+
+\subsubsubsection{3.4.4\hspace{0.2cm}从利益相关方处收集需求}
+
+此时，应该有一个利益相关方列表及其角色和联系信息。现在是时候利用它了，一定要花时间与每个相关方讨论他们从系统中需要什么，以及他们的想法。可以进行面谈，如1:1会议或小组会议。当与相关方交谈时，可以帮助他们做出明智的决定——展示他们对最终产品期望的潜在结果。
+
+相关方通常会说他们所有的需求都是同等重要的。试着说服他们根据他们给业务带来的价值，来优先考虑需求。当然，会有一些关键任务的需求，但最可能的情况是，如果一堆需求都无法交付，项目也不会失败，更不用说那些满足需求愿望清单的“好东西”了。
+
+除了面谈，也可以为组织研讨会，就像头脑风暴一样。在这样的研讨会中，当达成了共识，并且每个人都知道他们为什么要参与这样的项目，就可以开始向每个人询问尽可能多的使用场景。完成了这些，就可以继续巩固类似的故事，之后这些就需要优先考虑。最后，需要对所有的故事进行完善的处理。研讨会不仅仅是关于功能需求，每个使用场景也可以分配一个质量属性。在进行提炼之后，所有的质量属性都必须是可测量的。最后要，不需要将所有的相关方都牵扯到此类事件中，因为根据系统的规模，这些事件有时可能需要多天的时间才能完成。
+
+既然已经知道了如何使用技术和资源来挖掘需求。接下来，我们赖了解一下如何将发现记录到精心制作的文档中。
 
 
 

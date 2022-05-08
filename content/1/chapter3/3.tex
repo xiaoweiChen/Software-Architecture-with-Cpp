@@ -1,53 +1,54 @@
 
-When designing a software system, it's common to deal with dozens or hundreds of various requirements. In order to make sense of them and come up with a good design, you need to know which of them are important and which could be implemented regardless of your design decisions, or even dismissed. You should learn how to recognize the most important ones so you can focus on them first and deliver the most value in the shortest possible time.
+设计软件系统时，通常要处理几十个或数百个不同的需求。为了理解它们并想出一个好的设计，需要知道哪些是重要的，哪些是可以实现的。不管设计决策是什么，应该学会如何识别最重要的需求，这样就可以首先关注它们，并在尽可能在短时间内交付具有更大价值的产品。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}You should prioritize requirements using two metrics: the business value and the impact on architecture. Those that will be high on both scales are most important and should be dealt with as a matter of priority. If you come up with too many such requirements, you should revisit your prioritization scheme. If it doesn't help, it might be that the system just isn't achievable.
+\hspace*{0.7cm}应该使用两个指标对需求进行优先级划分:业务价值和对架构的影响。在两个比重排名较高的项目是最重要的，应作优先处理。如果提出了太多这样的需求，应该重新考虑这些需求的优先级。如果无法对优先级进行排序，那么可能是因为这个系统无法实现。
 \end{tcolorbox}
 
-ASRs are those that have a measurable impact on your system's architecture. They can be both functional and nonfunctional. How can you identify which ones are actually significant? If the absence of a specific requirement were to allow you to create a different architecture, you are looking at an ASR. Late discovery of such requirements will often cost you both time and money, as you'll need to redesign some part of your system, if not the whole solution. You can only hope it won't cost you other resources and your reputation, too.
+ASR对系统架构有影响，其可以是功能性的，也可以是非功能性的。那如何确定哪些是重要的呢？如果将某个特定需求的去掉，就需要创建一个不同的架构，那么这个需求就是ASR。因为您需要重新设计系统的某些部分，所以延迟发现这些需求通常会花费时间和金钱。如果不是整个解决方案的话，只能希望这不会再损失其他资源和/或声誉。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}It's a common mistake to start by applying concrete technologies to your architecture from the very beginning of your architectural work. We strongly suggest that you first gather all the requirements, focus on the ones significant for the architecture, and only then decide what technologies and technology stacks to build your project on.
+\hspace*{0.7cm}从架构工作的一开始就将具体的技术应用到架构中，这是一个常见的错误。我们强烈建议首先收集所有的需求，专注于那些对体系结构重要的需求，然后再决定架构项目所依赖的技术和/或技术栈。
 \end{tcolorbox}
 
-Since it's that important to recognize ASRs, let's talk about a few patterns that can help you with this.
+既然识别ASR很重要，那就来了解一些有帮助的模式。
 
-\subsubsubsection{3.3.1\hspace{0.2cm}Indicators of architectural significance}
+\subsubsubsection{3.3.1\hspace{0.2cm}架构指标的意义}
 
-If you have a requirement to integrate with any external system, this is most likely going to influence your architecture. Let's go through some common indicators that a requirement is an ASR:
+如果有与外部系统集成的需求，这很可能会影响架构。先来了解需求是ASR的一些常见指标:
 
 \begin{itemize}
 \item 
-\textbf{Needing to create a software component to handle it}: Examples include sending emails, pushing notifications, exchanging data with the company's SAP server, or using a specific data storage.
+\textbf{需要创建软件组件进行处理}: 示例包括发送电子邮件、推送通知、与公司的SAP服务器交换数据或使用特定的数据存储。
 
 \item 
-\textbf{Having a significant impact on the system}: Core functionality often defines what your system should look like. Cross-cutting concerns, such as authorization, auditability, or having transactional behavior, are other good examples.
+\textbf{对系统影响较大}: 核心功能通常会定义系统应该如何。减少关注点，例如授权、审核或具有事务性行为，也是很好的例子。
 
 \item 
-\textbf{Being hard to achieve}: Having low latency is a great example: unless you think of it early in development, it can be a long battle to achieve it, especially if you suddenly realize you can't really afford to have garbage collections when you're on your hot path.
+\textbf{难以实现}: 低延迟就是一个很好的例子:除非在开发早期就考虑到这一点，否则实现这可能会是一场漫长的战斗，特别是意识到在热路径上无法真正的进行垃圾收集时。
 
 \item 
-\textbf{Forcing trade-offs when satisfying certain architectures}: Perhaps your design decision will even need to compromise some requirements in favor of other, more important ones if the cost is too high. It's a good practice to log such decisions somewhere and to notice that you're dealing with ASRs here. If any requirement constrains you or limits the product in any way, it's very likely significant for the architecture. If you want to come up with the best architecture given many trade-offs, then be sure to read about the \textbf{Architecture Trade-off Analysis Method (ATAM)}, which you can read about under one of the links in the Further reading section.
+\textbf{强制对特定架构进行权衡}: 如果成本太高，设计决策可能需要对某些需求进行折衷，以支持其他更重要的需求。将这些决策会记录在某个地方，并注意到这里处理的是ASR，这是一个很好的实践。如果需求以某种方式限制了架构师或产品，那么它很可能对体系结构产生重大影响。如果想要得到最好的架构，就一定要阅读\textbf{架构权衡分析方法(ATAM)}，可以在扩展阅读部分的链接中找到它。
 \end{itemize}
 
-Constraints and the environment your application will run in can also impact your architecture. Embedded apps need to be designed in a different way to those running in the cloud, and apps being developed by less-experienced developers should probably use a simple and safe framework instead of using one with a steep learning curve or developing their own.
+应用程序运行的约束和环境也会影响架构。嵌入式应用程序，需要以不同于云中应用的方式进行设计，经验较少的开发者在开发应用的过程中，应该使用简单、安全的框架，而不是使用陡峭的学习曲线或自己开发的框架。
 
-\subsubsubsection{3.3.2\hspace{0.2cm}Hindrances in recognizing ASRs and how to deal with them}
+\subsubsubsection{3.3.2\hspace{0.2cm}ASR的识别及处理方法}
 
-Contrary to intuition, many architecturally significant requirements are difficult to spot at first glance. This is caused by two factors: they can be hard to define and even if they're described, this can be done vaguely. Your customers might not yet be clear about what they need, but you should still be proactive in asking questions to steer clear of any assumptions. If your system is to send notifications, you must know whether those are real time or whether a daily email will suffice, as the former could require you to create a publisher-subscriber architecture. 
+与直觉相反，许多架构的重要需求很难一眼就发现。这是由两个因素造成的。它们可能很难定义，即使它们被描述了，也可能是模糊的。客户可能不清楚他们需要什么，但作为架构师应该主动询问，避免任何假设。如果系统要发送通知，必须知道这些通知是实时的，还是每天发送一封就足够了，因为前者可能需要建立发布者-订阅者架构。 
 
-In most cases, you'll need to make some assumptions since not everything is known upfront. If you discover a requirement that challenges your assumptions, it might be an ASR. If you assume you can maintain your service between 3 a.m. and 4 a.m. and you realize your customers from a different time zone will still need to use it, it will challenge your assumption and likely change the product's architecture.
+大多数情况下，需要做一些假设，因为不是所有事情都已知。如果发现一个需求挑战了之前的假设，它可能是一个ASR。如果假设只在凌晨3点到4点之间维持服务，并且意识到来自不同时区的客户仍需要使用它，那么事实将会挑战假设，并可能改变产品的架构。
 
-What's more, people often tend to treat quality attributes vaguely during the earlier phases of projects, especially less-experienced or less-technical individuals. On the other hand, that's the best moment to address such ASRs, as the cost of implementing them in the system is the lowest.
+更重要的是，人们往往倾向于在项目的早期阶段模糊地对待质量属性，特别是缺乏经验或技术的个人。另一方面，这是解决ASR的最佳时机，因为现在在系统中实现它们，是成本最低的时刻。
 
-It's worth noting, however, that many people, when specifying requirements, like to use vague phrases without actually thinking it through. If you were designing a service similar to Uber, some examples could be: \textit{when receiving a DriverSearchRequest, the system must reply with an AvailableDrivers message fast, or the system must be available 24/7}.
+需要关注的是，许多人在指定需求时，喜欢在没有仔细考虑的情况下使用模糊的短语。如果正在设计一个类似于Uber的服务，一些例子可以是:\textit{当收到一个DriverSearchRequest，系统必须快速回复一个AvailableDrivers消息，或系统必须是可用的24/7}。
 
-Upon asking questions, it often turns out that 99.9\% monthly availability is perfectly fine, and fast is actually a few seconds. Such phrases always require clarification, and it's often valuable to know the rationale behind them. Perhaps it is just someone's subjective opinion, not backed by any data or business needs. Also, note that in the request and response case, the quality attribute is hidden inside another requirement, making it even harder to catch.
+提出问题后，会发现每月具有99.9\%的完美可用性，而快速实际上只需几秒钟。这些短语总是需要确认，了解它们背后的基本原理是有价值的。也许这只是某人的主观意见，没有任何数据或业务需求的支持。另外，请注意，在请求和响应的情况下，质量属性隐藏在另一个需求中，这使得它更难捕获。
 
-Finally, requirements being architecturally significant for one system aren't necessarily of the same importance to another, even if those systems serve similar purposes. Some will become more important over time, once the system grows and starts to communicate with more and more other systems. Others may become important once the needs for the product change. This is why there's no silver bullet in telling which of your requirements will be ASRs, and which won't. 
+最后，即使某些系统服务于类似的目的，对于这个系统架构上重要的需求，对于另一个系统并不一定同样重要。随着时间的推移，当系统开始发展，并与越来越多的其他系统进行通信，其中一些服务会变得更加重要。当产品需求发生变化，原来不重要的需求可能会变得很重要。这就是为什么没有什么诀窍可以告诉你哪些需求是ASR，哪些不是。 
 
-Equipped with all this knowledge on how to distinguish the important requirements from the rest, you know what to look for. Let's now say a few words about \textit{where} to look.
+了解了如何区分重要需求，就知道要寻找\textit{什么}了。接下来，让我们了解一下去\textit{哪里}了解需求。
+
 
 
 

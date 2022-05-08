@@ -1,113 +1,113 @@
 
-Once you're done with the steps described previously, it's time to put all the requirements you've gathered and refine them together in a single document. It doesn't matter what form the document will take and how you will manage it. What matters is that you have a document that puts all the stakeholders on the same page with regard to what is required from the product and what value each requirement brings.
+完成了前面描述的步骤之后，就可以将收集到的需求放在一个文档中进行细化。文档采用什么形式以及何管理它并不重要，重要的是要有一份文档，将所有相关方放在同一页上，说明产品需要什么，以及每个需求将带来什么价值。
 
-Requirements are produced and consumed by all stakeholders, and a broad set of them will need to read your document. This means that you should write it so that it brings value for people of various technical skills from customers, salespeople, and marketers, through designers and project managers, to software architects, developers, and testers.
+需求是由所有相关方产生和消费的，他们中的大部分人需要阅读文档。这意味着架构师应该编写这份文档，以便能为具有各种技术技能的人带来价值，从客户、销售人员和市场人员，到设计师和项目经理，再到软件架构师、开发人员和测试人员。
 
-Sometimes it makes sense to prepare two versions of the document, one for the people closest to the business side of the project, and another, a more technical one, for the development team. However, usually, it's enough to just have one document written to be understandable by everyone, with sections (sometimes single paragraphs) or whole chapters meant to cover the more technical details.
+有时可以准备两个版本的文档，一个是为最接近项目业务方面的人，另一个是为开发团队，更技术性的版本。通常，只要编写一份能看懂的文档就足够了，其中的章节(有时是单个段落)或整章都会有更多技术细节。
 
-Let's now take a tour of what sections could go into your requirements document.
+现在来看看哪些部分需要进入需求文档。
 
-\subsubsubsection{3.5.1\hspace{0.2cm}Documenting the context}
+\subsubsubsection{3.5.1\hspace{0.2cm}记录背景}
 
-A requirements document should act as one of the entry points for people getting on board with your project: it should outline the purpose of your product, who will use it, and how it can be used. Before design and development, the product team members should read it to have a clear idea of what they'll actually work on.
+需求文档应该作为进入项目的入口点之一，应该概述产品的目的，谁将使用它，以及如何使用。在设计和开发之前，产品团队成员应该阅读文档，以清楚地知道他们要做些什么。
 
-The context section should provide an overview of the system – why it's being built, what business goals is it trying to accomplish, and what key functionality it will deliver. 
+背景部分应该提供系统的概述——为什么要构建，试图实现什么业务目标，以及将交付什么关键功能。 
 
-You can describe a few typical user personas, such as John the CTO, or Ann the driver, to give the readers a better chance to think about the users of the system as actual human beings and know what to expect from them.
+可以描述一些典型的用户角色，例如首席技术官John，或者司机Ann，使读者可以把系统的用户当作真实的人来思考，并理解对他们的期望。
 
-All those things described in the Knowing the context section should also be summarized as parts of this context section, or sometimes even given separate sections in the document. The context and scope sections should provide all the information required by most nonproject stakeholders. They should be concise and precise.
+在了解背景一节中描述的所有内容也应该有总结的部分，有时甚至要在文档中设立单独的部分。背景和范围部分应该提供大多数非项目相关方所需的所有信息，这些信息应该简洁和精确。
 
-The same goes for any open questions you may want to research and decide on later. For each decision you make, it's best to note the following:
-
-\begin{itemize}
-\item 
-What the decision itself was
-
-\item 
-Who made it and when
-
-\item 
-What rationale stands behind it
-\end{itemize}
-
-Now that you know how to document the context of your project, let's learn how to properly describe its scope too.
-
-\subsubsubsection{3.5.2\hspace{0.2cm}Documenting the scope}
-
-This section should define what's in the scope of the project, as well as what is beyond the scope. You should provide a rationale for why the scope is defined in a particular way, especially when writing about things that won't make the cut.
-
-This section should also cover the high-level functional and nonfunctional requirements, but details should go into the subsequent sections of the document. If you're familiar with Agile practices, just describe epics and bigger user stories here.
-
-If you or your stakeholders have any assumptions regarding the scope, you should mention those here. If the scope is subject to change due to any issues or risks, you should also write some words about it, and similarly for any trade-offs you had to make.
-
-\subsubsubsection{3.5.3\hspace{0.2cm}Documenting functional requirements}
-
-Each requirement should be precise and testable. Consider this example: "The system will have a ranking system for the drivers." How would you create tests against it? It's better to create a section for the ranking system and specify the precise requirements for it there.
-
-Consider this other example: If there's a free driver close to the rider, they should be notified of the incoming ride request. What if there's more than one driver available? What maximum distance can we still describe as being close?
-
-This requirement is both imprecise and lacking parts of the business logic. We can only hope that the case where there are no free drivers is covered by another requirement.
-
-In 2009, Rolls Royce developed its Easy Approach to Requirements Syntax (EARS), to help cope with this. In EARS, there are five basic types of requirements, which should be written in a different way and serve different purposes. They can be later combined to create more complex requirements. Those basic ones are as follows:
+对于任何想要研究并决定的开放性问题也是如此。对于你所做的每一个决定，最好注意以下几点:
 
 \begin{itemize}
 \item 
-\textbf{Ubiquitous requirement}: "The \textit{\$SYSTEM} shall \textit{\$REQUIREMENT}," for example, the application will be developed in C++.
+这个决定本身是什么
 
 \item 
-\textbf{Event-driven}: "When \textit{\$TRIGGER} \textit{\$OPTIONAL\\\_PRECONDITION} the \textit{\$SYSTEM}
-shall \textit{\$REQUIREMENT}," for example, "When an order arrives, the gateway will produce a NewOrderEvent.
+谁来做，何时做
 
 \item 
-\textbf{Unwanted behavior}: "If \textit{\$CONDITION}, then the \textit{\$SYSTEM} shall \textit{\$REQUIREMENT}," for example if the processing of the request takes longer than 1 second, the tool will display a progress bar.
-
-\item
-\textbf{State-driven}: "While \textit{\$STATE}, the \textit{\$SYSTEM} shall \textit{\$REQUIREMENT}," for example, while a ride is taking place, the app will display a map to help the driver navigate to the destination.
-
-\item
-\textbf{Optional feature}: "Where \textit{\$FEATURE}, the \textit{\$SYSTEM} shall \textit{\$REQUIREMENT}," for example, where A/C is present, the app will let the user set the temperature through the mobile application.
+这样做的理由是
 \end{itemize}
 
-An example of a more complex requirement would be: When using a dual-server setup, if the backup server doesn't hear from the primary one for 5 seconds, it should try to register itself as a new primary server.
+现在已经了解了如何记录项目的背景，继续了解如何正确地描述范围。
 
-You don't need to use EARS, but it can help if you struggle with ambiguous, vague, overly complex, untestable, omissive, or otherwise badly worded requirements. Whatever way or wording you choose, be sure to use a concise model, which is based on common syntax and uses predefined keywords. It's also good practice to assign an identificator for each requirement you list, so you'll have an easy way to refer to them.
+\subsubsubsection{3.5.2\hspace{0.2cm}记录范围}
 
-When it comes to more detailed requirements formats, it should have the following fields:
+这个部分应该定义什么在项目范围内，什么是在项目范围外。应该提供一个基本准则，说明为什么要以特定的方式定义范围，特别是在编写一些不符合要求的内容时。
+
+本节还应该介绍高级功能和非功能性需求，但详细信息应在本文档的后续部分中介绍。如果熟悉敏捷实践，请在此描述一些传奇和大用户的故事。
+
+如果架构师或相关方对范围有假设，应该在这里提到这些假设。如果由于问题或风险，范围可能会发生变化，那么也应该写一些相关的文字，以及必须做出的权衡。
+
+\subsubsubsection{3.5.3\hspace{0.2cm}记录功能性需求}
+
+每个需求都应该是精确和可测试的。考虑这个例子:“系统将为司机提供一个排名系统。”如何创建针对它的测试？最好是为排名系统创建一个章节，并在那里精确的定义其需求。
+
+考虑另一个例子:如果有一位免费司机离乘客很近，应该告知他们即将到来的乘车请求。如果有多个合适的司机怎么办？我们能描述的最近距离是多少？
+
+此需求既不精确，又缺乏业务逻辑。我们只能希望没有可用司机的情况是另一个需求。
+
+2009年，Rolls Royce开发了\textbf{简单需求方法语法(EARS)}来帮助解决这个问题。在EARS中，有五种基本类型的需求，它们以不同的方式编写并服务于不同的目的，可以将它们组合起来创建更复杂的需求。这些基本的问题如下:
 
 \begin{itemize}
 \item 
-\textbf{ID or Index}: To easily identify a specific requirement.
+\textbf{无处不在型需求}: "\textit{\$SYSTEM}应是\textit{\$REQUIREMENT}," 例如，应用将使用C++开发。
 
 \item 
-\textbf{Title}: You can use the EARS template here.
+\textbf{事件驱动型需求}: "当\textit{\$TRIGGER} 是\textit{\$OPTIONAL$\backslash$\_PRECONDITION}时，\textit{\$SYSTEM}
+应是\textit{\$REQUIREMENT}," 例如：当订单到达时，网关将生成一个NewOrderEvent。
 
 \item 
-\textbf{Detailed Description}: You can put whatever information you find relevant here, for example, user stories.
+\textbf{意外行为型需求}: "若是\textit{\$CONDITION}，则\textit{\$SYSTEM}应是\textit{\$REQUIREMENT}," 例如：如果处理请求的时间超过1秒，该工具将显示一个进度条。
 
 \item
-\textbf{Owner}: Who this requirement serves. This can be the product owner, the sales team, legal, IT, and so on.
+\textbf{状态驱动型需求}: "当为\textit{\$STATE}时，\textit{\$SYSTEM}应是\textit{\$REQUIREMENT}," 例如：在开车时，应用会显示一张地图，帮助司机导航到目的地。
 
 \item
-\textbf{Priority}: Pretty self-explanatory.
-
-\item
-\textbf{Deliver By}: If this requirement is needed for any key date, you can note it here. 
+\textbf{自选特性}: "在具有\textit{\$FEATURE}时，\textit{\$SYSTEM}应是\textit{\$REQUIREMENT}," 例如：在有空调的地方，App会让用户通过手机设置温度。
 \end{itemize}
 
-Now that we know how to document functional requirements, let's discuss how you should approach documenting the nonfunctional ones.
+更复杂的需求示例是:在使用双服务器设置时，如果备份服务器在5秒内没有收到主服务器的消息，应该尝试将自己注册为一个新的主服务器。
 
-\subsubsubsection{3.5.4\hspace{0.2cm}Documenting nonfunctional requirements}
+也可以不使用EARS，但是如果与不明确的、模糊的、过于复杂的、不可测试的、省略的或措词糟糕的需求作过斗争，EARS可以提供帮助。无论选择何种方式或措辞，都要确保使用简洁的模型，该模型基于通用语法并使用预定义关键字。为列出的每一个需求分配一个标识符也是一个很好的实践方式，这样就可以使用一种简单的方法来引用它们。
+
+当涉及到更详细的需求格式时，应该有以下字段:
+
+\begin{itemize}
+\item 
+\textbf{ID或索引}: 便于识别特定需求。
+
+\item 
+\textbf{标题}: 可以在这里使用EARS模板。
+
+\item 
+\textbf{详细描述}: 可以将相关的信息放在这里，例如：用户故事。
+
+\item
+\textbf{拥有者}: 这个要求服务于谁，可能是产品所有者、销售团队、法律、IT等。
+
+\item
+\textbf{优先级}: 不言自明。
+
+\item
+\textbf{交付方式}: 如果关键日期都有要求，可以在这里注明。
+\end{itemize}
+
+既然已经了解了如何记录功能性需求，继续看一下应该如何记录非功能性需求。
+
+\subsubsubsection{3.5.4\hspace{0.2cm}记录非功能性需求}
 
 Each quality attribute, such as performance or scalability, should have its own section in your document, with specific, testable requirements listed. Most of the QAs are measurable, so having specific metrics can do a world of good to resolve future questions. You can also have a separate section about the constraints that your project has.
 
-With regard to wording, you can use the same EARS template to document your NFRs. Alternatively, you can also specify them as user stories using the personas that you defined in the context of this chapter.
+With regard to wording, you can use the same EARS template to document your NFRs. Alternatively, you can also specify them as user stories using the personas that you defined in the context of this chapter.
 
-
-\subsubsubsection{3.5.5\hspace{0.2cm}Managing the version history of your documentation}
+\subsubsubsection{3.5.5\hspace{0.2cm}管理文档版本的记录}
 
 You can take one of the two following approaches: either create a version log inside the document or use an external versioning tool. Both have their pros and cons, but we recommend going with the latter approach. Just like you use a version control system for your code, you can use it for your documentation. We're not saying you must use a Markdown document stored in a Git repo, but that's a perfectly valid approach as long as you're also generating a \textbf{business people-readable} version of it, be it a web page or a PDF file. Alternatively, you can just use online tools, such as RedmineWikis, or Confluence pages, which allow you to put a meaningful comment describing what's been changed on each edit you publish and to view the differences between versions.
 
-If you decided to take a revision log approach, it's usually a table that includes the following fields:
+If you decided to take a revision log approach, it's usually a table that includes the following fields:
+
 
 \begin{itemize}
 \item 
@@ -120,18 +120,19 @@ If you decided to take a revision log approach, it's usually a table that includ
 \textbf{Reviewed by}: Who reviewed the change.
 
 \item
-\textbf{Change description}: A \textit{commit message} for this revision. It states what changes have taken place.
+\textbf{Change description}: A \textit{commit message} for this revision. It states what changes have taken place.
+
 \end{itemize}
 
-\subsubsubsection{3.5.6\hspace{0.2cm}Documenting requirements in Agile projects}
+\subsubsubsection{3.5.6\hspace{0.2cm}记录敏捷项目中的需求}
 
 Many proponents of Agile would claim that documenting all the requirements is simply a waste of time as they will probably change anyway. However, a good approach is to treat them similarly to items in your backlog: the ones that will be developed in the upcoming sprints should be defined in more detail than the ones that you wish to implement later. Just like you won't split your epics into stories and stories into tasks before it's necessary, you can get away with having just roughly described, less granular requirements until you're certain that you need them implemented.
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}Note who or what was the source of a given requirement so that you'll know how who can provide you with necessary input for refining it in the future.
+\hspace*{0.7cm}Note who or what was the source of a given requirement so that you'll know how who can provide you with necessary input for refining it in the future.
 \end{tcolorbox}
 
-Let's take our Dominican Fair, for example. Say in the next sprint, we'll be building the shop page for a visitor to view, and in the sprint after that one, we'll be adding a subscription mechanism. Our requirements could look like the following:
+Let's take our Dominican Fair, for example. Say in the next sprint, we'll be building the shop page for a visitor to view, and in the sprint after that one, we'll be adding a subscription mechanism. Our requirements could look like the following:
 
 \begin{table}[H]
 	\begin{tabular}{|l|l|l|l|}
@@ -147,13 +148,15 @@ As you can see, the first two items relate to the feature we'll be doing next. s
 
 There are cases, on the other hand, that would still require you to have a complete list of requirements. If you need to deal with external regulators or internal teams such as auditing, legal, or compliance, chances are they'll still require a well-written physical document from you. Sometimes just handing them a document containing work items extracted from your backlog is OK. It's best to communicate with such stakeholders just like with any other ones: gather their expectations to know the minimum viable documentation that satisfies their needs.
 
-What's important about documenting requirements is to have an understanding between you and the parties proposing specific requirements. How can this be achieved? Once you have a draft ready to go, you should show your documentation to them and gather feedback. This way, you'll know what was ambiguous, unclear, or missing. Even if it takes a few iterations, it will help you have a common ground with your stakeholders, so you'll gain more confidence that you're building the right thing.
+What's important about documenting requirements is to have an understanding between you and the parties proposing specific requirements. How can this be achieved? Once you have a draft ready to go, you should show your documentation to them and gather feedback. This way, you'll know what was ambiguous, unclear, or missing. Even if it takes a few iterations, it will help you have a common ground with your stakeholders, so you'll gain more confidence that you're building the right thing.
 
-\subsubsubsection{3.5.7\hspace{0.2cm}Other sections}
+
+\subsubsubsection{3.5.7\hspace{0.2cm}其他部分}
 
 It's a good idea to have a links and resources section in which you point to stuff such as the issue tracker boards, artifacts, CI, the source repo, and whatever else you'll find handy. Architectural, marketing, and other kinds of documents can also be listed here.
 
 If needed, you can also include a glossary.
 
-You now know how to document your requirements and related information. Let's now say a few words about documenting the designed system.
+You now know how to document your requirements and related information. Let's now say a few words about documenting the designed system.
+
 
