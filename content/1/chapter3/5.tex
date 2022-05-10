@@ -98,65 +98,62 @@
 
 \subsubsubsection{3.5.4\hspace{0.2cm}记录非功能性需求}
 
-Each quality attribute, such as performance or scalability, should have its own section in your document, with specific, testable requirements listed. Most of the QAs are measurable, so having specific metrics can do a world of good to resolve future questions. You can also have a separate section about the constraints that your project has.
+每个质量属性，例如性能或可扩展性，都应该在文档中有记录，并列出特定的、可测试的需求。大多数都是QA可测试的，所以拥有特定的测试标准可以很好地解决问题。当然，还可以用单独的部分来说明项目的约束条件。
 
-With regard to wording, you can use the same EARS template to document your NFRs. Alternatively, you can also specify them as user stories using the personas that you defined in the context of this chapter.
+关于措辞，可以使用EARS模板来记录您的NFR(\textbf{N}on\textbf{F}unctional \textbf{R}equirements)。或者，使用在背景信息中定义的角色，将其指定为用户故事。
 
 \subsubsubsection{3.5.5\hspace{0.2cm}管理文档版本的记录}
 
-You can take one of the two following approaches: either create a version log inside the document or use an external versioning tool. Both have their pros and cons, but we recommend going with the latter approach. Just like you use a version control system for your code, you can use it for your documentation. We're not saying you must use a Markdown document stored in a Git repo, but that's a perfectly valid approach as long as you're also generating a \textbf{business people-readable} version of it, be it a web page or a PDF file. Alternatively, you can just use online tools, such as RedmineWikis, or Confluence pages, which allow you to put a meaningful comment describing what's been changed on each edit you publish and to view the differences between versions.
+可以采用以下两种方法的一种：在文档内创建版本日志或使用外部版本控制工具。这两种方法各有利弊，但建议采用后一种方法。就像对代码使用版本控制系统一样，也可以将其用于文档。并不是说必须使用存储在Git库中的Markdown，只要生成一个\textbf{适用于业务人群}的文档，无论是网页还是PDF文件，这都是很好的方法。或者，也可以使用在线工具，比如RedmineWikis或Confluence，这些页面允许在每次发布的编辑中添加有意义的评论，描述修改的内容，并查看版本之间的差异。
 
-If you decided to take a revision log approach, it's usually a table that includes the following fields:
-
+如果决定用修订日志的方法，表中通常是包含以下字段:
 
 \begin{itemize}
 \item 
-\textbf{Revision}: A number identifying which iteration of the document the changes were introduced at. You can also add tags for special revisions, such as \textit{the first draft}, if you so wish.
+\textbf{修改}: 一个数字，标识变更是在文档的哪个迭代中引入的。如果愿意，还可以为特殊修订添加标签，例如\textit{初稿}。
 
 \item 
-\textbf{Updated by}: Who made the change.
+\textbf{更新}: 谁做的改变。
 
 \item 
-\textbf{Reviewed by}: Who reviewed the change.
+\textbf{审核}: 谁审阅的修改。
 
 \item
-\textbf{Change description}: A \textit{commit message} for this revision. It states what changes have taken place.
-
+\textbf{修改描述}: 修改的\textit{提交信息}。用来说明了发生了什么变化。
 \end{itemize}
 
 \subsubsubsection{3.5.6\hspace{0.2cm}记录敏捷项目中的需求}
 
-Many proponents of Agile would claim that documenting all the requirements is simply a waste of time as they will probably change anyway. However, a good approach is to treat them similarly to items in your backlog: the ones that will be developed in the upcoming sprints should be defined in more detail than the ones that you wish to implement later. Just like you won't split your epics into stories and stories into tasks before it's necessary, you can get away with having just roughly described, less granular requirements until you're certain that you need them implemented.
+许多敏捷的支持者声称，记录所有的需求纯粹是浪费时间，因为它们可能都会发生变化。然而，一个好的方法是将它们与待办事项列表中的项目进行类似的处理:在即将到来的sprint中开发的项目，应该比稍后实现的项目定义得更详细。如果不愿意在必要的时候将史诗巨作分解成故事和任务，那么可以在确定需要实现任务之前，对粗粒度需求只进行概要性的描述。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}Note who or what was the source of a given requirement so that you'll know how who can provide you with necessary input for refining it in the future.
+\hspace*{0.7cm}确定需求的来源，这样就可以知道哪里会提供输入，以便在将来对其进行细化。
 \end{tcolorbox}
 
-Let's take our Dominican Fair, for example. Say in the next sprint, we'll be building the shop page for a visitor to view, and in the sprint after that one, we'll be adding a subscription mechanism. Our requirements could look like the following:
+以多米尼加博览会为例。在下一个sprint中，将构建供访问者查看的商店页面，再下一个sprint中，将添加订阅机制。需求如下所示:
 
 \begin{table}[H]
 	\begin{tabular}{|l|l|l|l|}
 		\hline
-		\textbf{ID} & \textbf{Priority} & \textbf{Description}                                                                                                            & \textbf{Stakeholders}                                   \\ \hline
-		DF-42       & P1                & \begin{tabular}[c]{@{}l@{}}The shop's page must show the shop's inventory, with a\\ photo and price for each item.\end{tabular} & Josh, Rick                                              \\ \hline
-		DF-43       & P2                & \begin{tabular}[c]{@{}l@{}}The shop's page must feature a map with the shop's\\ location.\end{tabular}                          & \begin{tabular}[c]{@{}l@{}}Josh,\\ Candice\end{tabular} \\ \hline
-		DF-44       & P2                & Customers must be able to subscribe to shops.                                                                                   & Steven                                                  \\ \hline
+		\textbf{ID} & \textbf{优先级} & \textbf{描述}                                                                                                            & \textbf{负责人}                                   \\ \hline
+		DF-42       & P1                & \begin{tabular}[c]{@{}l@{}}商店页面必须可以显示商店的库存，并附带有\\照片和每个商品的价格。\end{tabular} & Josh, Rick                                              \\ \hline
+		DF-43       & P2                & \begin{tabular}[c]{@{}l@{}}商店页面必须在地图上标明有线下店铺的位置。\end{tabular}                          & \begin{tabular}[c]{@{}l@{}}Josh,\\ Candice\end{tabular} \\ \hline
+		DF-44       & P2                & 客户可以通过商店页面订阅商店。                                                                        & Steven                                                  \\ \hline
 	\end{tabular}
 \end{table}
 
-As you can see, the first two items relate to the feature we'll be doing next. so they are described in more detail. Who knows, maybe before the next sprint, the requirement about subscriptions will be dropped, so it doesn't make sense to think about every detail of it.
+前两项与接下来要做的特性有关，所以它们描述得更详细。不过，谁知道呢，也许在下一个sprint之前，关于订阅的要求会取消，所以考虑其细节信息也没有意义。
 
-There are cases, on the other hand, that would still require you to have a complete list of requirements. If you need to deal with external regulators or internal teams such as auditing, legal, or compliance, chances are they'll still require a well-written physical document from you. Sometimes just handing them a document containing work items extracted from your backlog is OK. It's best to communicate with such stakeholders just like with any other ones: gather their expectations to know the minimum viable documentation that satisfies their needs.
+在有些情况下，仍然需要拥有一个完整的需求列表。如果需要与外部监管机构或内部团队(如审计、法律或合规)打交道，可能需要提供编写良好的文档。有时候，只给他们一个包含从backlog中提取的工作项文档就可以了。最好与此类负责人沟通清楚:收集其期望，以了解满足需求，以便最小化文档。
 
-What's important about documenting requirements is to have an understanding between you and the parties proposing specific requirements. How can this be achieved? Once you have a draft ready to go, you should show your documentation to them and gather feedback. This way, you'll know what was ambiguous, unclear, or missing. Even if it takes a few iterations, it will help you have a common ground with your stakeholders, so you'll gain more confidence that you're building the right thing.
-
+编写需求文档的重要之处在于，和提出特定需求的各方之间要互相理解。如何实现这一点？当准备好了草稿，就应该向他们展示文档并收集反馈。这样，就会知道什么是模糊的，不清楚的，或缺失的。即使需要一些迭代，也将帮助与众负责人建立一个种共识，从而获得更多的信心，并相信正在构建正确的东西。
 
 \subsubsubsection{3.5.7\hspace{0.2cm}其他部分}
 
-It's a good idea to have a links and resources section in which you point to stuff such as the issue tracker boards, artifacts, CI, the source repo, and whatever else you'll find handy. Architectural, marketing, and other kinds of documents can also be listed here.
+有一个链接和资源部分是一个好主意，在其中你可以指向诸如问题跟踪板、工件、CI、代码库，以及任何可以陈现的东西。架构、营销和其他类型的文档也可以在这里列出。
 
-If needed, you can also include a glossary.
+如果需要，还可以包含词汇表。
 
-You now know how to document your requirements and related information. Let's now say a few words about documenting the designed system.
+现在知道了如何记录需求和相关信息。接下来，就简单介绍一下如何为设计的系统编写文档。
 
 
