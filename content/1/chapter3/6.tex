@@ -23,145 +23,144 @@
 
 \subsubsubsection{3.6.1\hspace{0.2cm}4+1模型}
 
-The 4+1 view model was created by Philippe Kruchten in 1995. The author then claimed it is intended for "describing the architecture of software-intensive systems, based on the use of multiple, concurrent views." Its name comes from the views it consists of.
+4+1模型是由Philippe Kruchten在1995年创建。然后，作者称它旨在“对多个并发视图的使用，描述软件密集型系统的架构”。它的名字来自于它所包含的视图。
 
-This model is widely known since it has been on the market for so long and does its job. It's well suited for bigger projects and while it can be used for small- and medium-sized ones as well, it can also turn out too complex for their needs (especially if they're written in an Agile way). If that's your case, you should try out the C4 model described in the next section.
+这种模型已经在市场上存在了很长时间，也非常有效果，因此广为人知。它非常适合于大项目，当然也可以用于中小型的项目，但对于需求来说也可能过于复杂(特别是用敏捷的方式编写的)。如果正处于这种情况，应该尝试下一节中的C4模型。
 
-A downside to the 4+1 model is that it uses a fixed set of views, while a pragmatic approach to document architecture would be to choose views based on the specifics of your project (more on that later).
+4+1模型的缺点是它使用了一组固定的视图，而文档体系结构需要根据项目的具体情况选择视图(稍后将详细介绍)。
 
-A nice upside, on the other hand, is how the views link together, especially when it comes to scenarios. At the same time, each stakeholder can easily get the parts of the model relevant to them. This brings us to how the model appears: 
+优点是可以清晰的了解视图是如何连接在一起，特别是涉及到场景时。同时，每个责任方可以很容易地了解与他们相关的部分。来展示一下模型:
 
 \begin{center}
-\includegraphics[width=0.8\textwidth]{content/1/chapter3/images/1.jpg}\\
-Figure 3.1 – An overview of the 4+1 model
+\includegraphics[width=0.6\textwidth]{content/1/chapter3/images/1.jpg}\\
+图3.1 - 4+1模式概览
 \end{center}
 
-Actors in the preceding diagram are the ones most interested in their corresponding views. All the views can be represented using different kinds of \textbf{Unified Modeling Language (UML)} diagrams. Let's now discuss each view:
+上图中的参与者对其对应的视图最感兴趣。所有的视图都可以用不同种类的\textbf{统一建模语言(UML)}图来表示。现在了解下每个视图:
 
 \begin{itemize}
 \item 
-\textbf{The logical view} shows how functionality is provided to users. It shows the system's components (objects) and how they interact with each other. Most commonly, it consists of class and state diagrams. If you have thousands of classes or just want to better show the interactions between them, you should also have communication or sequence diagrams, both being parts of our next view:
+\textbf{逻辑视图}展示了如何向用户提供功能，以及系统的组件(对象)如何交互。最常见的是，它由类和状态图组成。如果有成千上万的类或者只是想更好地显示交互，应该有通信图或序列图，两者都是下个视图的一部分:
 
 \begin{center}
-\includegraphics[width=0.8\textwidth]{content/1/chapter3/images/2.jpg}\\
-Figure 3.2 – Class diagrams can be used to show what types we plan to have, along with their relations
+\includegraphics[width=0.7\textwidth]{content/1/chapter3/images/2.jpg}\\
+图3.2 -类图可以用来显示计划拥有的类型，以及它们的关系
 \end{center}
 
 \item 
-\textbf{The process view} revolves around the system's runtime behavior. It shows processes, the communication between them, and interactions with external systems. It's represented by activity and interaction diagrams. This view addresses many NFRs, including concurrency, performance, availability, and scalability:
+\textbf{进程视图}围绕着系统的运行时行为，显示进程、进程之间的通信以及与外部系统的交互，由活动和交互图表示。此视图处理许多NFR，包括并发性、性能、可用性和可扩展性:
 
 \begin{center}
-\includegraphics[width=0.9\textwidth]{content/1/chapter3/images/3.jpg}\\
-Figure 3.3 – Activity diagrams are graphical representations of workflows and processes
+\includegraphics[width=0.6\textwidth]{content/1/chapter3/images/3.jpg}\\
+图3.3 -活动图工作流和过程的图形表示
 \end{center}
 
 \item 
-\textbf{The development view} is for decomposing into subsystems and revolves around software organization. Reuse, tooling constraints, layering, modularization, packaging, execution environments – this view can represent them by showing a building-block decomposition of the system. It does so by using components and package diagrams:
+\textbf{开发视图}为了分解成子系统，并围绕着软件组织。重用、工具约束、分层、模块化、打包、执行环境——这个视图可以通过显示系统的构建块来表示它们。通过使用组件和包图来实现:
 
 \begin{center}
 \includegraphics[width=0.8\textwidth]{content/1/chapter3/images/4.jpg}\\
-Figure 3.4 – Package diagrams can show the parts of a system from a higher perspective, as well as dependencies or relations between specific components
+图3.4 -包图可以从更高的角度显示系统的各个部分，以及特定组件之间的依赖关系
 \end{center}
 
 \item
-\textbf{The physical view} is used to map software to hardware using deployment diagrams. Aimed at system engineers, it can cover a subset of NFRs concerned with the hardware, for example, communication:
+\textbf{物理视图}使用部署图将软件映射到硬件。针对系统工程师，可以涵盖与硬件相关的NFR子集，例如通信:
 
 \begin{center}
 \includegraphics[width=0.9\textwidth]{content/1/chapter3/images/5.jpg}\\
-Figure 3.5 – Deployment diagrams demonstrate the hardware on which each software component will run. It can also be used to pass on information regarding the network
+图3.5 -部署图展示了运行每个软件组件的硬件，还可以用来传递有关网络的信息
 \end{center}
 
 \item
-\textbf{The scenarios} are gluing all the other views together. Represented by use case diagrams, these can be useful for all stakeholders. This view shows whether the system does what it should and that it is consistent. When all other views are finished, the scenario view can be redundant. However, all the other views wouldn't be possible without usage scenarios. This view shows the system from a high level, while the other views go into the details:
+\textbf{场景视图}把所有其他的视图都连接在一起，这些对所有相关方都是有用的。这个视图可以显示系统是否做了它应该做的事情。当其他视图都完成后，场景视图可能是多余的。但是，如果没有使用场景，所有其他视图都是不可能完成。这个视图从高层次展示了系统，而其他视图则展示了更多的细节:
 
 \begin{center}
 \includegraphics[width=0.9\textwidth]{content/1/chapter3/images/6.jpg}\\
-Figure 3.6 – Use case diagrams show how specific actors interact with the system and how the interactions relate to each other
+图3.6 -用例图显示了特定的参与者如何与系统交互，以及如何交互，彼此关联
 \end{center}
 
 \end{itemize}
 
-Each of those views is interconnected with the others and often they must coexist to show the full picture. Let's think about expressing concurrency. It can't be done using only the logical view, as it's more expressive to map them to tasks and processes; we need the process view. On the other hand, the processes will be mapped to physical, often distributed, nodes. This means we'll need to effectively document it in three views, each of which will be relevant for a specific group of stakeholders. Other connections between the views include the following:
+这些视图中的每一个都与其他视图相互关联，通常必须共存才能显示出全貌。需要考虑下，如何表达并发。它不能只使用逻辑视图来完成，因为将其映射到任务和流程更有表现力，从而需要过程视图。另一方面，进程将映射到物理(通常是分布式的)节点。这意味着需要在三个视图中进行记录，每个视图都与特定的责任方相关。视图之间的其他连接包括:
 
 \begin{itemize}
 \item
-Both logical and process views are used in analysis and design to conceptualize the product.
+逻辑视图和过程视图都用于分析和设计，以概念化产品。
 
 \item 
-Development and deployment in conjunction describe how the software is packaged and when each package will get deployed.
+将开发和部署结合在一起，描述了软件是如何打包的，以及每个包将在何时部署。
 
 \item
-The logical and development views show how the functionality is reflected in the source code.
+逻辑视图和开发视图显示了功能是如何反映在源码中。
 
 \item
-The process and deployment views are meant to collectively describe NFRs.
+流程和部署视图共同描述NFR。
 \end{itemize}
 
-Now that you're familiar with the 4+1 model, let's discuss another one, which is simple, yet extremely effective: the C4 model. We hope using it will be a blast (pun intended).
+熟悉了4+1模型，继续了解另一个简单但非常有效的模型:C4模型。希望使用它将是一个爆炸(双关语[译注：关联的是著名的C4炸弹])。
 
 \subsubsubsection{3.6.2\hspace{0.2cm}C4模型}
 
-The C4 model is a great fit for small- to medium-sized projects. It's easy to apply, as it's quite simple and it doesn't rely on any predefined notation. If you want to start diagramming using it, you can try out Tobias Shochguertel's c4-draw.io plugin (\url{https://github.com/tobiashochguertel/c4-draw.io}) for the free online drawing tool – draw.io (\url{https://www.draw.io/}).
+C4模型非常适合中小型项目。因为简单，所以很容易应用，并且不依赖于任何预定义的符号。如果想用它来绘制图表，可以试试Tobias Shochguertel的c4-draw.io插件(\url{https://github.com/tobiashochguertel/c4-draw.io})的免费在线绘图工具-draw.io(\url{https://www.draw.io/})。
 
-In the C4 model, there are four main types of diagram, namely the following:
-
+在C4模型中，主要有四种图类型，即:
 
 \begin{itemize}
 \item
-Context
+系统上下文
 
 \item 
-Container
+容器
 
 \item
-Component
+组件
 
 \item
-Code
+代码
 \end{itemize}
 
-Just like zooming in and out using a map, you can use those four types to show more details of a particular code region or "zoom out" to show more about the interactions and surroundings of either a specific module or even the whole system.
+就像使用地图放大和缩小一样，可以使用这四种类型来显示特定代码区域的细节，或者“缩小”来显示关于特定模块，甚至整个系统的交互和周围环境的更多信息。
 
-The system context is a great starting point for looking at the architecture, as it shows the system as a whole, surrounded by its users and other systems that it interacts with. You can take a look at an example C4 context diagram here:
+系统上下文是查看架构的一个很好的起点，因为它将系统作为一个整体显示出来，周围是与其交互的用户和其他系统。可以在这里看到一个C4模型的上下文关系图:
 
 \begin{center}
 \includegraphics[width=0.9\textwidth]{content/1/chapter3/images/7.jpg}\\
-Figure 3.7 – A C4 context diagram
+图3.7 - C4上下文关系图
 \end{center}
 
-As you can see, it shows the "big picture," so it shouldn't focus on specific technologies or protocols. Instead, think of it as a diagram that could also be shown to non-technical stakeholders. Just by looking at the diagram, it should be clear that there's one actor involved (the human-shaped depiction of the customer), who interacts with one of the components of our solution, namely, the customer service system. This system, on the other hand, interacts with two more, with each of the interactions described along with the arrows.
+它展示了“大局”，所以它不应该专注于特定的技术或协议。相反，可以把它看作是可以向非技术相关方展示的图表。仅通过查看图表，就可以清楚地看到有一个参与者(对客户的人形描述)，他与解决方案的一个组件(即客户服务系统)交互。另一方面，这个系统与另外两个系统相互作用，每个相互作用都用箭头表示。
 
-The context diagram we described is used to provide an overview of the system with few details. Let's now look at the other diagrams one by one:
+上下文关系图用于提供系统的概览，其中包含一些细节。现在让逐一查看其他图表:
 
 \begin{itemize}
 \item
-\textbf{Container diagram}: This one is for showing the overview of the system internals. If your system uses a database, offers services, or just consists of certain applications, this diagram will show it. It can also show the major technology choices for the containers. Note that containers don't mean Docker containers; although each is a separately runnable and deployable unit, this diagram type is not about deployment scenarios. The container view is meant for technical people but isn't limited to the development team only. Architects, as well as operations and support, are the intended audience, too.
+\textbf{容器图}: 用来显示系统内部的概述。如果系统使用数据库，提供服务，或者只是由某些应用程序组成，则此图将显示它。还可以展示容器的主要技术选择。注意，容器不是指Docker容器，尽管每个图都是单独的可运行和部署单元，但此图类型与部署场景无关。容器视图是为技术人员设计的，但并不仅限于开发团队。架构师以及操作和支持人员也是目标受众。
 
 \item 
-\textbf{Component diagram}: If you want more details about a specific container, this is where the component diagram comes into play. It shows how the components inside a selected container interact with each other, as well as with elements and actors outside the container. By looking at this diagram, you can learn about the responsibilities of each component and what technology it's being built with. The intended audience for component diagrams is mostly focused around a specific container and consists of the development team and the architect.
+\textbf{组件图}: 如果想要关于特定容器的更多细节信息，就需要组件图发挥作用了。它展示了所选容器内的组件如何彼此交互，以及如何与容器外的元素和参与者交互。通过查看这张图，可以了解每个组件的职责，以及使用什么技术构建它。组件图的目标受众主要集中在一个特定的容器上，由开发团队和架构师组成。
 
 \item
-\textbf{Code diagrams}: We finally come to code diagrams, which emerge when you zoom in to a specific component. This view consists mostly of UML diagrams, including class, entity-relationship, and others, and ideally should be created automatically from source code by standalone tools and IDEs. You should definitely not make such diagrams for each component in your system; instead, focus on making them for the most important ones in a way that allows them to actually tell the reader what you wanted to tell. This means that less can be more in such diagrams, so you should omit unnecessary elements from code diagrams. In many systems, especially smaller ones, this class of diagram is omitted. The target audience is the same as in the case of component diagrams.
+\textbf{代码图}: 最后来看代码图，将组件放大到一定程度时，代码图就会出现。这个视图主要由UML图组成，包括类、实体关系和其他，理想情况下应该由独立的工具和IDE从源代码自动创建。绝对不应该为系统中的每个组件制作这样的关系图;相反，把重点放在最重要的内容上，让它们告诉读者架构想要表达的内容。想要这样的图中少一些，就要从代码图中删掉不必要的元素。在许多系统中，特别是在较小的系统中，这类图会直接省略。目标受众与组件图中的受众相同。
 \end{itemize}
 
-You may find the C4 model lacking some specific views. If you're wondering how to demonstrate how your system should be deployed, for instance, you might be interested to learn that aside from the main diagrams, there are also a few supplementary ones. One of them is the deployment diagram, which you can see next. It shows how containers in your system are mapped to nodes in your infrastructure. In general, it's a simpler version of UML's deployment diagram:
+可能会发现C4模型缺少一些特定的视图。例如，如果想知道如何演示应该如何部署系统，可能会有兴趣了解除了主图之外，还有一些补充图。其中之一是部署图，它展示了如何将系统中的容器映射到基础设施中的节点。通常，其是UML部署图的一个简单版本:
 
 \begin{center}
 \includegraphics[width=0.9\textwidth]{content/1/chapter3/images/8.jpg}\\
-Figure 3.8 – A C4 deployment diagram
+图3.8 - C4部署图
 \end{center}
 
-Speaking of UML diagrams with regard to the C4 model, you might also wonder why it puts such little effort into presenting the system's use cases. If that's your case, then you should think about supplementing the preceding models with either the use case diagram from UML or perhaps think about introducing some sequence diagrams.
+说到与C4模型相关的UML图，可能还要知道为什么它在展示系统的用例上投入了这么少的努力。如果遇到了这种情况，那么应该考虑使用UML的用例图来补充前面的模型，或者可能考虑引入一些序列图。
 
-When documenting architecture, it's more important what you document and what knowledge you share than to follow a specific hard set of rules. Choose whatever tools suit your needs the best.
+在记录架构时，记录的内容和共享的知识比遵循特定的硬性规则更重要。可以选择最适合的工具。
 
 \subsubsubsection{3.6.3\hspace{0.2cm}记录敏捷项目中的架构}
 
-In Agile environments, your approach to documenting architecture should be similar to the one about documenting requirements. First and foremost, consider who will be reading the materials you prepare to be sure you're describing the right things in the right way. Your documentation doesn't need to be a lengthy Word document. You can use presentations, wiki pages, single diagrams, or even recordings from meetings when someone describes the architecture.
+敏捷环境中，记录架构的方法应该与记录需求的方法类似。首先，考虑谁会阅读这些材料，确保以正确的方式描述了正确的事情。文档不需要是一个冗长的Word文档。当有人描述架构时，可以使用演示文稿、Wiki页面、单个图表，甚至是会议的录音进行记录。
 
-What is important is to gather feedback on the documented architecture. Again, in the same way, as with the documented requirements, it's important to reiterate the documents with your stakeholders to know where to improve them. Even though this may seem like you're wasting time, if done properly, it should save you some time in terms of delivering the product. Good enough documentation should help newcomers to start being productive faster and guide more familiar stakeholders down the road. If you just discuss the architecture at some meetings, chances are, a quarter later, no one will remember why you made the decisions you made and whether they will remain valid in the ever-changing, Agile landscape.
+重要的是收集关于文档化架构的反馈。与文档化的需求一样，重要的告知相关方文档更新，以便器了解都改进了哪里。尽管这看起来像是在浪费时间，但如果处理得当，会为你节省交付产品的时间。足够好的文档可以帮助新手快速开始工作，并指导更熟悉的责任人。如果只是在一些会议上讨论架构，那么很有可能，会议之后就没有人会记得出于什么原因才做出的那些决策，以及这些决策在不断变化的敏捷环境中是否仍然有效。
 
-Reiteration is important when creating documentation because most probably there will be some misunderstanding of an important detail or two. Other times, you or your stakeholders will gain more knowledge and decide to change things. Be prepared to go through the document at least a few times before it will be considered mature and done. Often, a few conversations over IM, phone, or in-person will help you finish it quicker and address any follow-ups that could arise, so prefer those to emails or other asynchronous ways of communication.
+创建文档时，重复阅读是很重要的，因为很可能会对一两个重要的细节有一些误解。其他时候，架构师或相关方会了解更多的东西，从而对原有的决定进行更改。在文件认为是成熟和完成之前，至少要准备好把它们多看几遍。通常，通过即时通讯工具、电话或面对面的交谈可以更快地完成任务，并解决可能出现的后续问题，所以比起电子邮件或其他异步的沟通方式，架构师可能会更喜欢这些方式。
 
 
 

@@ -3,7 +3,6 @@ Architecture is way too complex a topic to be described by a single big diagram.
 
 Moreover, if you were building a smart house, chances are you would draw some plan of the devices you want to place around. Although not all projects will require such views, since it plays a role in your project, it may be worth adding it. The same approach is also valid for architecture: if you find a different view valuable to the document, you should do it. So, how do you know which views could be valuable? You can try to perform the following steps:
 
-
 \begin{enumerate}
 \item
 Start with the views from either the 4+1 model or the C4 model.
@@ -24,8 +23,7 @@ If you're still not sure which views to document, here's a set of tips:
 
 There are a few things you should think about when choosing what views you should describe in your documentation. We'll describe them shortly here, but if you're interested, you should grab \textit{Rozanski and Woods'} book mentioned in the \textit{Further reading} section.
 
-
-\subsubsubsection{3.7.1\hspace{0.2cm}Functional view}
+\subsubsubsection{3.7.1\hspace{0.2cm}功能视图}
 
 If your software is being developed as part of a bigger system, especially with teams that don't communicate on a daily basis, you should include a functional view (as in the 4+1 model).
 
@@ -33,15 +31,13 @@ One important and often overlooked aspect of documenting your architecture is th
 
 Another great benefit of including a functional view in your documentation is that it clarifies the responsibilities between components of your system. Each team developing the system should understand where the boundaries are and who's responsible for developing which functionality. All requirements should be explicitly mapped to components to eliminate gaps and duplicated work.
 
-
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
 \hspace*{0.7cm}An important thing to note here is to avoid overloading your functional view. If it gets messy, no one will want to read it. If you're starting to describe infrastructure on it, consider adding a deployment view. If you end up having a God object in your models, try to rethink the design and split it into smaller, more cohesive pieces.
 \end{tcolorbox}
 
 One last important note about the functional view: try to keep each diagram you include on one level of abstraction. On the other hand, don't make it too vague by choosing an overly abstract level; ensure that every element is properly defined and understood by the interested parties.
 
-
-\subsubsubsection{3.7.2\hspace{0.2cm}Information view}
+\subsubsubsection{3.7.2\hspace{0.2cm}信息视图}
 
 If your system has non-straightforward needs with regard to information, its processing flow, management process, or storage, perhaps it's a good idea to include this kind of view.
 
@@ -51,8 +47,7 @@ The structure of your data can be diagrammed using UML class models. Remember to
 
 The processing flow of your data can use UML's activity model, and to show the life cycle of information, a state diagram can be used.
 
-
-\subsubsubsection{3.7.3\hspace{0.2cm}Concurrency view}
+\subsubsubsection{3.7.3\hspace{0.2cm}并发视图}
 
 If running many concurrent units of execution is an important aspect of your product, consider adding a concurrency view. It can show what issues and bottlenecks you may have (unless that sounds too detailed). Other good reasons to include it are the reliance on interprocess communication, having a non-straightforward task structure, concurrent state management, synchronization, or task failure handling logic.
 
@@ -62,10 +57,7 @@ If you're not sure about the need to introduce concurrency to your system, a goo
 
 If, by looking at your diagram, you're worried about resource contention, try to replace locks on big objects with more locks, but finer-grained, use lightweight synchronization (sometimes atomics are enough), introduce optimistic locking, or reduce what's shared (creating an additional copy of some data in a thread and processing it can be faster than sharing access to the only copy).
 
-
-
-
-\subsubsubsection{3.7.4\hspace{0.2cm}Development view}
+\subsubsubsection{3.7.4\hspace{0.2cm}发展视图}
 
 If you're building a big system with lots of modules, and you need to structure your code, have system-wide design constraints, or if you want to share some common aspects  between parts of your system, presenting the solution from a development viewpoint should benefit you, along with software developers and testers.
 
@@ -75,13 +67,11 @@ Tactics to increase reuse in your system, such as creating your own runtime fram
 
 A common approach to code organization, building, and configuration management should also go into this section of your documentation. If all this sounds like a lot to document, then focus on the most important parts and cover the rest just briefly, if at all.
 
-
-\subsubsubsection{3.7.5\hspace{0.2cm}Deployment and operational views}
+\subsubsubsection{3.7.5\hspace{0.2cm}部署和操作视图}
 
 If you have a non-standard or complex deployment environment, such as specific needs with regard to hardware, third-party software or networking requirements, consider documenting it in a separate deployment section, aimed at system administrators, developers, and testers.
 
 If necessary, cover the following things:
-
 
 \begin{itemize}
 \item
@@ -110,7 +100,6 @@ Storage requirements for your app
 
 \item 
 Any third-party software that you plan to use
-
 \end{itemize}
 
 Once you have the requirements, you can map them to specific hardware and put them into a runtime platform model. You can use a UML deployment diagram with stereotypes if you desire formal modeling. This should show your processing nodes and client nodes, online and offline storage, network links, specialized hardware, such as firewalls or FPGA or ASIC devices, and a mapping between functional elements and the nodes they'll run on.
