@@ -1,122 +1,121 @@
 
-Architecture is way too complex a topic to be described by a single big diagram. Imagine you're the architect of a building. To design the whole thing, you'd need separate diagrams for different aspects: one for plumbing, another one for electricity and other cables, and so on. Each of those diagrams would show a different view of the project. The same goes for software architecture: you need to present the software from different perspectives, aimed at different stakeholders.
+架构是一个过于复杂的主题，无法用一个大图表来描述。假设一幢建筑的建筑师，为了设计整个建筑，需要不同视角的独立图表:一个用于设计管道，另一个用于部署电力和其他电缆等。每个图都显示了项目的不同方面。软件架构也是如此:需要从不同的角度，针对不同的受众来展示软件。
 
-Moreover, if you were building a smart house, chances are you would draw some plan of the devices you want to place around. Although not all projects will require such views, since it plays a role in your project, it may be worth adding it. The same approach is also valid for architecture: if you find a different view valuable to the document, you should do it. So, how do you know which views could be valuable? You can try to perform the following steps:
+此外，如果正在建造一座智能楼宇，很有可能需要规划出想要放置的设备的计划。尽管不是所有的项目都需要，但在当前的项目中需要，所以需要添加。同样的方法也适用于架构:如果发现一个不同的视图对文档有价值，那么就应该这样做。那么，如何知道哪些视图可能是有价值的呢？您可以尝试以下步骤:
 
 \begin{enumerate}
 \item
-Start with the views from either the 4+1 model or the C4 model.
+从4+1模型或C4模型的视图开始。
 
 \item 
-Ask your stakeholders what is essential for them to have documented and think about modifying your set of views.
+询问您的相关方，对他们文档化来说什么是必要的，并考虑修改视图集。
 
 \item
-Choose views that will help you to evaluate whether the architecture meets its objectives and that all the ASRs are satisfied. Read the first paragraph of each of the views from the next sections to check whether they suit your needs.
+选择可以评估体系结构是否满足其目标，以及是否满足所有ASR的视图。阅读下一节中每个视图的第一段，检查它们是否适配需要。
 \end{enumerate}
 
 If you're still not sure which views to document, here's a set of tips:
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}Try to just pick the most important views, because when there are too many of them, the architecture will become too hard to follow. A good set of views should not only showcase the architecture but also expose the technical risks to the project.
-
+\hspace*{0.7cm}尝试只选择最重要的视图，因为当它们太多时，体系结构将变得难以理解。好的视图不仅应该展示架构，还应该向项目暴露技术风险。
 \end{tcolorbox}
 
-There are a few things you should think about when choosing what views you should describe in your documentation. We'll describe them shortly here, but if you're interested, you should grab \textit{Rozanski and Woods'} book mentioned in the \textit{Further reading} section.
+选择应该在文档中描述哪些视图时，需要进行考虑。在这里简要地描述它们，但如果感兴趣，可以在\textit{扩展阅读}部分中找到\textit{Rozanski和Woods}的书，并进行阅读。
 
 \subsubsubsection{3.7.1\hspace{0.2cm}功能视图}
 
-If your software is being developed as part of a bigger system, especially with teams that don't communicate on a daily basis, you should include a functional view (as in the 4+1 model).
+若软件是作为更大的系统的一部分开发，特别是与不进行日常交流的团队一起开发，那么就应该包括一个功能视图(就像在4+1模型中那样)。
 
-One important and often overlooked aspect of documenting your architecture is the definition of the interfaces you provide, despite it being one of the most important things to describe. Whether it's an interface between two of your components or an entry point for the outside world, you should take the time to document it clearly, describing the semantics of objects and calls, as well as usage examples (which you can sometimes reuse as tests).
+在为架构编写文档时，接口的定义是最需要描述的事情，也是经常忽视的。无论是两个组件之间的接口，还是外部世界的入口点，都应该花时间进行完备地记录，描述对象和调用的语义，以及使用示例(有时可以作为测试重用)。
 
-Another great benefit of including a functional view in your documentation is that it clarifies the responsibilities between components of your system. Each team developing the system should understand where the boundaries are and who's responsible for developing which functionality. All requirements should be explicitly mapped to components to eliminate gaps and duplicated work.
+文档中包含功能视图的另一个好处是，阐明了系统组件之间的职责。每个开发系统的团队都应该了解边界在哪里，谁负责开发哪些功能。所有需求都应该显式地映射到组件，以消除差距和重复的工作。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}An important thing to note here is to avoid overloading your functional view. If it gets messy, no one will want to read it. If you're starting to describe infrastructure on it, consider adding a deployment view. If you end up having a God object in your models, try to rethink the design and split it into smaller, more cohesive pieces.
+\hspace*{0.7cm}这里需要注意的事情是避免重载函数视图。如果弄得一团糟，就没人想看了。如果开始仅在视图上描述基础设施，那么可以考虑添加一个部署视图。如果在模型中有一个上帝对象，试着重新思考设计，把它分成更小的，更内聚的组件。
 \end{tcolorbox}
 
-One last important note about the functional view: try to keep each diagram you include on one level of abstraction. On the other hand, don't make it too vague by choosing an overly abstract level; ensure that every element is properly defined and understood by the interested parties.
+关于功能视图的最后一个注意事项:尽量将包含的每个图维持在同一个抽象级别上。另一方面，不要选择过于抽象的层次而使它过于模糊，从而确保相关方对每个元素都能正确的定义和理解。
 
 \subsubsubsection{3.7.2\hspace{0.2cm}信息视图}
 
-If your system has non-straightforward needs with regard to information, its processing flow, management process, or storage, perhaps it's a good idea to include this kind of view.
+如果系统对信息、处理流、管理过程或存储有非直接的需求，那么需要包含这种视图。
 
-Take the most important, data-rich entities and demonstrate how they flow through the system, who owns them, and who the producers and consumers are. It may be useful to mark how long certain data remains "fresh" and when it can be safely discarded, what the expected latency for it to arrive at certain points of the system is, or how to deal with identifiers if your system works in a distributed environment. If your system manages transactions, this process, along with any rollbacks, should also be clear to your stakeholders. Techniques for transforming, sending, and persisting data can also be important for some of them. If you are operating in the financial domain or have to deal with personal data, you most probably must obey some regulations, so describe how your system plans to tackle this.
+选取最重要的、数据丰富的实体，展示如何在系统中流动，谁拥有它们，以及谁是生产者和消费者。标记某些数据的保质期，以及何时可以安全地丢弃，到达系统的特定点的预期延迟是什么，或者如果系统工作在分布式环境中，如何处理标识符，这些可能是有用的。如果系统管理事务，则相关方也应该清楚这个过程以及任何回滚。转换、发送和持久化数据的技术也很重要。如果从事金融领域的业务或必须处理个人数据，很可能需要遵守一些规定，因此请描述系统计划如何解决这一问题。
 
-The structure of your data can be diagrammed using UML class models. Remember to be clear about the format of your data, especially if it flows between two different systems. NASA lost the \$125 million-worth Mars Climate Orbiter, which it co-developed with Lockheed Martin, because they used different units unknowingly, so keep an eye out for data inconsistencies between systems.
+数据的结构可以用UML类模型来表示。要清楚数据的格式，特别是在两个不同的系统之间交互时。这是它与洛克希德·马丁公司共同开发的，因为他们在不知情的情况下使用了不同的单位，从而导致NASA失去了价值1.25亿美元的火星气候轨道器，所以要注意系统之间的数据不一致。
 
-The processing flow of your data can use UML's activity model, and to show the life cycle of information, a state diagram can be used.
+数据的处理流程可以使用UML的活动模型，并且可以使用状态图来显示信息的生命周期。
 
 \subsubsubsection{3.7.3\hspace{0.2cm}并发视图}
 
-If running many concurrent units of execution is an important aspect of your product, consider adding a concurrency view. It can show what issues and bottlenecks you may have (unless that sounds too detailed). Other good reasons to include it are the reliance on interprocess communication, having a non-straightforward task structure, concurrent state management, synchronization, or task failure handling logic.
+如果运行许多并发执行单元对产品很重要，请考虑添加并发视图。它可以显示可能遇到的问题和瓶颈(除非听起来太详细)。使用它的其他原因是依赖于进程间通信、具有非直接的任务结构、并发状态管理、同步或任务失败处理逻辑。
 
-Use whatever notation you want for this view, as long as it captures the units of execution and their communication. Assign priorities to your processes and threads, if necessary, and then analyze any potential issues, such as deadlocks or contention. You can use state diagrams to show the possible states and their transitions for important units of execution (waiting for queries, executing a query, distributing results, and so on).
+可以为这个视图使用想要的表示法，只要它可以捕获执行单元及其通信。如果需要，为进程和线程分配优先级，然后分析任何潜在问题，例如死锁或争用。可以使用状态图来显示可能的状态以及重要执行单元(等待查询、执行查询、分发结果等)的转换。
 
-If you're not sure about the need to introduce concurrency to your system, a good rule of thumb is \textit{don't}. And if you must, strive for a simple design. Debugging concurrency issues is never easy and always long, so if possible, try to optimize what you have first instead of just throwing more threads at the problem at hand.
+如果不确定是否需要将并发性引入系统，好的经验法则是\textit{不要做}。如果必须的话，尽量设计得简单一些。调试并发性问题从来都不是一件容易的事情，而且时间花费总是很长。因此，可能的话，首先尝试优化现有的问题，而不是抛出更多的线程来处理手头的问题。
 
-If, by looking at your diagram, you're worried about resource contention, try to replace locks on big objects with more locks, but finer-grained, use lightweight synchronization (sometimes atomics are enough), introduce optimistic locking, or reduce what's shared (creating an additional copy of some data in a thread and processing it can be faster than sharing access to the only copy).
+查阅图后，若担心资源争用，可以尝试用更多的锁替换大对象上的锁，这样的粒度会更细，使用轻量级同步(有时原子就足够了)，引入乐观锁，或者减少共享的内容(在线程中创建一些数据的外副本，并对其进行处理可能比共享访问唯一副本更快)。
 
 \subsubsubsection{3.7.4\hspace{0.2cm}发展视图}
 
-If you're building a big system with lots of modules, and you need to structure your code, have system-wide design constraints, or if you want to share some common aspects  between parts of your system, presenting the solution from a development viewpoint should benefit you, along with software developers and testers.
+如果正在构建一个包含许多模块的大型系统，并且需要结构化代码，拥有系统范围的设计约束，或者如果想在系统的各个部分之间共享，那么从开发的角度展示解决方案应该会使架构师，软件开发人员和测试人员更了解这个系统。
 
-A package diagram of the development view can be handy to show where different modules in your system are located, what their dependencies are, and other related modules (for example, residing in the same software layer). It doesn't need to be a UML diagram – even boxes and lines would do. If you plan for a module to be replaceable, this kind of diagram can show you what other software packages can be affected.
+开发视图的包图可以明确地展示系统中不同的模块位于何处，依赖关系是什么，以及其他相关的模块(例如，驻留在同一个软件层)。不需要是UML图—即使是框和行也可以。如果计划一个模块是可替换的，这种图表可以显示出有哪些软件包可能会受到影响。
 
-Tactics to increase reuse in your system, such as creating your own runtime framework for components, or tactics for increasing the coherence of your systems, such as a common approach to authentication, logging, internationalization, or other kinds of processing, are all part of the development view. If you see any common parts of the system, document it to be sure that all developers see them too.
+增加系统重用的策略，例如：为组件创建运行时框架，或者增加系统一致性策略。认证、日志、国际化或其他类型的处理的通用方法，都是开发视图的一部分。可以将系统可见的公共部分记录下来，以确保所有开发人员也能看到。
 
-A common approach to code organization, building, and configuration management should also go into this section of your documentation. If all this sounds like a lot to document, then focus on the most important parts and cover the rest just briefly, if at all.
+通用的代码组织、构建和配置管理方法，也应该出现在文档中。如果所有这些听起来都需要记录，那么就专注于最重要的部分，并简要介绍其余部分。
 
 \subsubsubsection{3.7.5\hspace{0.2cm}部署和操作视图}
 
-If you have a non-standard or complex deployment environment, such as specific needs with regard to hardware, third-party software or networking requirements, consider documenting it in a separate deployment section, aimed at system administrators, developers, and testers.
+如果有一个非标准的或复杂的部署环境，例如关于硬件、第三方软件或网络需求的特定需求，针对系统管理员、开发人员和测试人员，可以考虑将其记录在一个单独的部署部分中。
 
-If necessary, cover the following things:
+如有必要，应包括下列内容:
 
 \begin{itemize}
 \item
-The amount of memory required
+所需内存
 
 \item 
-The CPU thread count (with or without hyperthreading)
+CPU线程数(有或没有超线程)
 
 \item 
-Pinning and affinity with regard to NUMA nodes
+关于NUMA节点的亲和性
 
 \item 
-Specialist networking equipment requirements, such as switches that mark
+专业网络设备的要求，如交换机标记
 
 \item 
-packages to measure latency and throughput in a black-box manner
+以黑盒方式度量延迟和吞吐量的包
 
 \item 
-The networking topology
+网络拓扑结构
 
 \item 
-The estimated bandwidth required
+估计所需带宽
 
 \item 
-Storage requirements for your app
+应用程序的存储要求
 
 \item 
-Any third-party software that you plan to use
+计划使用到的第三方软件
 \end{itemize}
 
-Once you have the requirements, you can map them to specific hardware and put them into a runtime platform model. You can use a UML deployment diagram with stereotypes if you desire formal modeling. This should show your processing nodes and client nodes, online and offline storage, network links, specialized hardware, such as firewalls or FPGA or ASIC devices, and a mapping between functional elements and the nodes they'll run on.
+有了需求，就可以将它们映射到特定的硬件，并将它们放入运行时平台模型中。如果想要正式建模，可以使用带有构造型的UML部署图。这应该显示处理节点和客户机节点、在线和离线存储、网络链接、专门的硬件(如防火墙、FPGA或ASIC设备)，以及功能元素和运行节点之间的映射。
 
-If you have non-straightforward networking needs, you can add another diagram showing the networking nodes and the connections between them. 
+如果有非直接的网络需求，可以添加另一个图来显示网络节点和它们之间的连接。
 
-If you depend on specific technologies (including specific versions of software), it's a good idea to list them to see whether there are any compatibility issues between the software you use. Sometimes, two third-party components will require the same dependency, but in different versions.
+如果依赖于特定的技术(包括软件的特定版本)，最好将它们列出来，以查看所使用的软件是否存在兼容性问题。有时，两个第三方组件需要相同的依赖关系，但版本不同。
 
-If you have a specific installation and upgrade plan in your head, it might be a good idea to write a few words about it. Things such as A/B testing, blue-green deployments, or any particular container magic that your solution will rely on should be clear to everyone involved. Data migration plans should also be covered, if needed, including how long the migration can take and when it could be scheduled.
+如果头脑中有一个特定的安装和升级计划，写几句话来说明可能是个好主意。解决方案所依赖的A/B测试、蓝绿部署或特定容器的使用技巧，相关人员都很应该很清楚。如果需要，还应该包括数据迁移计划，包括迁移需要多长时间，以及何时可以安排迁移。
 
-Any plans for configuration management, performance monitoring, operational monitoring, and control, as well as backup strategies, can all be things worth describing. You'll probably want to create a few groups, identify the dependencies of each, and define the approach for each such group. If you can think about any probable errors that may occur, have a plan to detect and recover from them.
+配置管理、性能监视、操作监视和控制，以及备份策略的计划都值得描述。可能需要创建几个组，确定每个组的依赖关系，并为每个组定义方法。如果能够考虑到可能发生的错误，就制定一个计划来检测，并尝试从错误中恢复。
 
-A few notes to the support team can also go into this section: what support is required by which stakeholder group, what classes of incidents you plan to have, how to escalate, and what each level of support will be responsible for.
+对支持团队的注意事项也可以进入这个部分:哪个相关方需要什么支持，计划有什么类别的事件，如何升级，以及每个级别的支持将负责什么。
 
-It's best to engage early with the operational staff and create diagrams specifically for them in order to keep them engaged.
+最好尽早与一线人员接触，并为他们专门创建图表，以保持他们的参与度。
 
-Now that we've discussed how to create documentation about your system and its requirements manually, let's switch to documenting your APIs in an automated manner.
+已经讨论了如何手动创建关于系统及其需求的文档，接下来切换到以自动化的方式为API编写文档。
 
 
 
