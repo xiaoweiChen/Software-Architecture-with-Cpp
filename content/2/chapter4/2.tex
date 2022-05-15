@@ -1,194 +1,193 @@
 
-There are many types of different software systems, each of them suited for different scenarios, built for different needs, and using different sets of assumptions. Writing and deploying a classical, standalone desktop application is nothing like writing and deploying a microservice that needs to communicate with many others over a network.
+有许多不同类型的软件系统，每一种都适合于不同的场景，为不同的需求构建，并使用不同的假设集。编写和部署一个经典的、独立的桌面应用程序与编写和部署一个需要通过网络与许多其他应用程序通信的微服务完全不同。
 
-In this section, we'll go through the various models that you can use to deploy your software, the common mistakes that people should avoid when creating distributed systems, and some of the compromises people need to make to create such systems successfully
+这一节中，将介绍可以用来部署软件的各种模型，以及在创建分布式系统时会遇到的常见错误，以及为了成功创建这样的系统需要做出的一些妥协
 
-\subsubsubsection{4.2.1\hspace{0.2cm}Different service models and when to use them}
+\subsubsubsection{4.2.1\hspace{0.2cm}不同的服务模型}
 
-Let's first start with service models. When designing a bigger system, you need to decide how much of the infrastructure you will manage versus how much you can build upon existing building blocks. Sometimes, you might want to leverage existing software without the need to manually deploy an app or back up data, for example, by using Google Drive through its API as storage for your app. Other times, you can rely on an existing cloud platform such as Google's App Engine to deploy your solution without the need to worry about providing a language runtime or databases. If you can decide to deploy everything in your own way, you can either leverage an infrastructure from a cloud provider or use your company's one.
+从服务模型开始。当设计一个更大的系统时，需要决定管理多少基础设施，以及可以在现有的构建块上构建多少基础设施。有时，可能希望利用现有的软件，而不需要手动部署应用程序或备份数据，例如，通过其API使用谷歌Drive作为应用程序的存储。可以依赖现有的云平台，如谷歌的App Engine来部署解决方案，而无需担心提供语言运行时或数据库。如果可以决定以自己的方式部署一切，那么可以利用来自云提供商的基础设施，也可以使用公司的基础设施。
 
-Let's discuss the different models and where each can be useful.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{On-premises model}
-
-The classical way, and the only way available in the pre-cloud era, is to just deploy everything on your own premises. You need to buy all the hardware and software required and make sure it will provide enough capacity for your  needs. If you're working for a startup company, this may be a big upfront cost. Along with the growth of your userbase, you need to buy and set up more resources so that your service can deal even with the occasional spikes in load. All this means you need to predict the growth of your solution and act proactively, as there's no way you could just automatically scale depending on the current load.
-
-Even in the cloud era, deploying on-premises is still useful and often spotted in the wild. Sometimes you're dealing with data that shouldn't, or even can't, leave your company's premises, either due to data privacy issues or compliance ones. Other times, you need to have as little latency as possible and you need your own data center to do so. Sometimes you may calculate the costs and decide that in your case, on-premises will be cheaper than a cloud solution. Last, but not least, your company might just already have an existing data center that you can use.
-
-Deploying on-premises doesn't mean you need to have a monolith system. Often, companies have their own private clouds deployed on-premises. This helps to cut costs by better utilization of the available infrastructure. You can also mix a private cloud solution with one of the other service models, which can be useful when you need that extra capacity from time to time. This is called a hybrid deployment and is offered by all major cloud providers as well as provided by OpenStack's Omni project.
+先来了解一下不同的模型，以及它们各自的用处。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Infrastructure as a Service (IaaS) model}
+\textbf{本地(on-premises)模型}
 
-Speaking of other models, the most basic cloud service model is called Infrastructure as a Service (IaaS). It's also the most similar to on-premises: you can think of IaaS as a way to have a virtual data center. As the name suggests, the cloud provider offers you a slice of the infrastructure they host, which consists of three types of resources:
+经典的方法，也是在前云时代可用的唯一方法。在自己部署一切的前提下，需要购买所需的所有硬件和软件，并确保它能提供足够的容量。如果为一家初创公司工作，这可能是一笔很大的前期成本。随着用户基础的增长，需要购买和设置更多的资源，以便服务能够处理偶尔出现的负载高峰。所有这些都意味着需要预测解决方案的增长，并主动采取行动，因为这时不可能根据当前负载继进行自动扩展。
+
+即使在云时代，部署本地部署仍然很有用，而且经常在云外使用。有时，由于数据隐私问题或遵从性问题，不能处理的数据，甚至不能离开公司。其他时候，需要尽可能少的延迟，并且需要有自己的数据中心来进行实现。有时，可能会计算成本，并且需要确定在本地部署比云解决方案的开销更低。最后，但并非最不重要的是，公司可能已经有了可以使用的数据中心。
+
+本地部署并不意味着需要一个完整的系统。通常，公司有自己的私有云部署在内部。可以通过更好地利用可用的基础设施来降低成本。还可以将私有云解决方案与其他服务模型混合使用，这在不时需要额外容量时非常有用，这也称为混合部署，由所有主流云提供商，以及OpenStack的Omni项目都会提供这样的服务。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{基础设施即服务(IaaS)模型}
+
+谈到其他模型，最基本的云服务模型称为基础设施即服务(IaaS)。它也是最类似于内部部署的:可以将IaaS视为拥有虚拟数据中心的一种方式。顾名思义，云提供商提供他们托管的基础设施，其中包含三种类型的资源:
 
 \begin{itemize}
 \item 
-Compute, such as virtual machines, containers, or bare-metal machines (excluding operating systems)
+计算。例如虚拟机、容器或裸机(不包括操作系统)
 
 \item 
-Networking, which aside from the network itself includes DNS servers, routing, and firewalls
+网络。除了网络本身，还包括DNS服务器、路由和防火墙
 
 \item 
-Storage, including backup and recovery capabilities
+存储。包括备份和恢复能力
 \end{itemize}
 
-It's still up to you to provide all the software: operating systems, middleware, and your applications.
+提供所有软件仍然取决于:操作系统、中间件和应用程序。
 
-IaaS can be used in scenarios ranging from hosting websites (might be cheaper than traditional web hosting), through storage (for example, Amazon's S3 and Glacier services), to high-performance computing and big data analysis (requires huge computing power). Some companies use it to quickly set up and purge test and development environments when needed.
+IaaS可以用于各种场景，从托管网站(可能比传统的网站托管更便宜)，通过存储(例如，亚马逊的S3和冰川服务)，到高性能计算和大数据分析(需要巨大的计算能力)。一些公司使用它在需要时快速设置和清除测试和开发环境。
 
-Using IaaS instead of on-premises infrastructure can be a cheap way to test new ideas while saving you the time needed for configuration. 
+使用IaaS而不是本地基础设施是测试新想法的一种低开销方案，同时可以节省配置所需的时间。
 
-If your service observes spikes in usage, for example, during the weekends, you might want to leverage your cloud's automatic scaling capabilities: scale up when needed and scale back down later to save money. 
+如果服务观察到使用的高峰期(例如在周末)，可能希望利用云的自动扩展能力:在需要时向上扩展，过了高峰期后再向下扩展，以节省成本。
 
-IaaS solutions are offered by all the popular cloud service providers.
+所有云服务提供商都提供IaaS解决方案。
 
-A similar concept, sometimes thought of as a subset of IaaS, is \textbf{Containers as a Service (CaaS)}. In CaaS, instead of bare-metal systems and virtual machines, the service provides you with containers and orchestration capabilities that you can use to build your own container clusters. CaaS offerings can be found with Google Cloud Platform and AWS, among others.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Platform as a Service (PaaS) model}
-
-If the infrastructure itself is not enough for your needs, you can use the Platform as a Service (PaaS) model instead. In this model, the cloud service provider manages not only the infrastructure (just like in IaaS), but also the operating systems, any required middleware, and the runtime – the platform that you will deploy your software on.
-
-Often a PaaS solution will provide you with app versioning capabilities, service monitoring and discovery, database management, business intelligence, and even development tools.
-
-With PaaS, you're covered throughout the whole development pipeline: from building and testing to deploying, updating, and managing your service. However, PaaS solutions are more costly than IaaS offerings. On the other hand, with the whole platform provided, you can cut the costs and time to develop parts of your software and easily provide the same setup for development teams scattered around the globe.
-
-All main cloud providers have their own offerings, for example, Google App Engine or Azure App Service. There are also independent ones, such as Heroku.
-
-Aside from the more generic PaaS, there's also \textbf{Communications Platform as a Service (CPaaS)}, in which you're provided with the whole communications backend, including audio and video, which you can integrate into your solution. This technology allows you to easily provide video-enabled help desks or just integrate live chats into your apps.
+一个类似的概念，有时认为是IaaS的子集，是\textbf{容器即服务(CaaS)}。在CaaS中，服务不是提供裸机系统和虚拟机，而是提供容器和编排功能，可以使用它们构建自己的容器集群。CaaS产品可以在谷歌云平台和AWS中找到。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Software as a Service (SaaS) model}
+\textbf{平台即服务(PaaS)模型}
 
-Sometimes you might not want to develop a software component on your own and just want to use an existing one. Software as a Service (SaaS) basically gives you a hosted application. With SaaS, you don't need to worry about either the infrastructure or the platform built upon it, and not even about the software itself. The provider is responsible for installing, running, updating, and maintaining the whole software stack, as well as backups, licensing, and scaling.
+如果基础设施本身不能满足需求，可以使用平台即服务(PaaS)模型。这个模型中，云服务提供商不仅管理基础设施(就像在IaaS中一样)，还管理操作系统、任何必需的中间件和运行时(可以部署软件的平台)。
 
-There's quite a variety to what software you can get in the SaaS model. Examples vary from office suites such as Office 365 and Google Docs to messaging software such as Slack, through \textbf{Customer Relationship Management (CRM)} systems, and span even to gaming solutions such as cloud gaming services, allowing you to play resource-hungry video games hosted on the cloud.
+通常，PaaS解决方案将提供程序版本控制功能、服务监视和发现、数据库管理、商业智能，甚至开发工具。
 
-Usually, to access such services, all you need is a browser, so this can be a great step in providing remote work capabilities for your employees.
+使用PaaS的整个开发过程都会涉及:从构建和测试到部署、更新和管理服务。然而，PaaS解决方案比IaaS产品成本更高。另一方面，通过提供整个平台，可以减少开发部分软件的成本和时间，并轻松地为分布在全球的开发团队提供相同的设置。
 
-You can create your own SaaS applications and provide them to users either by deploying them however you like, or through means such as AWS Marketplace.
+所有主流的云提供商都有自己的产品，例如谷歌App Engine或Azure App Service。也有一些独立的，如Heroku。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Function as a Service (FaaS) model and serverless architecture}
-
-With the advent of cloud-native, another model that is growing in popularity is Function as a Service (FaaS). It can be helpful if you want to achieve a serverless architecture. With FaaS, you get a platform (similarly to PaaS) on which you can run short-lived applications, or functions.
-
-With PaaS, you typically always need to have at least one instance of your service running, while in FaaS you can run them only when they're actually needed. Running your function can make the time to handle requests longer (measured in seconds; you need to launch the function after all). However, some of those requests can be cached to reduce both the latency and costs. Speaking about costs, FaaS can get way more expensive than PaaS if you run the functions for a long time, so you must do the math when designing your system.
-
-If used correctly, FaaS abstracts away the servers from the developers, can reduce your costs, and can provide you with better scalability, as it can be based on events, not resources. This model is commonly used for running prescheduled or manually triggered tasks, processing batches or streams of data, and handling incoming, not-so-urgent requests. A few popular providers of FaaS are AWS Lambda, Azure Functions, and Google Cloud Functions.
-
-Now that we've covered the common service models in the cloud, let's discuss some of the wrong assumptions people make when designing distributed systems.
-
-\subsubsubsection{4.2.2\hspace{0.2cm}Avoiding the fallacies of distributed computing}
-
-When people new to distributed computing begin their journey with designing such systems, they tend to forget or ignore a few aspects of such systems. Although they were first noticed back in the 90s, they remain current today.
-
-The fallacies are discussed in the following sub-sections. Let's have a quick rundown on each of them.
+除了更通用的PaaS之外，还有\textbf{通信平台即服务(CPaaS)}，可以得到整个通信后端，包括音频和视频，可以将它们集成到解决方案中。这项技术可以提供视频支持的帮助，或者只是将实时聊天集成到应用程序中。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{The network is reliable}
+\textbf{软件即服务(SaaS)模型}
 
-Networking equipment is designed for long years of flawless operation. Despite that, many things can still cause packet loss, ranging from power outages through poor wireless networking signal, configuration errors, someone tripping over a cable, or even animals biting through wires. For instance, Google had to protect their underwater cables with Kevlar because they were being bitten by sharks (yes, really). You should always assume that data can get lost somewhere over the network. Even if that doesn't happen, software issues can still occur on the other side of the wire.
+有时，可能不想自己开发软件组件，而只想使用现有的组件。软件即服务(SaaS)基本上提供了一个托管应用程序。使用SaaS，不需要担心基础设施或构建在其上的平台，甚至不需要担心软件本身。提供商负责安装、运行、更新和维护整个软件堆栈，以及备份、许可和扩展。
 
-To fend off such issues, be sure you have a policy for automatically retrying failed network requests and a way to handle common networking issues. When retrying, try to not overload the other party and not commit the same transaction multiple times. You can use a message queue to store and retry sending for you.
+在SaaS模型中，可以得到各种各样的软件。示例从office 365和谷歌Docs这样的办公套件到Slack这样的信息软件，通过\textbf{客户关系管理(CRM)}系统，甚至延伸到游戏解决方案，如云游戏服务，允许玩托管在云上的视频游戏。
 
-Patterns such as circuit breaker, which we'll show later in this chapter, can also help. Oh, and be sure to not just wait infinitely, hogging up resources with each failed request.
+通常，要访问这些服务，只需要一个浏览器，所以这可能是为公司员工提供远程工作能力的重要一步。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Latency is zero}
-
-Both the network and the services you're running have to take some time to respond even under normal conditions. Occasionally they'll have to take longer, especially when being under a bigger-than-average load. Sometimes instead of a few milliseconds, your requests can take seconds to complete.
-
-Try to design your system so it doesn't wait on too many fine-grained remote calls, as each such call can add to your total processing time. Even in a local network, 10,000 requests for 1 record will be much slower than 1 request for 10,000 records. To reduce network latency, consider sending and handling requests in bulk. You can also try to hide the cost of small calls by doing other processing tasks while waiting for their results.
-
-Other ways to deal with latency are to introduce caches, push the data in a publishersubscriber model instead of waiting for requests, or deploy closer to the customers, for example, by using \textbf{Content Delivery Networks} (\textbf{CDN}s).
+可以创建自己的SaaS应用程序，并通过喜欢的方式或AWS Marketplace等方式向用户提供服务。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Bandwidth is infinite}
+\textbf{功能即服务(FaaS)模型和无服务器架构}
 
-When adding a new service to your architecture, make sure you take note of how much traffic it's going to use. Sometimes you might want to reduce the bandwidth by compressing the data or by introducing a throttling policy.
+随着原生云的出现，另一种日益流行的模型是功能即服务(FaaS)。如果想要实现一个无服务器的架构，这个模型会很有帮助。使用FaaS，可以获得一个平台(类似于PaaS)，可以在其上运行短期应用程序或功能。
 
-This fallacy also has to do with mobile devices. If the signal is weak, often the network will become the bottleneck. This means the amount of data a mobile app uses should generally be kept low. Using the \textit{Backends for Frontends} pattern described in \textit{Chapter 2, Architectural Styles}, can often help save precious bandwidth.
+在PaaS中，通常需要至少运行一个服务实例。而在FaaS中，只能在实际需要时运行它们。运行函数可以使处理请求的时间更长(以秒为单位，需要启动该函数)。但是，可以缓存其中一些请求，以减少延迟和成本。谈到成本，如果要长时间运行这些功能，FaaS的成本可能比PaaS高得多，因此在设计系统时必须进行计算。
 
-If your backend needs to transfer lots of data between some components, try to make sure such components are close together: don't run them in separate data centers. With databases, this often boils down to better replication. Patterns such as CQRS (discussed later in this chapter) are also handy.
+如果使用正确，FaaS将服务器从开发人员那里抽象出来，因为它可以基于事件，而不是资源，所以可以降低成本，并且提供更好的可扩展性。该模型通常用于运行预定的或手动触发的任务，处理批量或数据流，以及处理传入的不那么紧急的请求。一些流行的FaaS提供商有AWS Lambda、Azure Functions和谷歌Cloud Functions。
+
+已经讨论了云中常见的服务模型，现在来了解在设计分布式系统时所做的一些错误假设。
+
+\subsubsubsection{4.2.2\hspace{0.2cm}避免分布式计算的错误}
+
+当刚接触分布式计算的人开始设计这类系统时，往往会忘记或忽略这类系统的一些方面。虽然早在90年代就有人注意到了，但现在仍然存在。
+
+这些错误将在下面的小节中讨论。让我们先了解它们一下。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{The network is secure}
+\textbf{可靠的网络}
 
-This is a dangerous fallacy. A chain is only as strong as its weakest link, and unfortunately, there are many links in distributed systems. Here are a few ways to make those links stronger:
+网络设备是为长期完美运行而设计的。尽管如此，仍然会发生包丢失的情况，其原因包括由于无线网络信号不良而导致的停电、配置错误、有人被电缆绊倒，甚至是动物咬断电线。例如，谷歌必须用凯夫拉尔纤维保护他们的水下电缆，因为他们被鲨鱼咬怕了(是的，真的)。应该始终假定数据可能在网络的某个地方丢失。即使没有发生这种情况，软件问题仍然可能在网络的另一端发生。
+
+要避免此类问题，请确保有自动重试失败网络请求的策略，以及处理常见网络问题的方法。在重试时，尽量不要使另一方超载，也不要多次提交相同的事务。可以使用消息队列存储并重新发送。
+
+像断路器这样的模式，将在本章后面展示，也会有帮助。哦，还要确保不要无限等待，因为每次失败的请求都会占用资源。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{为零的延迟}
+
+即使在正常情况下，运行的网络和服务也需要一些时间来响应。有时需要花更长的时间，特别是当负载大于平均水平时。有时，请求可能需要几秒钟才能完成，而不是几毫秒。
+
+尝试设计系统，使它不会等待太多细粒度的远程调用，因为每个这样的调用都会增加总处理时间。即使在本地网络中，1万条记录的1万条请求，也要比1万条记录的1条请求慢得多。为了减少网络延迟，请考虑批量发送和处理请求。还可以尝试通过在等待结果的同时，执行其他处理任务来隐藏小调用的成本。
+
+其他处理延迟的方法是引入缓存，在发布者-订阅者模型中推送数据而不是等待请求，或者部署更靠近客户，例如使用\textbf{内容分发网络(CDN)}。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{无限的带宽}
+
+在向架构添加新服务时，请确保注意它将使用多少流量。有时，可能希望通过压缩数据或引入节流策略来降低带宽。
+
+这种错误也与移动设备有关。如果信号较弱，往往网络会成为瓶颈。这意味着手机应用使用的数据量通常应该保持在较低水平。使用\textit{面向前端的后端}中描述的模式(第2章)可以帮助节省宝贵的带宽。
+
+如果后端需要在一些组件之间传输大量数据，请确保这些组件是紧密连接在一起的:不要在单独的数据中心运行。对于数据库，这通常可以归结为复制。像CQRS(本章后面会讨论)这样的模式也很方便。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{安全的网络}
+
+这是一个危险的假设。一条链的强度取决于它最薄弱的环节，不幸的是，在分布式系统中有许多环节。下面是一些增强链接的方法:
 
 \begin{itemize}
 \item 
-Be sure to always apply security patches to every component that you use, to your infrastructure, operating systems, and other components.
+一定要始终对使用的每个组件、基础设施、操作系统和其他组件应用安全补丁。
 
 \item 
-Train your personnel and try to protect your system from the human factor; sometimes it's a rogue employee that compromises a system.
+培训你的员工，努力保护系统不受人为因素的影响。有时，就是一个流氓员工破坏了系统。
 
 \item 
-If your system will be online, it will get attacked, and it's possible that a breach will happen at one point. Be sure to have a written plan on how to react to such events.
+如果系统处于在线状态，就会受到攻击，并且有可能在某一点上发生漏洞。一定要有如何应对此类事件的书面计划。
 
 \item 
-You might have heard about the defense in depth principle. It boils down to having different checks for different parts of your system (your infrastructure, your applications, and so on) so that when a breach happens, its range, and the associated damage, will be limited.
+可能听说过纵深防御原则。这可以归结为对系统的不同部分(基础设施、应用程序等等)进行不同的检查，以便在发生漏洞时，其范围和相关的损害将得到限制。
 
 \item 
-Use firewalls, certificates, encryption, and proper authentication.
+使用防火墙、证书、加密和适当的身份验证。
 \end{itemize}
 
-For more on security, refer to \textit{Chapter 10, Security in Code and Deployment}.
-
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Topology doesn't change}
-
-This one became especially true in the microservices era. Autoscaling and the emergence of the cattle, not pets approach to managing infrastructure mean that the topology will constantly change. This can affect latency and bandwidth, so some of this fallacy's outcomes are the same as the ones described earlier.
-
-Fortunately, the mentioned approach also comes with guidelines on how to effectively manage your herd of servers. Relying on hostnames and DNS instead of hardcoding IPs is a step in the right direction, and service discovery, described later in this book, is another one. A third, even bigger, step is to always assume your instances can fail and automate reacting to such scenarios. Netflix's Chaos Monkey tool can also help you test your preparedness.
+关于安全性的更多信息，请参考\textit{第10章}。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{There is one administrator}
+\textbf{不变的拓扑结构}
 
-The knowledge about distributed systems, due to their nature, is often distributed itself. Different people are responsible for the development, configuration, deployment, and administration of such systems and their infrastructure. Different components are often upgraded by different people, not necessarily in sync. There's also the so-called bus factor, which in short is the risk factor for a key project member being hit by a bus.
+这一点在微服务时代尤其正确。自动扩展和“牛”不是“宠物”的基础设施管理方法，意味着拓扑结构将不断变化。这可能会影响延迟和带宽，因此这种假设的一些结果与前面描述的相同。
 
-How do we deal with all of this? The answer consists of a few parts. One of them is the DevOps culture. By facilitating close collaboration between development and operations, people share the knowledge about the system, thus reducing the bus factor. Introducing continuous delivery can help with upgrading the project and keeping it always up.
-
-Try to model your system to be loosely coupled and backward compatible, so upgrades of components don't require other components to be upgraded too. An easy way to decouple is by introducing messaging between them, so consider adding a queue or two. It will help you with downtime during upgrades as well.
-
-Finally, try to monitor your system and gather logs in a centralized place. Decentralization of your system shouldn't mean you now need to manually look at logs at a dozen different machines. The \textbf{ELK (Elasticsearch, Logstash, Kibana)} stack is invaluable for this. Grafana, Prometheus, Loki, and Jaeger are also very popular, especially with Kubernetes. If you're looking for something more lightweight than Logstash, consider Fluentd and Filebeat, especially if you're dealing with containers.
+幸运的是，上述方法还提供了关于如何有效管理服务器群的指导方针。依赖主机名和DNS而不是硬编码IP是朝着正确方向迈出的一步，本书后面将介绍的服务发现是另一个步骤。第三步(更大的一步)是始终假设实例可能会失败，并自动对此类场景做出反应。Netflix的Chaos Monkey工具也可以对相应的情况进行测试。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Transport cost is zero}
+\textbf{只有一个管理员}
 
-This fallacy is important for planning your project and its budget. Building and maintaining a network for a distributed system costs both time and money, regardless of whether you deploy on-premises or in the cloud – it's just a matter of when you pay the cost. Try to estimate the costs of the equipment, the data to be transferred (cloud providers charge for this), and the required manpower.
+关于分布式系统的知识，由于其性质，通常是分布式的。不同的人负责此类系统，及其基础设施的开发、配置、部署和管理。不同的组件通常由不同的人进行升级，不一定是同步的。还有所谓的总线因素，简而言之，就是项目关键成员被总线撞到的风险因素。
 
-If you're relying on compression, be wary that while this reduces networking costs, it can increase the price for your compute. In general, using binary APIs such as gRPC-based will be cheaper (and faster) than JSON-based ones, and those are still cheaper than XML. If you send images, audio, or video, it's a must to estimate how much this will cost you.
+该如何应对这一切？答案由几个部分组成，其中之一就是DevOps文化。通过促进开发和操作之间的密切协作，可以共享关于系统的知识，从而减少总线因素。引入持续交付可以帮助升级项目并使其始终保持正常运行。
+
+尝试对系统进行松散耦合和向后兼容的建模，这样组件的升级就不需要对其他组件也进行升级。一种简单的解耦方法是在它们之间引入消息传递，因此可以考虑添加一个或两个队列。它将有助于确定在升级期间的停机时间。
+
+最后，尝试监视系统，并在一个集中的地方收集日志。分散系统不应该意味着您现在需要在十几台不同的机器上手动查看日志。\textbf{ELK(Elasticsearch, Logstash, Kibana)}栈是非常宝贵的。Grafana, Prometheus, Loki和Jaeger也很受欢迎，尤其是Kubernetes。如果正在寻找比Logstash更轻量级的工具，请考虑Fluentd和Filebeat，尤其是处理容器的时候。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{The network is homogeneous}
+\textbf{传输成本为零}
 
-Even if you plan what hardware to have and what software to run on your network, it's easy to end up with at least some heterogeneity. A slightly different configuration on some of the machines, a different communication protocol used by that legacy system that you need to integrate with, or different mobile phones sending requests to your system are just a few examples of this. Another one is extending your on-premises solution by using additional workers in the cloud.
+这种假设对于计划项目及其预算非常重要。为分布式系统构建和维护网络需要时间和金钱，无论是在本地部署还是在云中部署——只是何时支付成本的问题。试着估算设备、要传输的数据(云提供商为此收费)和所需人力的成本。
 
-Try to limit the number of protocols and formats used, strive to use standard ones, and avoid vendor lock-in to ensure your system can still communicate properly in such heterogeneous environments. Heterogeneity can also mean differences in resiliency. Try to use the circuit breaker pattern along with retries to handle this.
+如果依赖于压缩，请注意，虽然这可以降低网络成本，但它可能会提高计算的成本。通常，使用二进制API(比如基于gRPC的API)将比基于JSON的API更廉价(也更快)，而且也比XML廉价。如果需要发送图像、音频或视频，必须估算一下这将花费多少钱。
 
-Now that we've discussed all the fallacies, let's discuss yet another pretty important aspect of distributed architectures.
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{同构的网络}
 
-\subsubsubsection{4.2.3\hspace{0.2cm}CAP theorem and eventual consistency}
+即使计划在网络上使用什么硬件和运行什么软件，也很容易出现一些异构性。某些机器上略有不同的配置、需要集成的遗留系统使用的不同通信协议，或者向系统发送请求的不同移动电话，这些只是其中的几个例子。另一个是通过在云中使用额外的人工服务来扩展本地的解决方案。
 
-To design successful systems that spread across more than one node, you need to know and use certain principles. One of them is the \textbf{CAP theorem}. It's about one of the most important choices you need to make when designing a distributed system and owes its name to the three properties a distributed system can have. They are as follows:
+尽量限制所使用的协议和格式的数量，尽量使用标准的协议和格式，并避免供应商锁定，以确保系统仍然可以在此类异构环境中正常通信。异构性也可能意味着弹性的差异。尝试使用断路器模式，并重试处理此问题。
+
+现在已经讨论了所有的错误的假设，接下来就来了解分布式架构的另一个非常重要的方面。
+
+\subsubsubsection{4.2.3\hspace{0.2cm}CAP定理和最终一致性}
+
+To design successful systems that spread across more than one node, you need to know and use certain principles. One of them is the \textbf{CAP theorem}. It's about one of the most important choices you need to make when designing a distributed system and owes its name to the three properties a distributed system can have. They are as follows:
 
 \begin{itemize}
 \item 
@@ -217,11 +216,11 @@ In a system offering eventual consistency, on the other hand, you only guarantee
 
 For a system to be asynchronous and eventually consistent (as AP systems often are), it's needed to have a way to solve state conflicts. A common way to do so is to exchange updates between instances and choose either the first or the last write as the accepted one.
 
-Let's now discuss two related patterns that can help in achieving eventual consistency.
+Let's now discuss two related patterns that can help in achieving eventual consistency.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Sagas and compensating transactions}
+\textbf{Sagas机制和补偿事务}
 
 The saga pattern is useful when you need to perform distributed transactions. Before the microservice era, if you had one host with one database, you could rely on the database engine to do the transaction for you. With multiple databases on one host, you  could use\textbf{ Two-Phase Commits (2PCs)} to do so. With 2PCs, you would have a coordinator, who would first tell all the databases to prepare, and once they all report being ready, it would tell them all to commit the transaction.
 
@@ -231,11 +230,12 @@ Instead, you can use the saga pattern. Let's demonstrate it in an example.
 
 Imagine you want to create an online warehouse that tracks how much supply it has and allows payment by credit cards. To process an order, above all other services, you need three: one for processing the order, one for reserving the supplies, and one for charging the card.
 
-Now, there are two ways the saga pattern can be implemented: choreography-based (also called event-based) and orchestration-based (also called command-based).
+Now, there are two ways the saga pattern can be implemented: choreography-based (also called event-based) and orchestration-based (also called command-based).
+
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{Choreography-based sagas}
+\textit{基于无中心协调器的Sagas}
 
 In the first case, the first part of the saga would be the order processing service sending an event to the supply service. This one would do its part and send another event to the payment service. The payment service would then send yet another event back to the order service. This would complete the transaction (the saga), and the order could now be happily shipped.
 
@@ -247,7 +247,7 @@ This way of implementing the saga pattern is pretty straightforward, but if ther
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{Orchestration-based sagas}
+\textit{基于中心化控制器的Sagas}
 
 In this case, we'll need a message broker to handle communication between our services, and an orchestrator that would coordinate the saga. Our order service would send a request to the orchestrator, which would then send commands to both the supply and payment services. Each of those would then do their part and send replies back to the orchestrator, through a reply channel available at the broker. 
 
@@ -255,7 +255,8 @@ In this scenario, the orchestrator has all the logic needed to, well, orchestrat
 
 If the orchestrator is sent a message that one of the services failed, for example, if the credit card has expired, it would then need to start the rollback. In our case, it would again use the broker to send an appropriate rollback command to specific services.
 
-Okay, that's enough about eventual consistency for now. Let's now switch to other topics related to availability.
+Okay, that's enough about eventual consistency for now. Let's now switch to other topics related to availability.
+
 
 
 
