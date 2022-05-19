@@ -1,216 +1,203 @@
 
-Availability and fault tolerance are software qualities that are at least somewhat important for every architecture. What's the point of creating a software system if the system can't be reached? In this section, we'll learn what exactly those terms mean and a few techniques to provide them in your solutions.
+可用性和容错是软件质量，至少对每个体系结构都有一定的重要性。如果系统无法达到，创建一个软件系统还有什么意义呢？本节中，将了解这些术语的确切含义，以及在解决方案中提供的技巧。
 
+\subsubsubsection{4.3.1\hspace{0.2cm}计算系统的可用性}
 
-\subsubsubsection{4.3.1\hspace{0.2cm}Calculating your system's availability}
+可用性是系统正常运行、可用和可访问的时间百分比。导致系统无法响应的崩溃、网络故障或极高的负载(例如，来自DDoS攻击)都会影响其可用性。
 
-Availability is the percentage of the time that a system is up, functional, and reachable. Crashes, network failures, or extremely high load (for example, from a DDoS attack) that prevents the system from responding can all affect its availability.
-
-Usually, it's a good idea to strive for as high a level of availability as possible. You may stumble upon the term counting the nines, as  availability is often specified as 99\% (two nines), 99.9\% (three), and so on. Each additional nine is much harder to obtain, so be careful when making promises. Take a look at the following table to see how much downtime you could afford if you specified it on a monthly basis:
-
+通常，争取尽可能高的可用性是一个好主意。可能会偶然发现计算9的术语，因为可用性通常指定为99\%(两个9)，99.9\%(三个)等。每增加一个9就更难获得，所以在做出承诺时要小心。看看下面的表格，看看如果按月计算，能承受多长时间的停机时间:
 
 \begin{table}[H]
 	\begin{tabular}{|l|l|}
 		\hline
-		\multicolumn{1}{|c|}{\textbf{Downtime/month}} & \multicolumn{1}{c|}{\textbf{Uptime}} \\ \hline
-		7 hours 18 minutes                            & 99\% (“two nines”)                   \\ \hline
-		43 minutes 48 seconds                         & 99.9\% (“three nines”)               \\ \hline
-		4 minutes 22.8 seconds                        & 99.99\% (“four nines”)               \\ \hline
-		26.28 seconds                                 & 99.999\% (“five nines”)              \\ \hline
-		2.628 seconds                                 & 99.9999\% (“six nines”)              \\ \hline
-		262.8 ms                                      & 99.99999\% (“seven nines”)           \\ \hline
-		26.28 ms                                      & 99.999999\% (“eight nines”)          \\ \hline
-		2.628 ms                                      & 99.9999999\% (“nine nines”)          \\ \hline
+		\multicolumn{1}{|c|}{\textbf{停机时间/月}} & \multicolumn{1}{c|}{\textbf{正常运行时间}} \\ \hline
+		7 小时 18 分钟                            & 99\% (“两个9”)                   \\ \hline
+		43 分钟 48 秒                         & 99.9\% (“三个9”)               \\ \hline
+		4 分钟 22.8 秒                        & 99.99\% (“四个9”)               \\ \hline
+		26.28 秒                                 & 99.999\% (“五个9”)              \\ \hline
+		2.628 秒                                 & 99.9999\% (“六个9”)              \\ \hline
+		262.8 毫秒                                      & 99.99999\% (“七个9”)           \\ \hline
+		26.28 毫秒                                      & 99.999999\% (“八个9”)          \\ \hline
+		2.628 毫秒                                      & 99.9999999\% (“九个9”)          \\ \hline
 	\end{tabular}
 \end{table}
 
-A common practice for cloud applications is to provide a Service-Level Agreement (SLA), which specifies how much downtime can occur per a given period of time (for example, a year). An SLA for your cloud service will strongly depend on the SLAs of the cloud services you build upon.
+云应用程序会提供服务水平协议(SLA)，它指定每一给定时间段(例如一年)可以出现多少停机时间。云服务的SLA将严重依赖于构建云服务的SLA。
 
-To calculate a compound availability between two services that need to cooperate, you should just multiply their uptimes. This means if you have two services with 99.99\% availability, their compound availability will be 99.99\% * 99.99\% = 99.98\%. To calculate the availability of redundant services (such as two independent regions), you should multiply their unavailability. For instance, if two regions have 99.99\% availability, their total unavailability will be (100\% – 99.99\%) * (100\% – 99.99\%) = 0.01\% * 0.01\% = 0.0001\%, so their compound availability is 99.9999\%.
+要计算需要协作的两个服务之间的复合可用性，应该将它们的正常运行时间相乘。这意味着如果有两个可用性为99.99\%的服务，复合可用性将为99.99\% * 99.99\% = 99.98\%。要计算冗余服务(例如两个独立区域)的可用性，应该将它们的不可用性相乘。例如，如果两个区域有99.99\%可用性，它们的总不可用性将是(100\% - 99.99\%)*(100\% - 99.99\%)= 0.01\% * 0.01\% = 0.0001\%，因此复合可用性是99.9999\%。
 
-Unfortunately, it's impossible to provide 100\% availability. Failures do occur from time to time, so let's learn how to make your system tolerate them.
+这里，不可能提供100\%的可用性。故障确实会不时地发生，所以继续了解如何使系统能够容错。
 
-\subsubsubsection{4.3.2\hspace{0.2cm}Building fault-tolerant systems}
+\subsubsubsection{4.3.2\hspace{0.2cm}构建容错系统}
 
-Fault tolerance is a system's ability to detect such failures and to handle them gracefully. It's essential that your cloud-based services are resilient, as due to the nature of the cloud, many different things can suddenly go south. Good fault tolerance can help your service's availability.
+容错是系统检测故障，并优雅地处理故障的能力。因为由于云的性质，许多可能会突然出现各种各样的问题，所以基于云的服务必须具有容错性。良好的容错能力有助于提高服务的可用性。
 
-Different types of issues require different handling: from prevention, through detection, to minimizing the impact. Let's start with common ways to avoid having a single point of failure.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Redundancy}
-
-One of the most basic preventions is introducing \textbf{redundancy}. Similar to how you can have a spare tire for your car, you can have a backup service that takes over when your primary server goes down. This stepping-in is also known as \textbf{failover}.
-
-How does the backup server know when to step in? One way to implement this is by using the heartbeat mechanism described in the \textit{Detecting faults} section.
-
-To make the switch faster, you can send all the messages that are going into the primary server also to the backup one. This is called a \textbf{hot standby}, as opposed to a cold one – initializing from zero. A good idea in such a case is to stay one message behind, so if a \textit{poisoned} message kills the primary server, the backup one can simply reject it.
-
-The preceding mechanism is called an \textbf{active-passive} (or \textbf{master-slave}) failover, as the backup server doesn't handle incoming traffic. If it did, we would have an \textbf{active-active} (or \textbf{master-master}) failover. For more on active-active architectures, refer to the last link in the \textit{Further reading} section.
-
-Be sure you don't lose any data when the failover happens. Using a message queue with backing storage may help with this.
-
+不同类型的问题需要不同的处理方法:从预防到检测，再到最小化影响。先从避免单点故障的常见方法开始。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{Leader election}
+\textbf{替代装置}
 
-It's also important for both the servers to know which one is which – if both start behaving as primary instances, you'll likely be in trouble. Choosing the primary server is called the leader election pattern. There are a few ways to do so, for example, by introducing a thirdparty arbiter, by racing to take exclusive ownership of a shared resource, by choosing the instance with the lowest rank, or by using algorithms such as bully election or token ring election.
+最基本预防方式是引入\textbf{替代装置}。类似于为汽车准备一个备用轮胎，这样就有了一份服务的副本，当主服务器出现故障时，副本可以进行接管。这种方式也称为\textbf{失效备援}。
 
-Leader election is also an essential part of the next related concept: achieving consensus.
+备用服务器如何了解何时介入？实现这个的一种方法是使用\textit{检测故障}中的心跳机制。
 
+为了使切换更快，可以将所有进入主服务器的消息也发送到备用服务器，这称为\textbf{热备份}。在这种情况下，好的办法是是保留最后一条消息，如果这条消息\textit{有毒}，并杀死了主服务器，备份服务器可以直接拒绝它。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textit{Consensus}
+上述机制称为\textbf{主动}(或\textbf{主从})故障转移，因为备份服务器不处理传入的流量。如果是这样，我们将有一个\textbf{双控}(或\textbf{双主})故障转移。有关双控架构的更多信息，请参考\textit{扩展阅读}中的最后一个链接。
 
-If you want your system to operate even when network partitions happen or some instances of your service experience faults, you need a way for your instances to reach consensus. They must agree what values to commit and often in what order. A simple approach is by allowing each instance to vote on the correct state. However, in some cases this is not enough to reach a consensus correctly or at all. Another approach would be to elect a leader and let it propagate its value. Because it's not easy to implement such algorithms by hand, we'd recommend using popular industry-proven consensus protocols such as Paxos and Raft. The latter is growing in popularity as it is simpler and easier to understand.
-
-Let's now discuss another way to prevent your system from faulting.
-
+确保在发生故障转移时不会丢失数据，使用带有备份存储的消息队列可能有助于解决这一问题。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Replication}
+\textit{领袖选举}
 
-This one is especially popular with databases, and it helps with scaling them, too. \textbf{Replication} means you will run a few instances of your service in parallel with duplicated data, all handling incoming traffic.
+对于两个服务器来说，了解两个服务器各自的任务也很重要——如果两个服务器开始都作为主实例运行，就可能会遇到麻烦。选择主服务器称为领袖选举模式。有几种方法可以做到这一点，例如：引入第三方仲裁者，通过竞争获得共享资源的独占所有权，通过选择级别最低的实例，或通过使用恶霸选举或令牌环选举等算法。
+
+领袖选举也是下一个相关概念的重要组成部分:达成共识。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{达成共识}
+
+如果希望系统即使在网络分区发生，或某些服务实例出现故障时也能运行，那么需要一种方法使实例之间达成共识。必须同意承担什么样的风险，以及以什么样的顺序。一种简单的方法是允许每个实例对正确的状态进行投票。然而，在某些情况下，这不足以正确地或根本无法达成一致。另一种方法是选举一个领袖，让他宣传自己的能力。因为手工实现这样的算法并不容易，所以建议使用行业验证的主流共识协议，如Paxos和Raft。后者会更受欢迎，因为它更简单，更容易理解。
+
+现在让我们讨论另一种防止系统出错的方法。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{重复}
+
+这种方法在数据库中尤为流行，并且有助于扩展数据库。\textbf{重复}意味着将运行服务的几个实例与重复的数据并行，其也会处理所有的传入流。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}Don't confuse replication with sharding. The latter doesn't require any data redundancy, but can often bring you great performance at scale. If you're using Postgres, we recommend you try out Citus (\url{https://www.citusdata.com}).
+\hspace*{0.7cm}不要混淆复制和分片。后者不需要冗余数据，但可以在规模上带来良好的性能。如果正在使用Postgres，那可以试试Citus(\url{https://www.citusdata.com})。
 \end{tcolorbox}
 
-In terms of databases, there are two ways you can replicate. 
+对于数据库，有两种方式可以进行重复。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Master-slave replication}
+\textbf{主从架构}
 
-In this scenario, all the servers are able to perform read-only operations, but there's only one master server that can also write. The data is replicated from the master, through the slaves, either in a one-to-many topology or using a tree topology. If the master fails, the system can still operate in read-only mode until this fault is remediated.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Multi-master replication}
-
-You can also have a system with multiple master servers. If there are two servers, you have a \textit{master-master replication} scheme. If one of the servers dies, the others can still operate normally. However, now you either need to synchronize the writes or provide looser consistency guarantees. Also, you need to provide a \textbf{load balancer}.
-
-Examples of such replication include Microsoft's Active Directory, OpenLDAP, Apache's CouchDB, or Postgres-XL.
-
-Let's now discuss two ways to prevent faults caused by too high a load.
-
+这个场景中，所有服务器都能够执行只读操作，但是只有一个主服务器也可以写。数据从主节点通过从节点进行复制，可以采用一对多拓扑，也可以采用树状拓扑。如果主服务器发生故障，系统仍然可以以只读模式运行，直到故障解决。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Queue-based load leveling}
+\textbf{多主架构}
 
-This tactic is aimed at reducing the impact of sudden spikes in your system's load. Flooding a service with requests can cause performance issues, reliability ones, and even dropping valid requests. Once again, queues are there to save the day.
+还可以使用一个具有多个主服务器的系统。如果有两个服务器，可以进行\textit{双主重复}的方案。如果其中一个服务器挂了，其他服务器仍然可以正常运行。但现在要么同步写操作，要么提供更宽松的一致性保证。另外，还需要一个\textbf{负载均衡器}。
 
-To implement this pattern, we just need to introduce a queue for the incoming requests to be added asynchronously. You can use Amazon's SQS, Azure's Service Bus, Apache Kafka, ZeroMQ, or other queues to achieve that.
+这类重复的例子还包括微软的Active Directory、OpenLDAP、Apache的CouchDB或Postgres-XL。
 
-Now, instead of having spikes in incoming requests, the load will get averaged. Our service can grab the requests from the said queue and process them without even knowing that the load was increased. Simple as that.
-
-If your queue is performant and your tasks can be parallelized, a side benefit of this pattern would be better scalability.
-
-Also, if your service isn't available, the requests will still get added into the queue for said service to process when it recovers, so this may be a way to help with bumping the availability.
-
-If the requests come infrequently, consider implementing your service as a function that runs only when there are items in the queue to save costs.
-
-Keep in mind that when using this pattern, the overall latency will increase by the addition of the queue. Apache Kafka and ZeroMQ should yield low latency, but if that's a dealbreaker, there's yet another way to deal with increased load.
-
+现在了解一下两种防止过高负载(会导致故障)的方法。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Back pressure}
+\textbf{基于队列的负载均衡}
 
-If the load remains high, chances are you'll have more tasks than you're able to handle. This can cause cache misses and swapping if the requests will no longer fit into memory, as well as dropping requests and other nasty things. If you expect a heavy load, applying back pressure might be a great way to deal with it.
+此策略旨在减少系统负载突然激增的影响。请求泛滥会导致性能问题、可靠性问题，甚至丢失有效的请求。还有，排队是为了挽救局面。
 
-In essence, back pressure means that instead of putting more pressure on our service with each incoming request, we push back into the caller so it needs to handle the situation. There are a few different ways to do so.
+要实现此模式，只需要引入队列，以便异步添加传入请求。可以使用Amazon的SQS、Azure的服务总线、Apache Kafka、ZeroMQ或其他队列来实现。
 
-For instance, we can block our thread that receives network packets. The caller will then see that it is unable to push the request to our service – instead, we push the pressure up the stream.
+现在，不是在传入请求中出现峰值，而是平均负载。服务可以从上述队列中获取请求，并在不知道负载增加的情况下处理它们，就这么简单。
 
-Another way is to recognize greater load and simply return an error code, for example, 503. You can model your architecture so that this is done for you by another service. One such service is the Envoy Proxy (\url{https://envoyproxy.io}), which can come in handy on many other occasions too.
+如果是高性能队列，并且任务可以并行化，则此模式的另一个好处是有更好的可扩展性。
 
-Envoy can apply back pressure based on predefined quotas, so your service will actually never get overloaded. It can also measure the time it takes to process requests and apply back pressure only if it goes above a certain threshold. There are many other cases for which a variety of error codes will get returned. Hopefully, the caller has a plan on what to do if the pressure goes back on them.
+此外，如果服务不可用，当服务恢复时，请求仍然会添加到该服务的队列中进行处理，因此这可能是一种有助于提高可用性的方法。
 
-Now that we know how to prevent faults, let's learn how to detect them once they occur.
+如果请求不经常出现，考虑将服务实现为仅在队列中有项目时运行的函数，以节省成本。
 
-\subsubsubsection{4.3.3\hspace{0.2cm}Detecting faults}
-
-Proper and fast fault detection can save you a lot of trouble, and often money. There are many ways to detect faults tailored to different needs. Let's go over a selection of them.
-
+在使用此模式时，总延迟将随着队列的增加而增加。Apache Kafka和ZeroMQ可以提供低延迟队列，但如果这是一个问题，需要另一种方法来处理增加的负载。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Sidecar design pattern}
+\textbf{反压力}
 
-Since we were discussing Envoy, it might be worth saying that it's an example of the \textbf{sidecar design pattern}. This pattern is useful in many more cases than just error prevention and detection, and Envoy is a great example of this.
+如果负载仍然很高，很可能是有更多的任务超出了服务器处理能力。这可能会导致缓存丢失和交换异常(如果请求不再适合内存)，以及删除请求和其他麻烦的事情。如果预计会有沉重的负担，反压力可能是一个更好的解决办法。
 
-In general, sidecars allow you to add a number of capabilities to your services without the need to write additional code. Similarly, as a physical sidecar can be attached to a motorcycle, a software sidecar can be attached to your service – in both cases extending the offered functionality.
+反向压力意味着，不会在每个传入请求时对服务施加更大的压力，而是将其推回调用方，以便调用方需要处理这种情况。有几种不同的方法可以做到这一点。
 
-How can a sidecar be helpful in detecting faults? First of all, by providing health checking capabilities. When it comes to passive health checking, Envoy can detect whether any instance in a service cluster has started behaving badly. This is called \textbf{outlier detection}. Envoy can look for consecutive 5XX error codes, gateway failures, and so on. Aside from detecting such faulty instances, it can eject them so the overall cluster remains healthy.
+例如，可以阻塞接收网络数据包的线程。调用者将发现无法将请求推到服务——相反，其实是我们将压力推回到上游。
 
-Envoy also offers active health checking, meaning it can probe the service itself instead of just observing its reactions to incoming traffic.
+另一种方法是，识别更大的负载并简单地返回错误代码，例如：503。可以为架构建模，以便由另一个服务来完成请求。特使代理(Envoy Proxy，\url{https://envoyproxy.io})就是这样一个服务，许多其他场合都会用到。
 
-Throughout this chapter, we'll show a few other usages for the sidecar pattern in general, and Envoy in particular. Let's now discuss the next mechanism of fault detection.
+特使代理可以应用基于预定义配额的反压力，所以服务实际上永远不会超载。它还可以测量处理请求和仅在超过某个阈值时，施加反压力所需的时间；还有许多其他情况会返回各种错误代码。希望使用者有提前的计划，从而明确如果压力返回来应该怎么办。
 
+既然已经知道了如何防止故障，继续了解如何在故障发生时检测故障。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Heartbeat mechanism}
+\subsubsubsection{4.3.3\hspace{0.2cm}检测故障}
 
-One of the most common ways of fault detection is through the \textbf{heartbeat mechanism}. A \textbf{heartbeat} is a signal or a message that is sent on regular intervals (usually a few seconds) between two services.
-
-If a few consecutive heartbeats are missing, the receiving service can consider the sending service \textit{dead}. In the case of our primary-backup service pair from a few sections previously, this can cause a failover to happen.
-
-When implementing a heartbeat mechanism, be sure that it's reliable. False alarms can be troublesome, as the services may get confused, for example, about which one should be the new master. A good idea might be to provide a separate endpoint just for heartbeats, so it won't be as easily affected by the traffic on the regular endpoints.
+正确而快速的故障检测可以省去很多麻烦，而且往往还能节约成本。有许多方法可以根据不同的需要检测故障。让我们来过一下。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Leaky bucket counter}
+\textbf{边车设计模式}
 
-Another way to detect faults is by adding a so-called \textbf{leaky bucket} counter. With each error, the counter would get incremented, and after a certain threshold is reached (the bucket is full), a fault would get signaled and handled. In regular time intervals, the counter would get decreased (hence, leaky bucket). This way, the situation would only be considered a fault if many errors occurred in a short time period.
+特使代理可以说这是\textbf{边车设计模式}的一个例子。该模式在很多情况下都很有用，而不仅仅是错误预防和检测。
 
-This pattern can be useful if in your case it's normal to sometimes have errors, for instance, if you're dealing with networking.
+通常，边车允许向服务添加许多功能，而不需要编写额外的代码。类似地，物理边车可以连接到摩托车上，软件边车则可以连接到服务上——这两种情况下都可以对功能进行扩展。
 
-Now that we know how to detect faults, let's learn what to do once they happen.
+边车如何帮助检测故障？首先，通过提供健康检查功能。对于被动运行状况检查，特使代理可以检测服务集群中的实例是否已经开始行为异常，这叫做\textbf{离群检测}。特使代理可以查找连续的5XX错误代码、网关故障等。除了检测这些错误之外，还可以弹出它们，以便整个集群保持健康。
 
-\subsubsubsection{4.3.4\hspace{0.2cm}Minimizing the impact of faults}
+特使代理还提供了主动的运行状况检查，这意味着它可以探测服务本身，而不仅仅是观察它对传入流的反应。
 
-It takes time to detect an ongoing fault, and it takes even more of this precious resource to resolve it. This is why you should strive to minimize the impact of faults. Here are a few ways that can help.
-
+本章中，展示了一般的边车模式的其他用法，特别是特使代理。现在来讨论另一种故障检测机制。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Retrying the call}
+\textbf{心跳机制}
 
-When your application calls another service, sometimes the call will fail. The simplest remedy for such a case is to just retry the call. If the fault was transient and you don't retry, that fault will likely get propagated through your system, making more damage than it should. Implementing an automated way to retry such calls can save you a lot of hassle.
+最常见的故障检测方法是通过\textbf{心跳机制}。一个\textbf{心跳}是在两个服务之间定期(通常是几秒钟)发送的信号或消息。
 
-Remember our sidecar proxy, Envoy? Turns out it can perform the automatic retries on your behalf, saving you from doing any changes to your sources.
+如果几个连续的心跳没有了，接收服务可以认为发送服务\textbf{挂了}。前面几节中提到的主备份服务的情况下，这可能导致故障转移。
 
-For instance, see this example configuration of a retry policy that can be added to a route in Envoy:
+实现心跳机制时，要确保可靠性。误报可能会造成麻烦，因为服务可能会混淆，例如：哪个服务应该成为新的主服务。一个好方法是仅为心跳提供一个单独的端点，这样就不会那么受到常规端点流的影响。
 
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{漏桶计数器}
+
+另一种检测错误的方法是添加\textbf{漏桶}计数器。对于每个错误，计数器将增加，并且在达到某个阈值(桶已满)后，将发出错误信号并处理。在固定的时间间隔内，计数器将减少(因此，漏桶了)。这样，只有在短时间内出现很多错误时，才会认为是故障。
+
+如果有时出现错误是很正常的(例如：在处理网络时)，这种模式会很有用。
+
+既然已经知道了如何检测故障，就继续了解在故障发生时应该做什么。
+
+\subsubsubsection{4.3.4\hspace{0.2cm}降低故障的影响}
+
+检测正在发生的故障需要花费时间，而解决故障则需要更多宝贵的资源。这就是为什么应该努力将错误的影响降到最低。这里有一些方法。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{重试调用}
+
+当应用程序调用另一个服务时，有时调用会失败。对于这种情况，最简单的补救方法就是重试。如果错误是暂时的，而没有重试，那么该错误可能会在系统中传播，造成更大的损失。实现自动重试此类调用可以为省去很多麻烦。
+
+还记得特使代理吗？它可以代表管理者执行自动重试，从而无需对源代码进行更改。
+
+例如，在特使代理中可以添加一个重试策略的配置:
 
 \begin{tcblisting}{commandshell={}}
 retry_policy:
   retry_on: "5xx"
   num_retries: 3
   per_try_timeout: 2s
-
 \end{tcblisting}
 
-This will make Envoy retry calls if they return errors such as the 503 HTTP code or gRPC errors that map to 5XX codes. There will be three retries, each considered failed if not finished within 2 seconds.
+如果特使代理返回错误，比如：映射到5XX代码的503 HTTP代码或gRPC错误，则将使特使代理重试调用。将有三次重试，如果没有在2秒内完成，每次认为失败。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Avoiding cascading failures}
+\textbf{避免级联故障}
 
-We mentioned that without retries the error will get propagated, causing a cascade of failures throughout the system. Let's now show more ways to prevent this from happening.
+如果没有重试，错误将会传播，在整个系统中造成一连串的失败。现在来了解更多防止这种情况发生的方法。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{Circuit breaker}
+\textit{断路器}
 
-The \textbf{circuit breaker pattern} is a very useful tool for this. It allows us to quickly notice that a service is unable to process requests, so the calls to it can be short-circuited. This can happen both close to the callee (Envoy provides such a capability), or on the caller side (with the additional benefit of shaving off time from the calls). In Envoy's case, it can be as simple as adding the following to your config:
-
+\textbf{断路器的模式}是一个非常有用的工具。它允许快速地注意到某个服务无法处理请求，因此对它的调用可能会短路。这可以发生在调用方附近(特使代理提供了这样的功能)，也可以发生在调用方(减少了调用时间)。在特使的情况下，可以添加以下配置:
 
 \begin{tcblisting}{commandshell={}}
 circuit_breakers:
@@ -221,30 +208,29 @@ circuit_breakers:
       max_pending_requests: 1000
 \end{tcblisting}
 
-In both cases, the load caused by the calls to the service may drop, which in some cases can help the service return to normal operation.
+这两种情况下，对服务的调用引起的负载可能会下降，这在某些情况下可以帮助服务恢复正常操作。
 
-How do we implement a circuit breaker on the caller side? Once you've made a few calls, and, say, your leaky bucket overflows, you can just stop making new calls for a specified period of time (for example, until the bucket no longer overflows). Simple and effective.
-
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textit{Bulkhead}
-
-Another way to limit fault from spreading is taken straight from the stockyards. When building ships, you usually don't want the ship to get full of water if a hole breaks in the hull. To limit the damage of such holes, you would partition the hull into bulkheads, each of which would be easy to isolate. In this case, only the damaged bulkhead would get filled with water.
-
-The same principle applies to limiting the fault impact in software architecture. You can partition your instances into groups, and you can assign the resources they use into groups as well. Setting quotas can also be considered an example of this pattern.
-
-Separate bulkheads can be created for different groups of users, which can be useful if you need to prioritize them or provide a different level of service to your critical consumers.
+如何在调用方实现一个断路器？在进行了一些调用之后，例如：漏桶溢出了，可以在指定的一段时间内停止进行新的调用(例如，直到桶不再溢出)。简单而有效的。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Geodes}
+\textit{隔板}
 
-The last way we'll show is called \textbf{Geodes}. The name comes from geographical nodes. It can be used when your service is deployed in multiple regions.
+另一种限制断层扩散的方法是直接从隔板中获取。当建造船只时，通常不希望船体上有一个洞，让船充满水。为了减少这些洞的破坏，可以把船体分成几个舱壁，每一个舱壁都很容易分开。在这种情况下，只有损坏的舱壁才会充满水。
 
-If a fault occurs in one region, you can just redirect the traffic to other, unaffected regions. This will of course make the latency much higher than if you'd made calls to other nodes in the same data center, but usually redirecting less critical users to remote regions is a much better choice than just failing their calls entirely.
+同样的原则也适用于限制软件架构中的故障影响。可以将实例划分到组中，也可以将其使用的资源分配到组中。设置配额也可以视为该模式的一个示例。
 
-Now that you know how to provide availability and fault tolerance through your system's architecture, let's discuss how to integrate its components together.
+可以为不同的用户组创建单独的舱壁，如果需要对它们进行优先级划分，或者为关键用户提供不同级别的服务，这会很有用。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{多地部署}
+
+最后一种方法称为\textbf{多地部署}，这个名字来自地理节点。当服务部署在多个地区时，可以使用它。
+
+当一个区域发生故障时，可以将流重定向到其他不受影响的区域。当然，与调用同一数据中心中的其他节点相比，这将导致更高的延迟，但通常将不太重要的用户重定向到远程区域比完全失败调用要好得多。
+
+既然已经知道了如何通过系统体系结构提供可用性和容错，接下来就来了解一下如何将其组件集成在一起。
 
 
 

@@ -187,75 +187,74 @@ IaaS可以用于各种场景，从托管网站(可能比传统的网站托管更
 
 \subsubsubsection{4.2.3\hspace{0.2cm}CAP定理和最终一致性}
 
-To design successful systems that spread across more than one node, you need to know and use certain principles. One of them is the \textbf{CAP theorem}. It's about one of the most important choices you need to make when designing a distributed system and owes its name to the three properties a distributed system can have. They are as follows:
+要设计跨多个节点的系统，需要了解并使用某些定理，其中之一就是\textbf{CAP定理}。其是在设计分布式系统时，需要做出的重要选择，其名称来源于分布式系统的三个属性。具体如下:
 
 \begin{itemize}
 \item 
-\textbf{Consistency}: Every read would get you the data after the most recent write (or an error).
+\textbf{一致性}: 每次读取都将获得最近一次写入(或错误)之后的数据。
 
 \item 
-\textbf{Availability}: Every request will get a non-error response (without the guarantee that you'll get the most recent data).
+\textbf{可用性}: 每个请求都会得到一个无错误响应(不保证会获得最新的数据)。
 
 \item 
-\textbf{Partition tolerance}: Even if a network failure occurs between two nodes, the system as a whole will continue working.
+\textbf{分区容错性}: 即使两个节点之间出现网络故障，系统作为一个整体仍可以继续工作。
 \end{itemize}
 
-In essence, the theorem states that you can pick at most two of those three properties for a distributed system.
+本质上，这个定理说明，对于一个分布式系统，最多只能选择这三个属性中的两个。
 
-As long as the system operates properly, it looks like all three of the properties can be satisfied. However, as we know from looking at the fallacies, the network is unreliable, so partitions will occur. In such cases, a distributed system should still operate properly. This means the theorem actually makes you choose between delivering partition tolerance and consistency (that is CP), or partition tolerance and availability (that is AP). Usually, the latter is the better choice. If you want to choose CA, you have to remove the network entirely and be left with a single-node system.
+只要系统正常运行，就可以满足这三个特性。然而，我们从错误假设中知道“网络不可靠”，因此就需要分区。这种情况下，分布式系统仍然可以正常运行。这意味着该定理实际上是需要在交付分区容错和一致性(即CP)或交付分区容错和可用性(即AP)之间做出选择。通常，后者是更好的选择。如果选择CA，则必须完全删除网络，只剩下单节点系统。
 
-If under a partition, you decide to deliver consistency, you will have to either return an error or risk timeouts when waiting for the data to be consistent. If you choose availability over consistency, you risk returning stale data – the latest writes might be unable to propagate across the partition.
+分区下使用交付一致性，在等待数据一致性时，要么返回一个错误，要么会有超时风险。如果选择可用性而不是一致性，则可能会返回旧数据——最新写入的数据可能无法跨分区传播。
 
-Both those approaches are suited for different needs. If your system requires atomic reads and writes, for instance, because a customer could lose their money, go with CP. If your system must continue operating under partitions, or you can allow eventual consistency, go with AP.
+这两种方法适用于不同的需求。如果系统需要原子读写，例如：客户可能会亏钱，那么就使用CP。如果系统必须继续在分区下运行，或者可以允许最终的一致性，那么就使用AP。
 
-Okay, but what is eventual consistency? Let's discuss the different levels of consistency to understand this.
+嗯，那最终一致性是什么呢？为了理解这一点，来了解一下不同层次的一致性。
 
-In a system offering strong consistency, each write is synchronously propagated. This means all reads will always see the latest writes, even at the cost of higher latency or lower availability. This is the type that relational DBMSes offer (based on ACID guarantees) and is best suited for systems that require transactions. 
+提供强一致性的系统中，每个写操作都同步传播。从而所有的读操作将总是看到最新写入的数据，甚至以更高的延迟或更低的可用性为代价。这是DBMS关系模型提供的(基于ACID保证)最适合需要事务的系统。
 
-In a system offering eventual consistency, on the other hand, you only guarantee that after a write, reads will eventually see the change. Usually, eventually means in a couple of milliseconds. This is due to the asynchronous nature of data replication in such systems, as opposed to the synchronous propagation from the previous paragraph. Instead of providing ACID guarantees, for example, using an RDBMS, here we have BASE semantics, often provided by NoSQL databases.
+另一方面，在提供最终一致性的系统中，只能保证在写操作之后，读操作最终会看到更改。通常，“最终”指的是几毫秒。这是由于此类系统中的数据复制具有异步特性，而不是上一段提到的同步传播。这里没有提供ACID保证(例如，使用RDBMS)，而是使用了BASE语义，通常由NoSQL数据库提供。
 
-For a system to be asynchronous and eventually consistent (as AP systems often are), it's needed to have a way to solve state conflicts. A common way to do so is to exchange updates between instances and choose either the first or the last write as the accepted one.
+如果系统是异步的，并且为最终一致(AP系统通常是这样的)，就需要有一种方法来解决状态冲突。一种常见的方法是在实例之间交换更新，并选择第一次或最后一次写入作为可接受的写入。
 
-Let's now discuss two related patterns that can help in achieving eventual consistency.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Sagas机制和补偿事务}
-
-The saga pattern is useful when you need to perform distributed transactions. Before the microservice era, if you had one host with one database, you could rely on the database engine to do the transaction for you. With multiple databases on one host, you  could use\textbf{ Two-Phase Commits (2PCs)} to do so. With 2PCs, you would have a coordinator, who would first tell all the databases to prepare, and once they all report being ready, it would tell them all to commit the transaction.
-
-Now, as each microservice likely has its own database (and it should if you want scalability), and they're spanned all over your infrastructure, you can no longer rely on simple transactions and 2PCs (losing this ability often means you no longer want an RDBMS, as NoSQL databases can be much faster).
-
-Instead, you can use the saga pattern. Let's demonstrate it in an example.
-
-Imagine you want to create an online warehouse that tracks how much supply it has and allows payment by credit cards. To process an order, above all other services, you need three: one for processing the order, one for reserving the supplies, and one for charging the card.
-
-Now, there are two ways the saga pattern can be implemented: choreography-based (also called event-based) and orchestration-based (also called command-based).
-
+接下来，来了解一下两个可以帮助实现最终一致性的模式。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{基于无中心协调器的Sagas}
+\textbf{Saga机制和补偿事务}
 
-In the first case, the first part of the saga would be the order processing service sending an event to the supply service. This one would do its part and send another event to the payment service. The payment service would then send yet another event back to the order service. This would complete the transaction (the saga), and the order could now be happily shipped.
+当需要执行分布式事务时，Saga模式非常有用。在微服务时代之前，如果有一台主机和数据库，那么可以依赖数据库引擎来处理事务。在一台主机上有多个数据库，可以使用\textbf{两阶段提交(2PCs)}来完成。对于2PCs，会有一个协调器，它首先告诉所有数据库准备好，当数据库都报告准备好了，它将告诉所有数据库进行事务提交。
 
-If the order service would want to track the state of the transaction, it would simply need to listen to all those events as well.
+现在，由于每个微服务可能都有自己的数据库(如果想要可扩展性，就应该这样)，并且它们遍布于基础设施，因此不能再依赖简单的事务和2PCs(失去这种能力通常意味着不再需要RDBMS，因为NoSQL数据库可以更快)。
 
-Of course, sometimes the order would be impossible to complete, and a rollback would need to happen. In this case, each step of the saga would need to be rolled back separately and carefully, as other transactions could run in parallel, for example, modifying the supply state. Such rollbacks are called compensating transactions.
+相反，可以使用saga模式。用一个例子进行演示。
 
-This way of implementing the saga pattern is pretty straightforward, but if there any many dependencies between the involved services it might be better to use the orchestration approach. Speaking of which, let's now say a few words about this second approach to sagas.
+假设要创建一个在线仓库，跟踪它有多少供应，并允许信用卡支付。要处理订单，在所有其他服务中，需要三个服务:一个用于处理订单，一个用于保留供应，一个用于刷卡。
+
+现在，有两种方式可以实现Saga模式:基于无中心协调器和基于中心化控制器。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{基于中心化控制器的Sagas}
+\textit{基于无中心协调器的Saga}
 
-In this case, we'll need a message broker to handle communication between our services, and an orchestrator that would coordinate the saga. Our order service would send a request to the orchestrator, which would then send commands to both the supply and payment services. Each of those would then do their part and send replies back to the orchestrator, through a reply channel available at the broker. 
+第一种情况下，Saga的第一部分将是订单处理服务向供应服务发送事件。这个将完成它的部分，并将另一个事件发送给支付服务。然后支付服务将另一个事件发送回订单服务。这将完成交易(传奇)，现在可以愉快地发送订单。
 
-In this scenario, the orchestrator has all the logic needed to, well, orchestrate the transaction, and the services themselves don't need to be aware of any other services taking part in the saga.
+如果订单服务想要跟踪事务的状态，只需要侦听所有这些事件。
 
-If the orchestrator is sent a message that one of the services failed, for example, if the credit card has expired, it would then need to start the rollback. In our case, it would again use the broker to send an appropriate rollback command to specific services.
+当然，有时订单无法完成，需要进行回滚。在这种情况下，Saga的每个步骤都需要分别小心地回滚，因为其他事务可以并行运行，例如：修改供应状态。这种回滚称为补偿事务。
 
-Okay, that's enough about eventual consistency for now. Let's now switch to other topics related to availability.
+这种实现Saga模式的方法非常简单，但是如果所涉及的服务之间存在许多依赖关系，那么使用中心化方法可能会更好。说到这个，现在让我们来谈谈Saga的第二种方法。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{基于中心化控制器的Saga}
+
+这种情况下，需要一个消息代理来处理服务之间的通信，还需要一个协调器来协调整个过程。订单服务将向协调器发送一个请求，然后协调器将向供应服务和支付服务发送命令。然后，其中每一个都将完成自己的工作，并通过代理上可用的应答通道将应答发送回协调器。
+
+此场景中，编排器拥有编排事务所需的所有逻辑，服务本身不需要知道参与该Saga的其他服务。
+
+如果向编排器发送一条消息，说明其中一个服务失败了(例如，信用卡已经过期)，将需要启动回滚。在示例中，它将再次使用代理向特定的服务发送适当的回滚命令。
+
+好了，关于最终一致性就讲到这里。现在让我们切换到与可用性相关的话题。
 
 
 

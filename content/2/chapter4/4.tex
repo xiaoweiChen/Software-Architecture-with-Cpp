@@ -6,9 +6,10 @@ Much was already said on the topic of integration, so in this section, we'll try
 
 To not make this chapter be a whole book on its own, let's start this section with a recommendation of an existing one. If you're interested in integration patterns, especially focused on messaging, then Gregor Hohpe and Bobby Woolf's Enterprise Integration Patterns book is a must-read for you.
 
-Let's take a brief look at two patterns covered by this book.
+Let's take a brief look at two patterns covered by this book.
 
-\subsubsubsection{4.4.1\hspace{0.2cm}Pipes and filters pattern}
+
+\subsubsubsection{4.4.1\hspace{0.2cm}管道与过滤器模式}
 
 The first integration pattern that we'll discuss is called \textbf{pipes and filters}. Its purpose is to decompose a big processing task into a series of smaller, independent ones (called filters), which you can then connect together (using pipes, such as message queues). This approach gives you scalability, performance, and reusability.
 
@@ -20,10 +21,9 @@ If you want to process multiple orders at the same time, you can also pipeline y
 
 The downside is that you need to use synchronized queues as your pipes, which introduces some overhead.
 
-To scale one step of your processing, you might want to use this pattern along with the next one on our list.
+To scale one step of your processing, you might want to use this pattern along with the next one on our list.
 
-
-\subsubsubsection{4.4.2\hspace{0.2cm}Competing consumers}
+\subsubsubsection{4.4.2\hspace{0.2cm}竞争消费者}
 
 The idea of competing consumers is simple: you have an input queue (or a messaging channel) and a few instances of consumers that fetch and process items from the queue concurrently. Each of the consumers can process the message, so they compete with each other to be the receiver.
 
@@ -32,18 +32,18 @@ This way, you get scalability, free load balancing, and resilience. With the add
 This pattern integrates effortlessly with priority queues if you need to shave latency from a request or just want a specific task submitted to your queue to be performed in a more urgent manner.
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}This pattern can get tricky to use if the ordering is important. The order in which your consumers receive and finish to process messages may vary, so make sure that either this doesn't impact your system, or you find a way to reorder the results later on. If you need to process messages in sequence, you might not be able to use this pattern.
+\hspace*{0.7cm}This pattern can get tricky to use if the ordering is important. The order in which your consumers receive and finish to process messages may vary, so make sure that either this doesn't impact your system, or you find a way to reorder the results later on. If you need to process messages in sequence, you might not be able to use this pattern.
 \end{tcolorbox}
 
 Let's now see a few more patterns, this time to help us integrate with existing systems.
 
-\subsubsubsection{4.4.3\hspace{0.2cm}Transitioning from legacy systems}
+\subsubsubsection{4.4.3\hspace{0.2cm}从遗留系统的过渡}
 
-Developing a system from scratch can be a blissful experience. Development instead of maintenance and a possibility to use a bleeding-edge technology stack – what's not to like? Unfortunately, that bliss often ends when integrating with an existing, legacy system starts. Fortunately, though, there are some ways to ease that pain.
+Developing a system from scratch can be a blissful experience. Development instead of maintenance and a possibility to use a bleeding-edge technology stack – what's not to like? Unfortunately, that bliss often ends when integrating with an existing, legacy system starts. Fortunately, though, there are some ways to ease that pain.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Anti-corruption layer}
+\textbf{防腐层}
 
 Introducing an \textbf{anti-corruption layer} can help your solution in painless integration with a legacy system that has different semantics. This additional layer is responsible for communication between those two sides.
 
@@ -51,11 +51,11 @@ Such a component allows your solution to be designed with more flexibility – w
 
 For instance, if your solution is based on microservices, the legacy system can just communicate with the anti-corruption layer instead of locating and reaching each microservice directly. Any translations (for example, due to outdated protocol versions) are also done in the additional layer.
 
-Keep in mind that adding such a layer can introduce latency and has to satisfy quality attributes for your solution, for example, scalability.
+Keep in mind that adding such a layer can introduce latency and has to satisfy quality attributes for your solution, for example, scalability.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Strangler pattern}
+\textbf{扼杀者模式}
 
 The \textbf{strangler pattern} allows the gradual migration from a legacy system to a new one. While the anti-corruption layer we just looked at is useful for communication between the two systems, the strangler pattern is meant for providing services from both to the outside world.
 
@@ -68,7 +68,8 @@ Figure 4.1 – The strangling of a monolith. After the migration, the strangler 
 
 This pattern can be overkill for small systems and can get tricky if the datastore should be shared or is for event-sourced systems. When adding it to your solution, be sure to plan for achieving the proper performance and scalability.
 
-Speaking of those two attributes, let's now discuss a few things that help achieve them.
+Speaking of those two attributes, let's now discuss a few things that help achieve them.
+
 
 
 
