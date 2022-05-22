@@ -1,13 +1,11 @@
 
-Although C++ allows you to use the well-known object-oriented APIs that you may be familiar with if you write code in so-called coffee-based languages, it has some other tricks up its sleeves. We'll mention a few of them in this section.
+尽管C++允许使用面向对象APUI(如果使用基于coffee的语言编写代码，可能会熟悉这些API)，但它还有其他一些诀窍，将在本节中提到。
 
+\subsubsubsection{5.2.1\hspace{0.2cm}使用RAII}
 
-\subsubsubsection{5.2.1\hspace{0.2cm}Leveraging RAII}
+C API和C++ API的主要区别是什么？通常，这与多态或类本身无关，而是与称为RAII的用法有关。
 
-What's the main difference between a C API and a C++ one? Usually, it's not about polymorphism or having classes per se, but about an idiom called RAII.
-
-\textbf{RAII} stands for \textbf{Resource Acquisition Is Initialization}, but it's actually more about releasing resources than acquiring them. Let's take a look at a similar API written in C and C++ to show this feature in action:
-
+\textbf{RAII}表示\textbf{资源获取即初始化}，但它实际上更多地是关于释放资源，而不是获取资源。来看一下用C和C++编写的类似API，来展示这个特性的实际应用:
 
 \begin{lstlisting}[style=styleCXX]
 struct Resource;
@@ -19,23 +17,21 @@ void releaseResource(Resource *resource);
 // C++ API
 using ResourceRaii = std::unique_ptr<Resource, decltype(&releaseResource)>;
 ResourceRaii acquireResourceRaii();
-
 \end{lstlisting}
 
-The C++ API is based on the C one, but this doesn't always need to be the case. What's important here is that in the C++ API, there's no need for a separate function to free our precious resource. Thanks to the RAII idiom, it's done automatically once a ResourceRaii object goes out of scope. This takes the burden of manual resource management away from the user, and the best part is that it comes at no extra cost.
+C++ API是基于C API的，但并不总是如此。这里重要的是，在C++ API中，不需要单独的函数来释放资源。由于RAII用法，当ResourceRaii对象超出作用域，它就会自动释放。这样省去了手工资源管理的负担，而且最好的一点是不需要额外的成本。
 
-What's more, we didn't need to write any class of our own – we just reused the standard library's \textit{unique\_ptr}, which is a lightweight pointer. It ensures that the object it manages will always be freed, and it will always be freed exactly once.
+更重要的是，不需要编写类——可以重用标准库的\textit{unique\_ptr}，这是一个轻量级指针。它确保它所管理的对象总可以释放，并且只释放一次。
 
-Since we're managing some special kinds of resources and not memory, we had to use a custom deleter type. Our \textit{acquireResourceRaii} function would need to pass the actual pointer to the \textit{releaseResource} function. The C API itself doesn't need to be exposed to the user if you only want to consume it from C++.
+因为要管理一些特殊类型的资源，而不是内存，所以必须使用自定义删除类型。\textit{acquireResourceRaii}函数需要将实际的指针传递给\textit{releaseResource}函数。如果只想在C++中使用C API，则不需要向用户公开。
 
-An important thing to note here is that RAII is not just for managing memory: you can use it to easily handle ownership of any resource, such as locks, file handles, database connections, and anything else that should be released once its RAII wrappers go out of scope.
+这里需要注意的事情是，RAII不仅仅用于管理内存:可以使用它轻松地处理任何资源的所有权，例如锁、文件句柄、数据库连接，以及在其RAII包装器超出作用域时应该释放的任何东西。
 
-\subsubsubsection{5.2.2\hspace{0.2cm}Specifying the interfaces of containers in C++}
+\subsubsubsection{5.2.2\hspace{0.2cm}整理C++中容器的接口}
 
-Implementations of the standard library are great places to search for idiomatic and performant C++ code. For instance, if you want to read some really interesting template code, you should give \textit{std::chrono} a shot, as it demonstrates some useful techniques and has a fresh approach to this. A link to libstdc++'s implementation can be found in the Further reading section.
+标准库的实现是惯用的、性能好的C++代码。例如，如果想阅读一些真正有趣的模板代码，应该去\textit{std::chrono}看一看，因为它演示了一些有用的技术，并用一个新的方法来实现它。在\textit{扩展阅读}部分可以找到有关libstdc++实现的链接。
 
-When it comes to other places of the library, even a quick peek at its containers shows that their interfaces tend to differ from their counterparts in other programming languages. To show this, let's take a look at a pretty straightforward class from the standard library, \textit{std::array}, and analyze it bit by bit:
-
+当涉及到库的其他位置时，即使快速浏览一下它的容器，也会发现其接口与其他编程语言中的有所不同。为了说明这一点，来看一下来自标准库的一个非常简单的类，\textit{std::array}，并对其进行分析:
 
 \begin{lstlisting}[style=styleCXX]
 template <class T, size_t N>
@@ -54,33 +50,30 @@ struct array {
 	typedef reverse_iterator<const_iterator> const_reverse_iterator;
 \end{lstlisting}
 
-The first thing you can see when you start reading the class definition is that it creates aliases for some types. This is common across the standard containers, and the names of those aliases are the same in many of them. This happens for a few reasons. One of them is the rule of least surprise – having it this way reduces the time developers spend scratching their heads and trying to understand what you meant and how a specific alias was named. Another reason is that the users of your class and library writers will often depend on such type traits when they're writing their own code. If your container won't provide such aliases, it will make using it with some standard utilities or type traits harder, so the users of your APIs will have to work around this or even use a completely different class.
+开始阅读类定义时，首先看到的是它为某些类型创建了别名。这在标准容器中很常见，并且在许多容器中别名的名称是相同的。这种情况的出现有几个原因，其中之一是最不让人惊讶的规则——这样做可以节省开发人员花在挠头和试图理解创建者的意思，以及特定别名是如何命名的时间。另一个原因是类和库编写器的用户在编写自己的代码时，常常依赖于此类类型特征。如果容器不提供这样的别名，将使它与一些标准实用程序或类型特征一起使用变得更加困难，因此使用API的用户需要解决这个问题，甚至使用一个完全不同的类。
 
-Having such type aliases can be useful even if you're not using them in your templates. It's not uncommon to rely on those types for function parameters and class member fields, so always remember to provide them if you're writing a class that other people could use. For instance, if you're writing an allocator, many of its consumers will rely on specific type aliases being present.
+即使没有在模板中使用这些类型别名，也可以使用它们。函数参数和类成员字段依赖于这些类型并不罕见，如果正在编写一个其他人可以使用的类，请始终记住提供这些类型。例如，正在编写一个分配器，它的许多使用者将依赖于特定类型别名的存在。
 
-Let's see what the array class will bring us:
-
+来看看数组类会带来什么:
 
 \begin{lstlisting}[style=styleCXX]
 // no explicit construct/copy/destroy for aggregate type
 \end{lstlisting}
 
-So, the next interesting thing about \textit{std::array} is that it has no definition of a constructor, including copy/move constructors; assign operators; or destructors. It's simply because having those wouldn't add any value. Often, adding such members when it's not necessary is actually harmful to performance. With a non-defaulted constructor (and \textit{T() \{\} }is already non-defaulted, as opposed to \textit{T() = default;}), your class is no longer trivial nor trivially constructible, which prevents the compiler from making optimizations to it.
+所以，\textit{std::array}没有构造函数的定义，包括复制/移动构造函数;赋值运算符;或析构函数。通常，在不必要的时候添加这样的成员实际上会损害性能。使用非默认构造函数(和\textit{T() \{\}}是非默认的，而不是\textit{T() = default;})，类不再简单，也不再有简单的构造函数，这将阻止编译器对其进行优化。
 
-Let's see what other declarations our class has:
+看看类还有哪些声明:
 
 \begin{lstlisting}[style=styleCXX]
 constexpr void fill(const T& u);
 constexpr void swap(array<T, N>&) noexcept(is_nothrow_swappable_v<T&>);
-
 \end{lstlisting}
 
-Now, we can see two member functions, including a member swap. Often, it's profitable to not rely on the default behavior of \textit{std::swap} and to provide our own. For instance, in the case of \textit{std::vector}, the underlying storage is swapped as a whole instead of each element being swapped. When you're writing a member \textit{swap} function, be sure to also introduce a free function named swap so that it can be detected via \textbf{argument-dependent lookup (ADL)}. It could just call your member's \textit{swap} function.+
+现在，可以看到两个成员函数，包括一个成员交换。通常，不依赖于\textit{std::swap}的默认行为，并提供我们自己的行为是有益的。例如，在\textit{std::vector}中，底层存储作为一个整体进行交换，而不是交换每个元素。当写一个成员\textit{swap}函数时，一定要引入名为swap的自由函数，这样它就可以通过\textbf{参数依赖查找(ADL)}检测到，从而可以调用成员函数\textit{swap}。
 
-One more thing regarding the swap function that's worth mentioning is that it's  conditionally \textit{noexcept}. If the stored type can be swapped without throwing exceptions, the array's swap will be \textit{noexcept} as well. Having a non-throwing swap can help you achieve strong exception safety guarantees in copy operations for classes that are storing our type as a member.
+关于swap函数，还有一点，它是有条件的\textit{noexcept}。如果存储的类型可以在不引发异常的情况下进行交换，则数组的交换也将是\textit{noexcept}。使用非异常抛出交换可以将类型作为成员存储的类的复制操作中呈现强异常安全的保证。
 
-As shown in the following code block, now comes a big set of functions that show us another important aspect of many classes – their iterators:
-
+如下面的代码块所示，现在出现了一组大的函数，展示了许多类的另一个重要组件——迭代器:
 
 \begin{lstlisting}[style=styleCXX]
 	 // iterators:
@@ -98,12 +91,11 @@ As shown in the following code block, now comes a big set of functions that show
 	constexpr const_iterator cend() const noexcept;
 	constexpr const_reverse_iterator crbegin() const noexcept;
 	constexpr const_reverse_iterator crend() const noexcept;
-
 \end{lstlisting}
 
-Iterators are vital for every container. If you don't provide iterator access for your class, you won't be able to use it in range-based for loops and it won't be compatible with all the useful algorithms from the standard library. This doesn't mean that you need to write your own iterator types – you could just use a simple pointer if your storage is contiguous. Providing \textit{const} iterators can help you use your class in an immutable manner, and providing reverse iterators can help with enabling more use cases for your container.
+迭代器对于每个容器都是至关重要的。如果不为类提供迭代器访问，就不能在基于范围的for循环中使用它，而且它也不能与标准库中所有有用的算法兼容。这并不意味着需要编写自己的迭代器类型——如果存储是连续的，只需使用一个简单的指针。提供\textit{const}迭代器可以以不可变的方式使用类，而提供反向迭代器可以为容器提供更多用例。
 
-Let's see what comes next:
+继续往下看:
 
 \begin{lstlisting}[style=styleCXX]
 	// capacity:
@@ -125,42 +117,38 @@ Let's see what comes next:
 private:
 	// the actual storage, like T elements[N];
 };
-
 \end{lstlisting}
 
-Following the iterators, we have a few ways to inspect and modify the container's data. In the case of \textit{array}, all of them are \textit{constexpr}. This means that if we were to write some compile-time code, we could use our array class. We'll look at this in more detail later in this chapter, in the \textit{Moving computations at compile time} section.
+迭代器之后，有几种方法来检查和修改容器的数据。\textit{array}中，它们是\textit{constexpr}。这意味着，如果要编写编译时代码，可以使用数组类。我们将在本章后面的\textit{编译时计算}部分更多的进行了解。
 
-Finally, we made it through the whole definition of our \textit{array}. Its interface doesn't end there, however. Starting with C++17, after a type definition, you can spot lines similar to the following:
+最后，完成了\textit{array}的整个定义。然而，还不止于此。从C++17开始，在类型定义之后，会发现类似如下代码:
 
 \begin{lstlisting}[style=styleCXX]
 template<class T, class... U>
 	array(T, U...) -> array<T, 1 + sizeof...(U)>;
 \end{lstlisting}
 
-Such statements are called \textbf{deduction guides}. They're part of a feature called \textbf{Class Template Argument Deduction (CTAD)}, which was introduced in C++17. It allows you to omit the template parameters when you're declaring a variable. It's handy for \textit{array} because now, you can just write the following:
-
+这样的语句被称为\textbf{演绎指南}，是称为\textbf{类模板参数演绎(CTAD)}特性的一部分，这个特性在C++17中引入，允许在声明变量时忽略模板参数。其有利于\textit{array}，现在可以只写以下内容:
 
 \begin{lstlisting}[style=styleCXX]
 auto ints = std::array{1, 2, 3};
-
 \end{lstlisting}
 
-However, it could be even handier for more complex types, such as maps, as follows:
+然而，对于更复杂的类型，例如map，可能使用起来更方便:
 
 \begin{lstlisting}[style=styleCXX]
 auto legCount = std::unordered_map{ std::pair{"cat", 4}, {"human", 2}, {"mushroom", 1} };
-
 \end{lstlisting}
 
-There is, however, a catch here: we needed to specify that we're passing the key-value pair when we passed the first argument (note that we also used a deduction guide for it).
+然而，这里有一个catch:当我们传递第一个参数时，需要指定传递的是键值对(注意，还使用了一个推导指引)。
 
-Since we're on the topic of interfaces, let's point to some other aspects of them.
+既然正在讨论接口的主题，就再看看接口的其他方面。
 
-\subsubsubsection{5.2.3\hspace{0.2cm}Using pointers in interfaces}
+\subsubsubsection{5.2.3\hspace{0.2cm}接口中使用指针}
 
-The types that you use in your interfaces matter a lot. Even if there's documentation, a good API should still be intuitive at a glance. Let's see how different approaches to passing resource parameters to a function can suggest different things to the API consumer.
+接口中使用的类型非常重要。即使有文档，好的API也应该是一目了然的。看看向函数传递资源参数的不同方法，如何向API使用者提出不同的建议。
 
-Consider the following function declarations:
+考虑下面的函数声明:
 
 \begin{lstlisting}[style=styleCXX]
 void A(Resource*);
@@ -171,25 +159,25 @@ void E(std::shared_ptr<Resource>);
 void F(std::shared_ptr<Resource>&);
 \end{lstlisting}
 
-When should you use which of those functions?
+应该什么时候使用这些函数中的哪一个？
 
-Since smart pointers are now the standard way to deal with resources, \textit{A} and \textit{B} should be left for simple parameter passing and shouldn't be used if you don't do anything with the ownership of the passed objects. A should only be used for a single resource. For example, if you want to pass multiple instances, you could use a container, such as \textit{std::span}. If you know the object you want to pass is not null, it's best to pass it by using a reference, such as a const reference. You can also consider passing by value if the object is not too big.
+由于智能指针现在是处理资源的标准方式，\textit{A}和\textit{B}应该留给简单的参数传递，如果不处理传递对象的所有权，就不应该使用。A应该只用于单个资源。例如，如果想传递多个实例，可以使用一个容器，例如\textit{std::span}。如果确定想传递的对象不为空，最好使用引用来传递它，比如const引用。如果对象不是太大，也可以考虑按值传递。
 
-A good rule of thumb regarding functions \textit{C} to \textit{F} is that you should only pass smart pointers as arguments if you want to manipulate the pointers themselves; for example, for transferring ownership.
+关于函数\textit{C}到\textit{F}的一个很好的经验法则是，如果你想操作指针本身，你应该只将智能指针作为参数传递;例如，用于转移所有权。
 
-The \textit{C} function takes a \textit{unique\_ptr} by value. This means it's a resource sink. In other words, it consumes and then frees the resource. Note that just by selecting a specific type, the interface expresses its intent clearly.
+\textit{C}函数根据值接受\textit{unique\_ptr}。这意味着它是一个资源池。换句话说，它先消耗资源，然后释放资源。请注意，仅仅通过选择特定的类型，接口就可以清楚地表达其意图。
 
-The \textit{D} function should only be used if you want to pass in a \textit{unique\_ptr} containing one resource and receive another resource in the same \textit{unique\_ptr} as an out parameter. It's not a good idea to have such a function for simply passing a resource since it requires that the caller stores it specifically in a \textit{unique\_ptr}. In other words, if you think about passing a const \textit{unique\_ptr<Resource>\&}, just pass a \textit{Resource*} (or \textit{Resource\&}) instead.
+只有想要传入包含资源的\textit{unique\_ptr}，并接收另一个包含相同\textit{unique\_ptr}的资源作为输出参数时，才应该使用\textit{D}函数。这并不是一个好主意，因为它要求调用者将其存储在一个\textit{unique\_ptr}中。换句话说，如果想传递一个const \textit{unique\_ptr<resource>\&}，只需传递一个\textit{Resource*}(或\textit{Resource\&})就好。
 
-The \textit{E} function is meant for sharing resource ownership with the callee. Passing a \textit{shared\_ptr} by value can be relatively costly, as it is required to increment its reference counters. However, in this case, passing \textit{shared\_ptr} by value is okay, since a copy must be made somewhere if the callee really wants to become a shared owner.
+\textit{E}函数用于与被调用方共享资源所有权。通过值传递\textit{shared\_ptr}的开销相对比较大，因为需要增加它的引用计数器。然而，在这种情况下，通过值传递\textit{shared\_ptr}是可以的，如果被调用方真的想成为共享的所有者，就必须在某处创建一个副本。
 
-The \textit{F} function is similar to \textit{D} and should only be used when you want to manipulate the \textit{shared\_ptr} instance and propagate the change through this in/out parameter. If you're unsure if the function should take ownership or not, consider passing a \textit{const shared\_ptr\&}.
+\textit{F}函数类似于\textit{D}，应该只在想要操作\textit{shared\_ptr}实例并通过这个in/out参数传播更改时使用。如果不确定函数是否应该拥有所有权，可以考虑传递\textit{const shared\_ptr\&}。
 
-\subsubsubsection{5.2.4\hspace{0.2cm}Specifying preconditions and postconditions}
+\subsubsubsection{5.2.4\hspace{0.2cm}确定前置条件和后置条件}
 
-It's not uncommon for a function to have some requirements regarding its parameters. Each requirement should be stated as a precondition. If a function guarantees that its result has some properties – for example, it is non-negative – the function should make that clear as well. Some developers resort to placing comments to inform others about this, but it doesn't really enforce the requirement in any way. Placing if statements is better, but hides the reason for the check. Currently, the C++ standard still doesn't offer a way to deal with this (contracts were first voted into the C++20 standard, just to be removed later on). Fortunately, libraries such as Microsoft's \textbf{Guideline Support Library (GSL)} provide their own checks.
+函数对参数有一些要求很正常，每一项要求都应作为先决条件。如果函数可以保证结果具有某些属性——例如，是非负的——该函数也应该明确这一点。一些开发人员使用注释来告知其他人这一点，但并没有以任何方式真正执行需求。使用if语句更好，但隐藏了检查的原因。目前，C++标准仍然没有提供一种方法来处理这个问题(契约第一次投票加入C++20标准，只是后面删除了)。幸运的是，像微软的\textbf{指南支持库(GSL)}这样的库提供了自己实现的检查。
 
-Let's assume that, for whatever reason, we're writing our own queue implementation. The push member function could look like this:
+假设，出于某种原因，正在编写自己的队列实现。push成员函数看起来像这样:
 
 \begin{lstlisting}[style=styleCXX]
 template<typename T>
@@ -200,13 +188,13 @@ T& Queue::push(T&& val) {
 }
 \end{lstlisting}
 
-Note that the user doesn't even need access to the implementation to be sure that some checks are in place. The code is also self-documenting as it's clear what the function requires and what the result will be.
+注意，用户甚至不需要访问实现来确保某些检查已经就绪。代码也是自解释化的，因为函数需要什么，结果会是什么都很清楚。
 
-\subsubsubsection{5.2.5\hspace{0.2cm}Leveraging inline namespaces}
+\subsubsubsection{5.2.5\hspace{0.2cm}使用内联名称空间}
 
-In systems programming, oftentimes, you're not always just writing code against an API; often, you need to care about ABI compatibility as well. A famous ABI break happened when GCC released its fifth version, with one of the major changes being the change of the class layout of \textit{std::string}. This meant that libraries working with older GCC versions (or still using the new ABI in newer versions, which is still a thing in recent GCC releases) would not work with code written using a later ABI. In the case of an ABI break, if you receive a linker error, you can consider yourself lucky. In some cases, such as mixing \textit{NDEBUG} code with debug code, you'll likely get memory corruption if a class only has members available in one such configuration' for instance, special members being added for better debugging.
+系统编程中，通常并不总是针对API编写代码，还需要关心ABI兼容性。一个著名的ABI崩溃发生在GCC发布第5个版本的时候，其中一个主要的变化是改变了\textit{std::string}的类布局。这意味着与旧的GCC版本一起工作的库(或者仍然在新版本中使用新的ABI，这在最近的GCC版本中仍然是一种现象)不能与使用新版本ABI编写的代码一起工作。在ABI中断的情况下，如果收到一个链接器错误，可以认为自己很幸运。在某些情况下，例如混合\textit{NDEBUG}代码和\textit{DEBUG}代码。若类只有一个这样的配置中可用的成员，例如，为了更好地调试而添加的成员，可能会出现内存崩溃。
 
-Some memory corruptions, which are often hard to debug, can easily be turned into linker errors with the use of C++11's inline namespaces. Consider the following code:
+使用C++11的内联名称空间时，一些通常很难调试的内存损坏很容易转化为链接器错误。考虑下面的代码:
 
 \begin{lstlisting}[style=styleCXX]
 #ifdef NDEBUG
@@ -225,40 +213,40 @@ struct EasilyDebuggable {
 } // end namespace
 \end{lstlisting}
 
-Because the preceding code uses inline namespaces, the users won't see a difference between the two build types when you're declaring objects of this class: all declarations from an inline namespace are visible in the surrounding scope. The linker, however, will end up with different symbol names, which will cause the linker to fail if it tries to link incompatible libraries, giving us the ABI safety we're looking for and a nice error message mentioning the inline namespace.
+由于前面的代码使用内联名称空间，当声明这个类的对象时，用户不会看到这两种构建类型之间的区别:来自内联名称空间的所有声明在周围的作用域中都是可见的。但是，链接器将以不同的符号名结束，这将导致链接器在试图链接不兼容的库时失败，从而给提供了我们正在寻找的ABI安全性，并提供了一个很好的错误消息，其中提到了内联名称空间。
 
-For more tips on providing safe and elegant ABIs, please see Arvid Norberg's The ABI Challenge talk from C++Now 2019, which is linked in the Further reading section.
+有关提供安全优雅的ABI的更多提示，请参见Arvid Norberg的《2019 C++ Now 2019》ABI挑战演讲，链接在扩展阅读部分。
 
-\subsubsubsection{5.2.6\hspace{0.2cm}Leveraging std::optional}
+\subsubsubsection{5.2.6\hspace{0.2cm}使用std::optional}
 
-Going back from ABIs to APIs, let's mention one more type that we omitted when we were designing great APIs earlier in this book. The hero of this section can save the day when it comes to optional parameters for functions as it can help your types have components that may or may not hold value, and it can also be used for designing clean interfaces or as a replacement for pointers. This hero is called std::optional and was standardized in C++17. If you can't use C++17, you can still find it in Abseil (absl::optional), or find a very similar version from Boost (boost::optional). A big plus of using those classes is that they express the intent very clearly, which helps with writing clean and selfdocumenting interfaces. Let's see it in action.
+从ABI回到API，再提一种在本书前面设计优秀API时忽略的类型。当涉及到函数的可选参数时，本节的主角可以挽救一切，因为它可以帮助类型拥有可能有值也可能没有值的组件，它还可以用于设计干净的接口或替代指针。它就是\textit{std::optional}，在C++17中标准化了。如果不能使用C++17，可以在Abseil(absl::optional)中找到它，或者从Boost(Boost::optional)中找到非常类似的版本。使用该类的一个很大的优点是，非常清楚地表达了意图，这有助于编写干净和自文档化的接口。来看看实际情况。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Optional function parameters}
+\textbf{可选的函数参数}
 
-We'll start by passing arguments to functions that can, but may not, hold value. Have you ever stumbled upon a function signature similar to the following?
+首先将参数传递给可以(但可能不能)保存值的函数。曾经发现过类似于以下的函数签名吗？
 
 \begin{lstlisting}[style=styleCXX]
 void calculate(int param); // If param equals -1 it means "no value"
 void calculate(int param = -1);
 \end{lstlisting}
 
-Sometimes, it's just too easy to pass a -1 by mistake when you didn't want to if param was calculated somewhere else in code – perhaps where it was even a valid value. How about the following signature?
+有时，如果param是在代码的其他地方计算的，那么很容易错误地传递-1——可能它是一个有效值。下面的签名呢？
 
 \begin{lstlisting}[style=styleCXX]
 void calculate(std::optional<int> param);
 \end{lstlisting}
 
-This time, it's much clearer what to do if you don't want to pass a value: just pass an empty optional. The intent is clear, and -1 can still be used as a valid value instead of you having to give it any special meaning in a type-unsafe manner.
+这一次，如果不想传递一个值，该做什么就更清楚了:只传递一个空的可选值。目的很明确，-1仍然可以用作有效值，而不必以一种类型不安全的方式赋予它特殊的含义。
 
-That's just one usage of our optional template. Let's see some others.
+这只是可选模板的一种用法。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Optional function return values}
+\textbf{可选函数返回值}
 
-Just like with accepting special values to signify the no value of a parameter, a function can sometimes return no value. Which of the following would you prefer?
+就像接受特殊值表示形参无值一样，函数有时也会无值返回。看看更喜欢下面哪一种？
 
 \begin{lstlisting}[style=styleCXX]
 int try_parse(std::string_view maybe_number);
@@ -267,17 +255,17 @@ int *try_parse(std::string_view maybe_number);
 std::optional<int> try_parse(std::string_view maybe_number);
 \end{lstlisting}
 
-How can you tell what value the first function will return in case of errors? Or will it throw an exception instead of returning a magic value? Moving on to the second signature, it looks like false will be returned if there is an error, but it's still easy to just forget to check it and read parsed\_number directly, potentially causing trouble. In the third case, while it's relatively safe to assume a nullptr will be returned on errors and an integer in case of success, it's now unclear if the returned int should be freed.
+如何知道第一个函数在出现错误时将返回什么值？或者它会抛出一个异常而不是返回一个魔值吗？继续看第二个签名，如果有错误，它看起来会返回false，但仍然很容易忘记检查它，并直接读取parsed\_number，这可能会造成麻烦。第三种情况下，虽然假设错误时返回nullptr，成功时返回一个整数相对安全，但现在还不清楚是否应该释放返回的整数。
 
-With the last signature, it's clear by just looking at it that an empty value will be returned in case of errors and that there's nothing else that needs to be done. It's simple, understandable, and elegant.
+对于最后一个签名，只要查看它，就可以清楚地看到在发生错误时将返回一个空值，并且不需要做任何其他操作。就是这么简单、易懂、优雅。
 
-Optional return values can also be used to just mark a no value being returned, not necessarily that an error had occurred. Having said that, let's move on to our last use case for optionals.
+可选的返回值也可以用来标记没有返回值，而不一定表示发生了错误。话虽如此，来看看可选项的最后一个用例。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Optional class members}
+\textbf{可选类的成员}
 
-Achieving coherence in a class state is not always an easy task. For instance, sometimes, you want to have a member or two that can simply not be set. Instead of creating another class for such a case (which increases code complexity) or reserving a special value (which is easy to pass unnoticed), you can use an optional class member. Consider the following type:
+类状态中实现一致性并不总是一件容易的任务。例如，有时希望有一两个成员不能简单地设置。可以使用可选的类成员，而不是为这种情况创建另一个类(这会增加代码的复杂性)或保留一个特殊的值(很容易不被注意地传递)。考虑以下类型:
 
 \begin{lstlisting}[style=styleCXX]
 struct UserProfile {
@@ -288,9 +276,9 @@ struct UserProfile {
 };
 \end{lstlisting}
 
-Here, we can see which fields are necessary and which ones don't need to be filled. The same data could be stored using empty strings, but this wouldn't be clearly visible just from the struct's definition. Another alternative would be to use std::unique\_ptr's, but then we would lose data locality, which is often essential for performance. For such cases, std::optional can be of great value. It should definitely be a part of your toolbox when you want to design clean and intuitive APIs.
+这里，可以看到哪些字段是必要的，哪些字段不需要填充。同样的数据可以使用空字符串存储，但仅从结构体的定义来看，这并不明显。另一种选择是使用\textit{std::unique\_ptr}，但是这样就会丢失数据局部性，而这对于性能来说通常是必不可少的。对于这种情况，\textit{std::optional}就非常合适。想要设计干净直观的API时，它绝对应该是开发者工具箱的一部分。
 
-This knowledge can help you provide high-quality and intuitive APIs. There's one more thing you can do to improve them further that will also help you write less buggy code by default. We will discuss this in the next section.
+这些知识可以帮助您提供高质量和直观的API。还可以做一件事来进一步改进它们，这也使编写的代码出现更少的错误。我们将在下一节对此进行讨论。
 
 
 
