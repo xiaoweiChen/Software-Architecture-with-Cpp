@@ -1,24 +1,22 @@
 
 
-Even though deploying services sounds easy, there's a lot of things to think about if you take a closer look. This section will describe how to perform efficient deployments, configure your services after installing them, check that they stay healthy after being deployed, and how to do it all while minimizing downtime.
+尽管部署服务听起来很简单，如果仔细观察，会发现还有很多事情需要考虑。本节将描述如何执行有效的部署、在安装服务后配置服务、在部署后检查服务是否保持正常运行，以及如何在最小化宕机时间内的同时完成这些工作。
 
-\subsubsubsection{4.6.1\hspace{0.2cm}The sidecar pattern}
+\subsubsubsection{4.6.1\hspace{0.2cm}边车设计模式}
 
-Remember Envoy from earlier in this chapter? It's a very useful tool for efficient application development. Instead of embedding infrastructure services such as logging, monitoring, or networking into your application, you can deploy the Envoy proxy along with your app, just like a sidecar would be deployed next to a motorbike. Together, they can do much more than the app without the sidekick (another name for this pattern).
+还记得本章前面提到的Envoy吗？对于高效的应用程序开发来说，它是一个非常有用的工具。可以将Envoy代理与应用程序一起部署，就像在摩托车旁边部署挎车一样，而不是将日志、监控或网络等基础设施服务嵌入到应用程序中，加在一起会比没有sidekick(这种模式的另一种叫法)的应用做得更多。
 
-Using a sidecar can speed up development, as many of the functionality it brings would need to be developed independently by each of your microservices. Because it's separate from your application, a sidecar can be developed using any programming language you find best for the job. The sidecar, along with all the functionality it provides, can be maintained by an independent team of developers and updated independently from your main service.
+使用边车可以加速开发，因为它带来的许多功能需要由微服务独立开发。因为边车独立于应用程序，所以可以使用适合的编程语言进行开发。边车及其提供的所有功能，都可以由独立的开发团队进行维护，并独立于主服务进行更新。
 
-Because sidecars reside right next to the app they enhance, they can use local means of inter-process communication. Usually, it's fast enough and much faster than communicating from another host, but remember that it can sometimes be too big a burden.
+因为边车就在需要增强的应用程序旁边，它们可以使用本地的进程进行通信。通常，与与另一个主机通信相比，这就已经足够快，而且要快得多。但请记住，这有时可能是一个巨大的负担。
 
-Even if you deploy a third-party service, deploying your selected sidecar next to it can still provide value: you can monitor the resource usage and the condition of both the host and the service, as well as tracing requests throughout your distributed system. Sometimes it's also possible to reconfigure the service dynamically based on its condition, via editing the config file or a web interface.
-
+即使部署了第三方服务，将所选的边车部署到旁边仍然有用:可以监视资源使用情况，以及主机和服务的状况，还可以在整个分布式系统中跟踪请求。有时也可以根据服务的情况，通过编辑配置文件或Web界面动态地配置服务。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Deploying a service with tracing and a reverse proxy using Envoy}
+\textbf{使用Envoy部署带有跟踪和反向代理的服务}
 
-Let's now use Envoy as a front proxy for our deployment. Start by creating Envoy's configuration file, in our case named \textit{envoy-front\_proxy.yaml}, with the address of our proxy:
-
+现在让Envoy作为我们部署的前线代理人。首先创建Envoy的配置文件，在例子中名为\textit{envoy-front\_proxy.yaml}，代理地址为:
 
 \begin{tcblisting}{commandshell={}}
 static_resources:
@@ -30,8 +28,7 @@ static_resources:
       traffic_direction: INBOUND
 \end{tcblisting}
 
-We've specified that Envoy is going to listen for incoming traffic on port 8080. Later in the config, we'll route it to our service. Now, let's specify that we'd like to handle HTTP requests using our set of service instances and adding some tracing capabilities on top. First, let's add an HTTP endpoint:
-
+这里已经指定Envoy将侦听端口8080上的传入信息。在配置后，将把信息转到我们的服务中。现在，让指定使用我们的服务实例集来处理HTTP请求，并在上面添加一些跟踪功能。首先，让添加一个HTTP端点:
 
 \begin{tcblisting}{commandshell={}}
 filter_chains:
@@ -43,7 +40,7 @@ type.googleapis.com/envoy.extensions.filters.network.
 http_connection_manager.v3.HttpConnectionManager
 \end{tcblisting}
 
-Now, let's specify that requests should have IDs assigned and be traced by a distributed tracing system, Jaeger:
+现在，指定请求分配ID，并由分布式跟踪系统Jaeger跟踪:
 
 \begin{tcblisting}{commandshell={}}
 generate_request_id: true
@@ -70,10 +67,9 @@ type.googleapis.com/envoy.config.trace.v3.DynamicOtConfig
          hostPort: ""
 \end{tcblisting}
 
-We'll create IDs for requests and use the OpenTracing standard (\textit{DynamicOtConfig}) with the native Jaeger plugin. The plugin will report to a Jaeger instance running under the specified address and add the specified headers.
+将为请求创建ID，并在本地Jaeger插件中使用OpenTracing标准(\textit{DynamicOtConfig})。该插件将生成一个Jaeger实例在指定地址下运行，并添加指定的头文件。
 
-We also need to specify that all traffic (see the match section) from all domains shall be routed into our service cluster:
-
+还需要指定来自所有域名的所有信息(参见匹配部分)都应转到我们的服务集群:
 
 \begin{tcblisting}{commandshell={}}
 codec_type: auto
@@ -84,6 +80,8 @@ route_config:
     - name: front_proxy
       domains:
         - "*"
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
       routes:
         - match:
             prefix: "/"
@@ -93,7 +91,7 @@ route_config:
             operation: example_operation
 \end{tcblisting}
 
-We'll define our \textit{example\_service} cluster in a second. Note that each request coming to the cluster will be marked by a predefined operation decorator. We also need to specify what router address to use:
+这里定义了\textit{example\_service}集群。注意，到达集群的每个请求都将由预定义的操作修饰符标记。还需要指定路由器地址:
 
 \begin{tcblisting}{commandshell={}}
 http_filters:
@@ -102,7 +100,7 @@ http_filters:
 use_remote_address: true
 \end{tcblisting}
 
-Now we know how to handle and trace the requests, so what's left is to define the clusters we used. Let's start with our service's cluster:
+现在知道了如何处理和跟踪请求，剩下的就是定义使用的集群。先从我们的服务集群开始:
 
 \begin{tcblisting}{commandshell={}}
 clusters:
@@ -121,10 +119,9 @@ clusters:
                 port_value: 5678
 \end{tcblisting}
 
-Each cluster can have multiple instances (endpoints) of our service. Here, if we decide to add more endpoints, the incoming requests will be load-balanced using the round-robin strategy.
+每个集群可以有多个实例(端点)。这里，若决定添加更多端点，则将使用循环策略对传入请求进行负载平衡。
 
-Let's also add an admin interface:
-
+再添加一个管理界面:
 
 \begin{tcblisting}{commandshell={}}
 admin:
@@ -135,7 +132,7 @@ admin:
      port_value: 9901
 \end{tcblisting}
 
-Let's now place the config inside a container that will run Envoy using a Dockerfile, which we named \textit{Dockerfile-front\_proxy}:
+现在将配置放在一个容器中，它将使用Dockerfile运行Envoy，将其命名为\textit{Dockerfile-front\_proxy}:
 
 \begin{tcblisting}{commandshell={}}
 FROM envoyproxy/envoy:v1.17-latest
@@ -152,10 +149,9 @@ COPY envoy-front_proxy.yaml /etc/envoy/envoy.yaml
 
 \end{tcblisting}
 
-We also downloaded the Jaeger native plugin that we used in our Envoy config.
+还下载了在Envoy配置中使用的Jaeger本地插件。
 
-Now let's specify how to run our code in several containers using Docker Compose. Create a \textit{docker-compose.yaml} file, starting with the front proxy service definition:
-
+现在指定如何使用Docker Compose在几个容器中运行代码。从前端代理服务定义开始，创建一个\textit {docker-compose.yaml}文件:
 
 \begin{tcblisting}{commandshell={}}
 version: "3.7"
@@ -165,6 +161,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-front_proxy
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
     networks:
       - example_network
     ports:
@@ -172,8 +170,7 @@ services:
       - 9901:9901
 \end{tcblisting}
 
-We use our Dockerfile here, a simple network, and we expose two ports from the container on the host: our service and the admin interface. Let's now add the service our proxy will direct to:
-
+这里使用Dockerfile，这是一个简单的网络，在主机上公开了容器的两个端口:服务和管理接口。现在让添加代理要指向的服务:
 
 \begin{tcblisting}{commandshell={}}
 example_service:
@@ -184,10 +181,9 @@ example_service:
 
 \end{tcblisting}
 
-In our case, the service will just display a predefined string in a simple web server.
+在例子中，服务只会在一个简单的Web服务器中显示一个预定义的字符串。
 
-Now, let's run Jaeger in another container, exposing its port to the outside world:
-
+现在，在另一个容器中运行Jaeger，将其端口暴露给外部:
 
 \begin{tcblisting}{commandshell={}}
 jaeger:
@@ -201,39 +197,36 @@ jaeger:
 
 \end{tcblisting}
 
-The last step will be to define our network:
+最后一步是定义网络:
 
 \begin{tcblisting}{commandshell={}}
   networks:
     example_network: {}
 \end{tcblisting}
 
-And we're done. You can now run the service using \textit{docker-compose up -\,-build} and point your browser to the endpoints we specified.
+完成了。现在可以使用\textit{docker-compose up -\,-build}运行这个服务，并将浏览器指向特定的端口。
 
-Using a sidecar proxy has one more benefit: even if your service will die, the sidecar is usually still alive and can respond to external requests while the main service is down. The same applies when your service is redeployed, for example, because of an update. Speaking of which, let's learn how to minimize the related downtime.
+使用边车代理还有一个好处:即使服务死机，边车通常是活着的，可以在主服务关闭时响应外部请求。当服务重新部署(例如，由于更新)时，这同样适用。说到这里，让我们了解如何最小化相关的宕机时间。
 
+\subsubsubsection{4.5.2\hspace{0.2cm}零宕机部署}
 
-\subsubsubsection{4.5.2\hspace{0.2cm}Zero-downtime deployments}
-
-There are two common ways to minimize the risk of downtime during deployments: \textbf{bluegreen deployments} and \textbf{canary releases}. You can use the Envoy sidecar when introducing any of those two.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Blue-green deployments}
-
-\textbf{Blue-green deployments} can help you minimize both the downtime and the risk related to deploying your app. To do so, you'll need two identical production environments, called blue and green. While green serves the customers, you can perform the update in the blue one. Once the update was made, the services were tested, and all looks stable, you can switch the traffic so it now flows to the updated (blue) environment.
-
-If any issues are spotted in the blue environment after the switch, the green one is still there – you can just switch them back. The users probably won't even notice any changes, and because both the environments are up and running, no downtime should be visible during the switch. Just make sure you won't lose any data during the switch (for example, transactions made in the new environment).
-
+有两种常见的方法来最小化部署期间的宕机风险:\textbf{蓝绿部署}和\textbf{金丝雀发布}。两者都可以使用Envoy边车模式。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Canary releases}
+\textbf{蓝绿部署}
 
-The simplest way to not have all your service instances fail after an update is often, well, not updating all of them at once. That's the key idea behind the incremental variant of bluegreen deployments, also called a \textbf{canary release}.
+\textbf{蓝绿部署}可以最小化宕机时间和与部署应用程序的相关风险。为此，需要两个相同的生产环境，称为蓝色和绿色。绿色服务于客户，可以执行蓝色的更新。一旦进行了更新，服务进行了测试，所有看起来都很稳定，可以切换流量，让其流到更新的(蓝色)环境。
 
-In Envoy, you could put the following in the \textit{routes} section of your config:
+如果在切换后蓝色环境中发现了问题，绿色环境仍然存在——可以将切换回来。用户甚至可能不会注意到，而且由于两个环境都已启动并运行，在切换期间应该不会停机。只要确保在切换期间不会丢失任何数据(例如，在新环境中进行的事务)即可。
 
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{金丝雀发布}
+
+要避免所有服务实例在更新后都失败，最简单的方法是，不要一次更新所有服务实例。这就是蓝绿部署的增量变体背后的关键思想，也称为\textbf{金丝雀发步}。
+
+在Envoy中，可以在配置的\textit{routes}部分中输入以下内容:
 
 \begin{tcblisting}{commandshell={}}
 - match:
@@ -245,11 +238,9 @@ In Envoy, you could put the following in the \textit{routes} section of your con
         weight: 5
       - name: old_version
         weight: 95
-
 \end{tcblisting}
 
-You should also remember to define the two clusters from the preceding snippet, the first one with the old version of your service:
-
+还应该记得在前面的代码片段中定义两个集群，第一个是旧版服务:
 
 \begin{tcblisting}{commandshell={}}
 clusters:
@@ -257,6 +248,8 @@ clusters:
     connect_timeout: 0.250s
     type: strict_dns
     lb_policy: round_robin
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
     load_assignment:
       cluster_name: old_version
       endpoints:
@@ -269,7 +262,7 @@ clusters:
 
 \end{tcblisting}
 
-The second cluster will run the new version:
+第二个集群将运行新版本:
 
 \begin{tcblisting}{commandshell={}}
 - name: new_version
@@ -285,21 +278,19 @@ The second cluster will run the new version:
               socket_address:
                 address: new_version
                 port_value: 5678
-
 \end{tcblisting}
 
-When an update gets deployed, the new version of a service will only be seen and used by a small fraction (here: 5\%) of your users. If the updated instances remain stable and no checks and verifications fail, you can gradually update more and more hosts in several steps, until all of them are switched to a new version. You can do it either by updating the config files by hand or by using the admin endpoint. Voila!
+当一个部署更新时，服务的新版本将只会让一小部分(这里:5\%)的用户看到和使用。如果更新的实例保持稳定，并且没有检查和验证失败，那么可以分几个步骤逐步更新越来越多的主机，直到所有主机都切换到新版本。可以通过手动更新配置文件或使用管理端点来实现。
 
-Let's now move on to the last deployment pattern that we'll cover here.
+现在，来了解一下最后一个部署模式。
 
+\subsubsubsection{4.5.3\hspace{0.2cm}外部配置存储}
 
-\subsubsubsection{4.5.3\hspace{0.2cm}External configuration store}
+如果部署的是一个简单的应用程序，可以只部署其配置。然而，当希望有一个包含许多应用程序实例的更复杂的部署时，为了重新配置而重新部署新版本的应用程序很快就会成为一种负担，从而手动配置更改是不可取的。引入外部配置存储是解决问题的好方法。
 
-If you're deploying a simple application, it can be okay to just deploy its configuration along with it. However, when you want to have a more complex deployment with many application instances, it can quickly become a burden to redeploy a new version of the app just to reconfigure it. At the same time, manual configuration changes are a no-go if you want to treat your services like cattle, not pets. Introducing an external configuration store can be an elegant way to overcome such hurdles.
+从本质上说，应用程序可以从上述商店获取配置，而不是仅仅依赖于它们的本地配置文件。这可以为多个实例提供公共设置，并为其中一些实例调优参数，同时拥有一种简单而集中的方式来监视所有配置。如果想让仲裁程序决定哪些节点将作为主节点，哪些节点将作为备份节点，外部配置存储可以为实例提供此类信息。实现配置更新过程也很有用，这样可以在操作期间轻松地重新配置实例。可以使用现成的解决方案，如Firebase Remote Config，利用基于Java的Netflix Archaius，或者编写一个配置存储，利用云存储和更改通知。
 
-In essence, your apps can grab their configuration from said store instead of just relying on their local config files. This allows you to provide common settings for multiple instances and tune parameters for some of them, while having an easy and centralized way to monitor all your configs. If you want an arbiter to decide which nodes will be master nodes and which will serve as backup ones, an external config store can provide the instances with such information. It's also useful to implement a configuration update procedure so that your instances can be easily reconfigured during operation. You can use ready solutions such as Firebase Remote Config, leverage the Java-based Netflix Archaius, or write a configuration store on your own leveraging cloud storage and change notifications. 
-
-Now that we've learned some useful deployment patterns, let's move to another important topic when it comes to high-level design: APIs.
+已经了解了一些有用的部署模式，接下来转向另一个重要的高级设计主题:API。
 
 
 
