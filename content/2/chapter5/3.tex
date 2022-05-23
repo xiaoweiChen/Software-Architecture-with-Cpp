@@ -1,9 +1,9 @@
 
-Are you familiar with imperative versus declarative coding styles? The former is when your code tells the machine how to achieve what you want step by step. The latter is when you tell the machine just what you want to achieve. Certain programming languages favor one over the other. For instance, C is imperative, while SQL is declarative, just like many functional languages. Some languages allow you to mix the styles – think of LINQ in C\#.
+熟悉命令式编码风格和声明式编码风格吗？前者是代码告诉机器如何一步步实现想要的结果。后者是告诉机器想要达到的目标。某些编程语言支持其中一种。例如，C语言是命令式的，而SQL是声明式的，就像许多函数式语言一样。有些语言可以混合——比如C\#中的LINQ。
 
-C++ is a flexible beast that allows you to write code in both ways. Is there one you should prefer? It turns out that when you're writing declarative code, usually a higher level of abstraction is kept, which leads to fewer bugs and easier-to-spot errors. So, how can we write C++ declaratively? There are two main tactics to apply.
+C++是一种灵活的语言，可以以两种方式对代码进行编写。当编写声明性代码时，通常会保留更高层次的抽象，这会让错误出现的更少，以及更容易发现错误。那么，如何以声明的方式编写C++呢？主要有两种方式。
 
-The first one is to write functional-style C++, which is where you prefer a pure-functional style (no side effects of functions) if possible. Instead of writing loops by hand, you should try using standard library algorithms. Consider the following code:
+第一种是编写函数式风格的C++代码，如果更喜欢纯函数式风格(没有函数的副作用)，应该尝试使用标准库算法，而不是手工编写循环。比如下面的代码:
 
 \begin{lstlisting}[style=styleCXX]
 auto temperatures = std::vector<double>{ -3., 2., 0., 8., -10., -7. };
@@ -17,7 +17,7 @@ for (std::size_t i = 0; i < temperatures.size() - 1; ++i) {
 return std::nullopt;
 \end{lstlisting}
 
-Now, compare the preceding code with the following snippet, which does the same:
+现在，比较上下两段代码，它们的功能相同:
 
 \begin{lstlisting}[style=styleCXX]
 auto it = std::ranges::adjacent_find(temperatures,
@@ -29,9 +29,9 @@ if (it != std::end(temperatures))
 return std::nullopt);
 \end{lstlisting}
 
-Both snippets return the last day that had a relatively stable temperature. Which one of those would you rather read? Which one is easier to understand? Even if you're not that familiar with C++ algorithms now, after encountering them a few times in code, they just feel simpler, safer, and cleaner than hand-crafted loops. That's because they often are.
+两个代码段都返回温度相对稳定的最后一天，你更愿意喜欢哪个本版？哪一个更容易理解？即使现在对C++算法不是很熟悉，但在代码中多次看到这些算法后，肯定会觉得它们比手工编写的循环更简单、更安全、更干净。
 
-The second tactic for writing declarative code in C++ is already somewhat present in the previous snippet. You should prefer using declarative APIs, such as the one from the ranges library. And although no range views were used in our snippet, they can make a lot of difference. Consider the following snippet:
+用C++编写声明性代码的第二种方式在前面的代码段中已经有所体现。通常会更偏向使用声明性API，比如ranges库中的API。尽管在代码段中没有使用范围视图，也可以产生很大的不同。看看下面的代码段:
 
 \begin{lstlisting}[style=styleCXX]
 using namespace std::ranges;
@@ -45,15 +45,15 @@ auto my_range = views::iota(1)
 std::cout << std::accumulate(begin(my_range), end(my_range), ""s) << '\n';
 \end{lstlisting}
 
-This is a great example of declarative coding: you just specify what should happen, not how. The preceding code takes the first two even numbers, reverses their order, and prints them as a string, thus printing the famous answer to life, the universe, and everything: 42. All of this is done in an intuitive and easily modifiable way.
+这是一个很好的声明性编码示例:只指定应该发生什么，而不是如何发生。前面的代码取前两个偶数，将它们的顺序颠倒，并将它们打印为字符串，从而打印出生命、宇宙和一切的著名答案:42。所有这些都是以一种直观且容易修改的方式完成。
 
-\subsubsubsection{5.3.1\hspace{0.2cm}Showcasing a featured items gallery}
+\subsubsubsection{5.3.1\hspace{0.2cm}展示特色商品}
 
-Enough with the toy examples, though. Remember our Dominican Fair application from Chapter 3, Functional and Nonfunctional Requirements? Let's write a component that will select and display a few featured items from the stores that a customer saved as their favorites. This can be pretty handy when we're writing a mobile app, for example.
+不过，简单例子到此为止。还记得在第3章提到的Dominican Fair应用程序吗？现在编写一个组件，选择并显示客户保存为其收藏夹的商店中的一些特色商品。例如，当编写移动应用程序时，这中功能非常方便。
 
-Let's start with a mostly C++17 implementation, which we'll update to C++20 throughout this chapter. This will include adding support for ranges.
+先从一个主要是C++17的实现开始，在本章中将其更新到C++20。这包括添加对range的支持。
 
-First, let's start with some code for obtaining information about the current user:
+首先，从获取当前用户信息的代码开始:
 
 \begin{lstlisting}[style=styleCXX]
 using CustomerId = int;
@@ -61,7 +61,7 @@ using CustomerId = int;
 CustomerId get_current_customer_id() { return 42; }
 \end{lstlisting}
 
-Now, let's add the store owners:
+现在，让添加商店所有者:
 
 \begin{lstlisting}[style=styleCXX]
 struct Merchant {
@@ -69,7 +69,7 @@ struct Merchant {
 };
 \end{lstlisting}
 
-The stores also need to have items in them:
+商店还需要有商品:
 
 \begin{lstlisting}[style=styleCXX]
 struct Item {
@@ -82,9 +82,9 @@ struct Item {
 };
 \end{lstlisting}
 
-Some items may not have photos or prices, which is why we used std::optional for those fields.
+有些商品可能没有照片或价格，这就是为什么对这些字段使用\texttt{std::optional}的原因。
 
-Next, let's add some code that describes our items:
+接下来，让添加一些代码来描述商品:
 
 \begin{lstlisting}[style=styleCXX]
 std::ostream &operator<<(std::ostream &os, const Item &item) {
@@ -112,9 +112,9 @@ std::ostream &operator<<(std::ostream &os, const Item &item) {
 }
 \end{lstlisting}
 
-First, we created a helper lambda for converting our optionals into strings. Since we only want to use it in our << operator, we defined it inside it.
+首先，创建了一个helper lambda将可选项转换为字符串。因为只想在\texttt{<<}操作符中使用它，所以在\texttt{<<}操作符中进行了定义。
 
-Note how we used C++14's generic lambdas (the auto parameter), along with C++17's constexpr and the is\_same\_v type trait, so that we have a different implementation when we're dealing with an optional <string> versus other cases. Achieving the same preC++17 would require writing templates with overloads, resulting in more complicated code:
+注意我们如何使用C++14的泛型lambdas(auto参数)，以及C++17的\texttt{constexpr}和\texttt{is\_same\_v}类型特征，以便在处理可选的<string>和其他情况时，我们有不同的实现。实现同样的功能，使用C++17前需要编写带有重载的模板，从而出现更复杂的代码:
 
 \begin{lstlisting}[style=styleCXX]
 enum class Category {
@@ -128,7 +128,7 @@ enum class Category {
 };
 \end{lstlisting}
 
-Finally, we can define the store itself:
+最后，定义存储:
 
 \begin{lstlisting}[style=styleCXX]
 struct Store {
@@ -138,18 +138,18 @@ struct Store {
 };
 \end{lstlisting}
 
-What's worth noting here is the use of the gsl::not\_null template from the Guidelines Support Library, which signals that the owner will always be set. Why not use just a plain old reference? That's because we may want our store to be moveable and copyable. Using a reference would hinder that.
+这里值得注意的是使用\texttt{gsl::not\_null}模板，它表示所有者总是设置。为什么不使用一个普通的引用呢？这是因为可能希望商店是可移动和可复制的。使用引用会有所阻碍。
 
-Now that we have those building blocks, let's define how to get a customer's favorite stores. For simplicity, let's assume we're dealing with hardcoded stores and merchants instead of creating code to deal with external data stores.
+现在，有了这些构建模块，来定义如何获得客户最喜欢的商店。简单起见，假设处理的是硬编码的商店和商家，而不是创建代码来处理外部数据存储。
 
-First, let's define a type alias for the stores and begin our function definition:
+首先，定义存储的类型别名，并开始函数定义:
 
 \begin{lstlisting}[style=styleCXX]
 using Stores = std::vector<gsl::not_null<const Store *>>;
 Stores get_favorite_stores_for(const CustomerId &customer_id) {
 \end{lstlisting}
 
-Next, let's hardcode some merchants, as follows:
+接下来，对一些商家进行硬编码，如下:
 
 \begin{lstlisting}[style=styleCXX]
 	static const auto merchants = std::vector<Merchant>{{17}, {29}};
@@ -180,9 +180,9 @@ Next, let's hardcode some merchants, as follows:
 		};
 \end{lstlisting}
 
-Here, we introduced our first C++20 feature. You might not be familiar with the .field = value; syntax unless you've coded in C99 or newer. Starting from C++20, you can use this notation (officially called designated initializers) to initialize aggregate types. It's more constrained than in C99 because the order is important, although it has some other minor differences. Without those initializers, it can be hard to understand which value initializes which field. With them, the code is more verbose but easier to comprehend, even for people unfamiliar with programming.
+这里，介绍了的第一个用到的C++20特性。你可能不熟悉\texttt{.field = value;}语法，除非使用C99或更高标准的代码。从C++20开始，可以使用这种表示法(正式称为指定初始化器)来初始化聚合类型。它比C99的限制更加严格，因为顺序很重要。如果没有这些初始化器，就很难理解哪个值初始化哪个字段。使用时，代码会更冗长，但更容易理解，即使对不熟悉编程的人也是如此。
 
-Once we've defined our stores, we can write the last part of our function, which will do the actual lookup:
+当已经定义了商店，就可以完成函数的最后一部分，执行实际的查找:
 
 \begin{lstlisting}[style=styleCXX]
 static auto favorite_stores_by_customer =
@@ -192,7 +192,7 @@ return favorite_stores_by_customer[customer_id];
 }
 \end{lstlisting}
 
-Now that we have our stores, let's write some code to obtain the featured items for those stores:
+现在有了自己的商店，可以编写一些代码来获取这些商店的特色商品:
 
 \begin{lstlisting}[style=styleCXX]
 using Items = std::vector<gsl::not_null<const Item *>>;
@@ -208,7 +208,7 @@ Items get_featured_items_for_store(const Store &store) {
 }
 \end{lstlisting}
 
-The preceding code was for obtaining items from one store. Let's also write a function that will obtain items from all the given stores:
+前面的代码用于从一个存储中获取商品。再编写一个函数，从所有给定的商店获取商品:
 
 \begin{lstlisting}[style=styleCXX]
 Items get_all_featured_items(const Stores &stores) {
@@ -223,9 +223,9 @@ Items get_all_featured_items(const Stores &stores) {
 }
 \end{lstlisting}
 
-The preceding code uses std::copy to insert elements into a vector, with memory preallocated by the reserve call.
+上面的代码使用\texttt{std::copy}将元素插入到\texttt{vector}中，内存由\texttt{reserve}预先分配。
 
-Now that we have a way to obtain interesting items, let's sort them by "freshness" so that the most recently added ones will appear first:
+现在，有了一种获得特殊物品的方法，让我们按“新鲜度”对它们进行排序，这样最近添加的物品就会首先出现:
 
 \begin{lstlisting}[style=styleCXX]
 void order_items_by_date_added(Items &items) {
@@ -236,7 +236,7 @@ void order_items_by_date_added(Items &items) {
 }
 \end{lstlisting}
 
-As you can see, we leveraged std::sort with a custom comparator. If you like, you could also force the same type for both left and right. To do so in a generic manner, let's use another C++20 feature: template lambdas. Let's apply them to the preceding code:
+使用自定义比较器来使用\texttt{std::sort}。如果愿意，还可以强制左对齐和右对齐使用相同的类型。为了以通用方式做到这一点，这里使用另一个C++20特性:模板lambda。这里，把它们应用到前面的代码中:
 
 \begin{lstlisting}[style=styleCXX]
 void order_items_by_date_added(Items &items) {
@@ -247,7 +247,7 @@ void order_items_by_date_added(Items &items) {
 }
 \end{lstlisting}
 
-The T type for the lambda will be deduced just like it would for any other template. The last two parts that are missing are the actual rendering code and the main function to glue it all together. In our example case, rendering will be as simple as printing to an ostream:
+T的类型可以推导出来，就像其他模板一样。最后缺少的两个部分是实际的呈现代码和将它们粘合在一起的主要功能。例子中，呈现部分将像打印到\texttt{ostream}一样简单:
 
 \begin{lstlisting}[style=styleCXX]
 void render_item_gallery(const Items &items) {
@@ -257,9 +257,9 @@ void render_item_gallery(const Items &items) {
 }
 \end{lstlisting}
 
-In our case, we just copy each element to the standard output and insert a newline between the elements. Using copy and an ostream\_iterator allows you to handle the element's separators for yourself. This can be handy in some cases; for instance, if you don't want a comma (or a newline, in our case) after the last element.
+本例中，只是将每个元素复制到标准输出中，并在元素之间插入一个换行符。使用\texttt{copy}和\texttt{ostream\_iterator}处理元素的分隔符。这在某些情况下是很方便的;例如，如果不希望最后一个元素后面有逗号(或换行符，在例子中)。
 
-Finally, our main function will look like this:
+最后，main函数看起来就像这样:
 
 \begin{lstlisting}[style=styleCXX]
 int main() {
@@ -273,7 +273,7 @@ int main() {
 }
 \end{lstlisting}
 
-Voila! Feel free to run the code to see how it prints our featured items:
+瞧!随意运行代码，看看它是如何打印特色商品的:
 
 \begin{tcblisting}{commandshell={}}
 name: Handmade painted ceramic bowls, photo_url:
@@ -285,11 +285,11 @@ the Tatra mountains, price: 1.230000, date_added: Sun Jan 3 12:06:38 2021
 CET, featured: 1
 \end{tcblisting}
 
-Now that we're done with our base implementation, let's see how we can improve it by using some new language features from C++20.
+现在已经完成了基本实现，继续了解如何使用C++20的一些新语言特性来改进它。
 
-\subsubsubsection{5.3.2\hspace{0.2cm}Introducing standard ranges}
+\subsubsubsection{5.3.2\hspace{0.2cm}标准中的range}
 
-Our first addition will be the ranges library. As you may recall, it can help us achieve elegant, simple, and declarative code. For brevity, first, we will pull in the ranges namespace:
+我们首先添加的是ranges库，它可以帮助我们实现优雅、简单和声明性的代码。为简洁起见，首先引入ranges命名空间:
 
 \begin{lstlisting}[style=styleCXX]
 #include <ranges>
@@ -297,7 +297,7 @@ Our first addition will be the ranges library. As you may recall, it can help us
 using namespace std::ranges;
 \end{lstlisting}
 
-We'll leave the code-defining merchants, items, and stores as-is. Let's start our modifications by using the get\_featured\_items\_for\_store function:
+将保留定义商家、商品和商店的代码。这里，使用\texttt{get\_featured\_items\_for\_store}函数进行修改:
 
 \begin{lstlisting}[style=styleCXX]
 Items get_featured_items_for_store(const Store &store) {
@@ -309,11 +309,11 @@ Items get_featured_items_for_store(const Store &store) {
 }
 \end{lstlisting}
 
-As you can see, making a range out of a container is straightforward: just pass it to a pipe operator. Instead of our hand-crafted loop to filter featured elements, we can use the views::filter expression, passing it a member pointer as the predicate. Due to the magic of std::invoke under the hood, this will correctly filter out all items that have our Boolean data member set to false.
+在容器中创建一个range很简单:只需将其传递给管道操作符。可以使用\texttt{views::filter}表达式，将成员指针作为谓词传递给它。由于\texttt{std::invoke}的魔力，它将正确地过滤掉所有布尔数据成员设置为false的项。
 
-Next, we need to convert each item into a gsl::not\_null pointer so that we can avoid unnecessary item copies. Finally, we return a vector of such pointers, the same as in our base code.
+接下来，需要将每个项目转换为一个\texttt{gsl::not\_null}指针，这样就可以避免不必要的复制。最后，与基本代码一样，返回此类指针的\texttt{vector}。
 
-Now, let's see how we can use the preceding function to obtain all the featured items from all our stores:
+现在，来看看如何使用前面的函数从所有商店获得所有的特色商品:
 
 \begin{lstlisting}[style=styleCXX]
 Items get_all_featured_items(const Stores &stores) {
@@ -329,11 +329,11 @@ Items get_all_featured_items(const Stores &stores) {
 }
 \end{lstlisting}
 
-Here, we created a range from all the stores and transformed them using the function we created in the previous step. Because we needed to dereference each element first, we used a helper lambda. Views are lazily evaluated, so each transform will be done only when it is about to be consumed. This can sometimes save you lots of time and computations: assuming you would only want the first N items, you can skip the unnecessary calls to get\_featured\_items\_for\_store.
+这里，从所有存储中创建了一个range，并使用在前面步骤中创建的函数对它们进行了转换。因为需要先对每个元素解引用，所以使用了helper lambda。视图进行惰性求值，因此每个转换只有在即将使用时才会执行。这有时可以为节省大量的时间和计算:假设只需要前N个项目，可以跳过对\texttt{get\_featured\_items\_for\_store}不必要的调用。
 
-Once we have our lazy view, similar to our base implementation, we can reserve space in the vector and copy items there from each nested vector in the all\_featured view. Range algorithms are more concise to use if you take the whole container. Look how copy doesn't require us to write std::begin(elem) and std::end(elem).
+有了惰性视图后，类似于现有的基实现，可以在\texttt{vector}中保留空间，并从\texttt{all\_featured}视图中的每个嵌套\texttt{vector}中复制项。如果使用容器，range算法使用起来会更简洁。看看\texttt{copy}是如何不要求使用\texttt{std::begin(elem)}和\texttt{std::end(elem)}。
 
-Now that we have our items, let's simplify our sorting code by using ranges to process them:
+现在有了商品，让我们简化排序代码，使用范围来处理它们:
 
 \begin{lstlisting}[style=styleCXX]
 void order_items_by_date_added(Items &items) {
@@ -341,11 +341,11 @@ void order_items_by_date_added(Items &items) {
 }
 \end{lstlisting}
 
-Again, you can see how ranges can help you write more concise code. The preceding copy and the sort here are both range algorithms, as opposed to views. They are eager and allow you to use projections. In our case, we just passed another member of our item class so that it can be used for comparison when sorting. Effectively, each item will be projected as just its date\_added, which will then be compared using greater\{\}.
+同样，可以看到使用range如何编写更简洁的代码。前面的复制和排序都是与视图相反的range算法。这里使用投影可能会更合适。在例子中，只是传递了item类的另一个成员，以便在排序时使用它进行比较。实际上，每个项目将投影为它的\texttt{date\_added}，然后使用更大的\texttt{\{\}}对其进行比较。
 
-But wait – our items are actually gsl::not\_null pointers to Item. How does this work? It turns out that our projection will dereference the gsl::not\_null pointer first because of the cleverness of std::invoke. Neat!
+等等——项目实际上是指向项目的\texttt{gsl::not\_null}指针。这是如何运作的呢？因为\texttt{std::invoke}很聪明，所以投影将首先解引用\texttt{gsl::not\_null}指针。完美!
 
-The last change that we can make is in our "rendering" code:
+可以做的最后一个改变是在“呈现”代码中:
 
 \begin{lstlisting}[style=styleCXX]
 void render_item_gallery([[maybe_unused]] const Items &items) {
@@ -355,15 +355,15 @@ void render_item_gallery([[maybe_unused]] const Items &items) {
 }
 \end{lstlisting}
 
-Here, ranges just help us remove some boilerplate code. When you run our updated version of the code, you should get the same output as in the base case.
+这里，range只删除了一些样板代码。当运行更新版本的代码时，应该得到与原始版本相同的输出。
 
-If you were expecting more from ranges than just concise code, there's good news: they can be used even more efficiently in our case.
+如果期望range不仅仅是简洁的代码，那么有一个好消息:在示例中，可以更有效地使用。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Reducing memory overhead and increasing performance using ranges}
+\textbf{使用range减少内存开销，增加性能}
 
-You already know that using lazy evaluation in std::ranges::views can help with performance by eliminating unnecessary compute. It turns out we can also use ranges to reduce the memory overhead in our example. Let's revisit our code for obtaining featured items from a store. It can be shortened down to the following:
+已经知道在\texttt{std::ranges::views}中使用惰性求值，可以通过消除不必要的计算来提高性能。在示例中，还可以使用range来减少内存开销。回顾一下从商店获取特色商品的代码，可以缩短为:
 
 \begin{lstlisting}[style=styleCXX]
 auto get_featured_items_for_store(const Store &store) {
@@ -373,9 +373,9 @@ auto get_featured_items_for_store(const Store &store) {
 }
 \end{lstlisting}
 
-Note that our function no longer returns items, instead relying on C++14's auto return type deduction. In our case, instead of returning a vector, our code will return a lazy view.
+注意，函数不再返回商品，而是依赖于C++14的自动返回类型推断。在例子中，代码将返回一个惰性视图，而不是\texttt{vector}。
 
-Let's learn how to consume this for all stores:
+让了解如何为所有商店使用这段代码:
 
 \begin{lstlisting}[style=styleCXX]
 Items get_all_featured_items(const Stores &stores) {
@@ -390,11 +390,11 @@ Items get_all_featured_items(const Stores &stores) {
 }
 \end{lstlisting}
 
-Now, because our preceding function returns a view instead of the vector, we end up with a view of views after calling transform. This means we can use yet another standard view called join to join our nested views into just one that's unified.
+现在，因为前面的函数返回的是一个视图而不是\texttt{vector}，在调用\texttt{transform}之后，最终会得到了一个视图的视图。这意味着可以使用另一个\texttt{join}的标准视图，将嵌套视图连接到一个统一的视图中。
 
-Next, we use std::ranges::distance to preallocate space in our destination vector, after which we make our copy. Some ranges are sized, in which case you could call std::ranges::size instead. The resulting code has just one call to reserve, which should give us a nice performance boost.
+接下来，使用\texttt{std::ranges::distance}来预分配目标\texttt{vector}中的空间，然后再进行复制。有些range是有限制，在这种情况下，可以调用\texttt{std::ranges::size}来代替。最后的代码只有一个对\texttt{reserve}的调用，这应该会带来很好的性能提升。
 
-This concludes introducing ranges to our code. Since we ended this section on a performance-related note, let's talk about one more topic that's important for this aspect of C++ programming.
+这就结束了对代码range的介绍。这里，以一个与性能相关的注释结束了本节。接下来，再讨论一个对C++编程的这方面很重要的另一个主题。
 
 
 

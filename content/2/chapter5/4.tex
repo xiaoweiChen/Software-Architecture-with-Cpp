@@ -1,13 +1,13 @@
 
-Starting with the advent of modern C++ in the early 2000s, C++ programming became more about computing things during compilation instead of deferring them to runtime. It's much cheaper to detect errors during compilation than to debug them later on. Similarly, it's much faster to have the result ready before the program is started instead of calculating it later on.
+从21世纪初现代C++的出现开始，C++编程更多地是在编译期间进行计算，而不是将它们推迟到运行时。在编译期间检测错误比较容易调试。类似地，在程序启动之前就准备好结果，要比之后再计算快。
 
-At first, there was template metaprogramming, but with C++11 onward, each new standard brought additional features for compile-time compute: be it type traits, constructs such as std::enable\_if or std::void\_t, or C++20's consteval for computing stuff only at compile time.
+起初，有模板元编程，但随着C++11的发展，每一个新标准都为编译时计算带来了额外的特性:类型特征，诸如\texttt{std::enable\_if}或\texttt{std::void\_t}之类的构造，或者C++20的构造，都是只在编译时进行计算。
 
-One feature that improved over the years was the constexpr keyword and its related code. C++20 really improved and extended constexpr. Now, you can not only write regular simple constexpr functions thanks to the previous standards (quite an improvement from C++11's single-expression ones), but you can also use dynamic allocations and exceptions inside them, not to mention std::vector and std::string!
+多年来改进的一个特性是\texttt{constexpr}关键字及其相关代码。C++20确实改进和扩展了\texttt{constexpr}。现在，不仅可以编写常规的\texttt{constexpr}函数(这是对C++11的单表达式函数的极大改进)，而且还可以在其中使用动态分配和异常，更不用说\texttt{std::vector}和\texttt{std::string}了!
 
-There's more: even virtual functions can now be constexpr: overload resolution happens as usual, but if a given one is constexpr, it can get called at compile time.
+甚至虚函数现在也可以是\texttt{constexpr}:重载解析照常进行，但如果给定的函数是\texttt{constexpr}，则可以在编译时调用。
 
-Yet another improvement was made to standard algorithms. Their non-parallel versions are all ready for you to use in your compile-time code. Consider the following example, which can be used to check if a given merchant is present in a container:
+对标准算法进行的另一项改进是，它们的非并行版本可以在编译时代码中使用。在下面的例子中，可以用来检查一个给定的商人信息是否存在于一个容器中:
 
 \begin{lstlisting}[style=styleCXX]
 #include <algorithm>
@@ -23,27 +23,27 @@ bool has_merchant(const Merchant &selected) {
 }
 \end{lstlisting}
 
-As you can see, we're doing a binary search for an array of merchants, sorted by their IDs.
+如您所见，正在对一组商家进行二分搜索，根据他们的ID进行排序。
 
-To gain insight into the code and its performance, we recommend that you take a quick look at the assembly that this code generates. Along with the advent of compile-time computations and chasing performance, one of the invaluable tools that was developed was the \url{https://godbolt.org} site. It can be used to quickly play with code to see how different architectures, compilers, flags, library versions, and implementations influence the generated assembly.
+为了深入了解代码及其性能，建议查看一下代码生成的汇编码。随着编译时计算和追逐性能的出现，有一个开发工具是\url{https://godbolt.org}。可用于快速处理代码，以查看不同的架构、编译器、标志、库版本和实现如何影响生成的程序集。
 
-We tested the preceding code using GCC trunk (before GCC 11 was officially released) with -O3 and --std=c++2a. In our case, we checked the generated assembly with the following code:
+使用\texttt{-O3}和\texttt{-\,-std=c++2a}编译标识，再使用GCC trunk(在GCC 11正式发布之前)测试了上述代码。在例子中，使用以下代码检查生成的汇编码:
 
 \begin{lstlisting}[style=styleCXX]
 int main() { return has_merchant({4}); }
 \end{lstlisting}
 
-You can see the few dozens of assembly lines using the following Godbolt: \url{https://godbolt.org/z/PYMTYx}.
+在这里可以看到相应的几十行汇编: \url{https://godbolt.org/z/PYMTYx}.
 
-But wait – you could say that there's a function call in the assembly, so maybe we could inline it so it can be optimized better? That would be a valid point. Often, this helps a lot, although now, we just get the assembly inlined (see: \url{https://godbolt.org/z/hPadxd}).
+但请等一下——可以说在汇编码中有一个函数调用，也许可以内联它，这样它可以更好地优化？这是一个不错的想法。但现在，这里只是将汇编码进行内联(参见:\url{https://godbolt.org/z/hPadxd})。
 
-So, now, try changing the signature to the following:
+现在，试着将签名改为以下形式:
 
 \begin{lstlisting}[style=styleCXX]
 constexpr bool has_merchant(const Merchant &selected)
 \end{lstlisting}
 
-constexpr functions are implicitly inline, so we removed that keyword. If we look into the assembly, we will see that some magic happened: the search was optimized away! As you can see at https://godbolt.org/z/v3hj3E, all the assembly that was left was as follows:
+\texttt{constexpr}函数是隐式内联的，因此删除了该关键字。如果研究一下汇编码，就会发现发生了一些神奇的事情:搜索被优化掉了!可以在\url{https://godbolt.org/z/v3hj3E}看到，所有剩下的程序集如下所示:
 
 \begin{tcblisting}{commandshell={}}
 main:
@@ -51,15 +51,15 @@ main:
     ret
 \end{tcblisting}
 
-The compiler optimized our code so that the only thing left is our pre-computed result being returned. That's pretty impressive, isn't it?
+编译器优化了代码，因此只剩下返回预先计算的结果。很真的很令人吃惊，对吧？
 
-\subsubsubsection{5.4.1\hspace{0.2cm}Helping the compiler help you by using const}
+\subsubsubsection{5.4.1\hspace{0.2cm}使用const来帮助编译器}
 
-Compilers can optimize pretty well, even if you don't give them inline or constexpr keywords, as in the preceding example. One thing that helps them achieve performance for you is marking variables and functions as const. Perhaps even more importantly, it also helps you avoid making mistakes in your code. Many languages have immutable variables by default, which can lead to fewer bugs, code that's easier to reason about, and often faster multi-threaded performance.
+编译器可以很好地优化，即使没有给\texttt{inline}或\texttt{constexpr}关键字。为了让实现性能良好，可以将变量和函数标记为\texttt{const}。更重要的是，还可以避免代码中的错误。许多语言在默认情况下都有常量，这可以减少错误，更容易推理的代码，并通常获得更好的多线程性能。
 
-Even though C++ has mutable variables by default and you need to explicitly type const, we encourage you to do so. It can really help you stop making tricky typos related to modifying a variable that you shouldn't.
+尽管C++默认使用可变变量，并且需要显式地输入\texttt{const}类型，但还是鼓励这样做。因为，这样可以及时停止在修改不应该修改的变量时，出现棘手的输入错误。
 
-Using const (or constexpr) code is part of a bigger philosophy called type safety. Let's say a few words about it.
+使用\texttt{const}(或\texttt{constexpr})代码是类型安全原理的一部分。接下来，就来简单了解一下。
 
 
 

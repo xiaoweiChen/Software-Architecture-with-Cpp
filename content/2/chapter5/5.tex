@@ -1,60 +1,60 @@
 
-C++ relies heavily on mechanisms that help you write type-safe code. Language constructs such as explicit constructors and conversion operators have been baked into the language for a long time. More and more safe types are being introduced to the standard library. There's optional to help you avoid referencing empty values, string\_view to help you avoid going out of a range, and any as a safe wrapper for any type, just to name a few. Moreover, with its zero-cost abstractions, it's recommended that you create your own types that are useful and hard or impossible to misuse.
+C++严重依赖于编写类型安全代码的机制。语言构造(如显式构造函数和转换操作符)已经融入语言中很长时间了。越来越多的安全类型被引入标准库。有\texttt{optional}，以帮助避免引用空值，\texttt{string\_view}，以帮助您避免超出范围，和作为类型的安全包装，这里仅举几个例子。此外，由于其零成本抽象，建议创建自己的有用且不可能滥用的类型。
 
-Often, using C-style constructs can lead to type-unsafe code. One example would be C-style casts. They can resolve to a const\_cast, static\_cast, reinterpret\_cast, or one of these two combined with a const\_cast. Accidentally writing to a const object that was const\_cast is undefined behavior. So is reading memory returned from a reinterpret\_cast<T>, if T was not the original type of the object (C++20's std::bit\_cast can help here). Both of those cases are much easier avoided if C++ casts are used.
+通常，使用C风格的结构会导致类型不安全。一个例子就是C的强制转换，可以对应为\texttt{const\_cast}、\texttt{static\_cast}、\texttt{reinterpret\_cast}，或者两者之一与\texttt{const\_cast}结合使用。若不小心对\texttt{const}对象使用\texttt{const\_cast}，则会出现未定义行为。从\texttt{reinterpret\_cast<T>}中读取返回的内存地址也是会如此，如果\texttt{T}不是对象的原始类型(C++20添加了\texttt{std::bit\_cast})。如果使用C++的类型转换，这两种情况都更容易避免。
 
-C was perhaps too permissive when it came to types. Fortunately, C++ introduces many type-safe alternatives to problematic C constructs. There are streams and std::format instead of printf et al., and there's std::copy and other similar algorithms instead of the unsafe memcpy. Finally, there are templates instead of functions taking a void * (and paying a price in terms of performance). With C++, templates get even more type safety through a feature called concepts. Let's see how we can improve our code by using them.
+C在类型方面太宽容了。幸运的是，C++为有问题的C结构体引入了许多类型安全的替代方案。用\texttt{streams}和\texttt{std::format}来代替\texttt{printf}等，还有\texttt{std::copy}和其他类似的算法来代替不安全的\texttt{memcpy}。最后，用模板代替函数使用\texttt{void *}(并在性能方面付出代价)。在C++中，模板通过一个称为概念的特性获得了更多的安全性。来看看如何通过使用它来改进代码。
 
-\subsubsubsection{5.5.1\hspace{0.2cm}Constraining template parameters}
+\subsubsubsection{5.5.1\hspace{0.2cm}约束模板参数}
 
-The first way concepts can improve your code is by making it more generic. Do you remember the cases where you needed to change the container type in one place, which caused a cascade of changes in other places too? If you weren't changing the container to one with totally different semantics and that you had to use in a different way, that means your code may not have been generic enough. 
+概念可以改进代码的第一种方式是使其更通用。还记得需要在一个地方更改容器类型，从而导致在其他地方也发生了更改的情况吗？如果没有将容器更改为具有完全不同语义的容器，并且必须以不同的方式使用，这意味着代码可能不够通用。
 
-On the other hand, have you ever written a template or sprinkled auto over your code and later wondered if your code would break if someone changed the underlying type?
+另外，是否曾经编写过模板或在代码中加入\texttt{auto}，然后想知道如果改变了底层类型，代码是否会崩溃？
 
-Concepts are all about putting the right level of constraints onto the types you're operating on. They constrain what types your template can match, and are checked at compile time. For instance, let's say you write the following:
+概念是关于在操作类型上放置正确级别的约束。它们限制模板可以匹配的类型，并在编译时进行检查。例如，假设写了以下内容:
 
 \begin{lstlisting}[style=styleCXX]
 template<typename T>
 void foo(T& t) {...}
 \end{lstlisting}
 
-Now, you can write the following instead:
+现在，可以这样写:
 
 \begin{lstlisting}[style=styleCXX]
 void foo(std::swappable auto& t) {...}
 \end{lstlisting}
 
-Here, foo() must be passed a type that supports std::swap to work. Do you recall some templates that matched just too many types? Previously, you could use std::enable\_if, std::void\_t, or if constexpr to constrain them. However, writing enable\_if statements was a bit cumbersome and could slow down your compilation times. Here, concepts come to the rescue once more due to their conciseness and how they express their intent clearly.
+这里，\texttt{foo()}必须传递一个支持\texttt{std::swap}的类型才能工作。还记得一些匹配太多类型的模板吗？以前，可以使用\texttt{std::enable\_if}、\texttt{std::void\_t}或\texttt{if constexpr}来约束它们。然而，编写\texttt{enable\_if}语句有些麻烦，可能会减慢编译时间。这里，由于概念的简洁性以及可以清晰地表达其意图，概念再次发挥了作用。
 
-There are a few dozen standard concepts in C++20. Most of them live in the <concepts> header and can be divided into four categories:
-
-\begin{itemize}
-\item 
-Core language concepts, such as derived\_from, integral, swappable, and move\_constructible
-
-\item 
-Comparison concepts, such as boolean-testable, equality\_comparable\_with, and totally\_ordered
-
-\item 
-Object concepts, such as movable, copyable, semiregular, and regular
-
-\item 
-Callable concepts, such as invokable, predicate, and strict\_weak\_order
-\end{itemize}
-
-Additional ones are defined in the <iterator> header. These can be divided into the following categories:
+C++20中有几十个标准概念，大多数存在于头文件\texttt{<concepts>}中，可以分为四类:
 
 \begin{itemize}
 \item 
-Indirect callable concepts, such as indirect\_binary\_predicate and indirectly\_unary\_invocable
+核心语言概念，如\texttt{derived\_from}、\texttt{integral}、\texttt{swappable}和\texttt{move\_constructible}
 
 \item 
-Common algorithm requirements, such as indirectly\_swappable, permutable, mergeable, and sortable
+比较的概念，比如布尔可测试、\texttt{equality\_comparable\_with}和\texttt{totally\_ordered}
+
+\item 
+对象概念，如可移动、可复制、半正则和正则
+
+\item 
+可调用的概念，如可调用、谓词和\texttt{strict\_weak\_order}
 \end{itemize}
 
-Finally, a dozen can be found in the <ranges> header. Examples include range (duh), contiguous\_range, and view.
+其他的定义在\texttt{<iterator>}头文件中。这些可以分为以下几类:
 
-If that's not enough for your needs, you can declare your own concepts similarly to how the standard defines the ones we just covered. For instance, the movable concept is implemented like so:
+\begin{itemize}
+\item 
+间接可调用的概念，例如\texttt{indirect\_binary\_predicate}和\texttt{indirectly\_unary\_invocable}
+
+\item 
+常见的算法要求，例如\texttt{indirectly\_swappable}, \texttt{permutable}, \texttt{mergeable}和\texttt{sortable}
+\end{itemize}
+
+最后，可以在\texttt{<ranges>}头文件中找到一堆相关特性。包括\texttt{range(duh)}、\texttt{continuous\_range}和\texttt{view}。
+
+如果这还不能满足需要，可以声明自己的概念，类似于标准定义中提到的方式。例如，\texttt{movable}的概念是这样实现的:
 
 \begin{lstlisting}[style=styleCXX]
 template <class T>
@@ -62,41 +62,40 @@ concept movable = std::is_object_v<T> && std::move_constructible<T> &&
 std::assignable_from<T&, T> && std::swappable<T>;
 \end{lstlisting}
 
-Furthermore, if you look at std::swappable, you'll see the following:
+此外，如果查看\texttt{std::swappable}的实现，会看到以下内容:
 
 \begin{lstlisting}[style=styleCXX]
 template<class T>
 concept swappable = requires(T& a, T& b) { ranges::swap(a, b); };
 \end{lstlisting}
 
-This means a type, T, will be swappable if ranges::swap(a, b) compiles for two references of this type.
+如果\texttt{range::swap(a, b)}编译了该类型的两个引用，类型\texttt{T}将是可交换的。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}When defining your own concepts, be sure that you cover the semantic requirements for them. Specifying and using a concept when defining an interface is a promise that's made to the consumers of that interface.
+\hspace*{0.7cm}定义自己的概念时，请确保涵盖了语义需求。定义接口时指定和使用一个概念是对该接口的使用者作出的承诺。
 \end{tcolorbox}
 
-Often, you can go with the so-called shorthand notation in declarations for brevity:
+为了简洁，可以在声明中使用所谓的简写符号:
 
 \begin{lstlisting}[style=styleCXX]
 void sink(std::movable auto& resource);
 \end{lstlisting}
 
-For readability and type safety, it's recommended that you use auto together with a concept to constrain the type and let your readers know the kind of object they're dealing with. Code written in this manner will retain the perks of auto-like genericity. You can use this in both regular functions and lambdas.
+为了可读性和类型安全，建议将auto与概念一起使用，以约束类型，并让使用者知道他们正在处理的对象的类型，以这种方式编写的代码将保留自动式通用性的优点。也可以在常规函数和lambda中使用它。
 
-A great bonus of using concepts is shorter error messages. It's not uncommon to cut a few dozens and dozens of lines about one compilation error down to just a few lines. Yet another bonus is that you can overload on concepts.
+使用概念的好处是更短的错误信息。将关于一个编译错误的几十行代码，可以缩减为几行代码是很常见的。另一个好处是，可以尽可能多地使用概念。
 
-Now, let's go back to our Dominican Fair example. This time, we'll add some concepts to see how they can improve our implementation.
+现在，让我们回到多米尼加博览会的例子。这一次，添加一些概念，看它们如何改进原来的实现。
 
-First, let's make get\_all\_featured\_items return just a range of items. We can do so by adding the concept to the return type, like so:
+首先，让\texttt{get\_all\_featured\_items}返回一个商品range。这里，可以将概念添加到返回类型来实现:
 
 \begin{lstlisting}[style=styleCXX]
 range auto get_all_featured_items(const Stores &stores);
 \end{lstlisting}
 
-So far, so good. Now, let's add yet another requirement to this type that will be enforced when we call order\_items\_by\_date\_added: our range must be sortable.
+到目前为止，一切顺利。现在，让向这个类型添加另一个需求，当调用\texttt{order\_items\_by\_date\_added}时将强制执行，所以range必须是可排序的。
 
-std::sortable has already been defined for a range iterator, but for our convenience, let's define a new concept called sortable\_range:
-
+\texttt{std::sortable}已经为range迭代器定义过了，但是为了方便起见，定义一个新的概念\texttt{sortable\_range}:
 
 \begin{lstlisting}[style=styleCXX]
 template <typename Range, typename Comp, typename Proj>
@@ -105,9 +104,9 @@ concept sortable_range =
 Proj>;
 \end{lstlisting}
 
-Similar to its standard library counterpart, we can accept a comparator and a projection (which we introduced with ranges). Our concept is satisfied by (will be matched by) types that satisfy the random\_access\_range concept, as well as having an iterator that satisfies the aforementioned sortable concept. It's as simple as that.
+与标准库类似，可以接受比较器和投影(通过range引入)。满足\texttt{random\_access\_range}概念的类型要求(将由满足\texttt{random\_access\_range}概念的类型匹配)，以及满足上述可排序概念的迭代器。就是这么简单！
 
-When defining concepts, you can also use the requires clause to specify additional constraints. For instance, if you want our range to store elements with a date\_added member only, you could write the following:
+定义概念时，还可以使用\texttt{requires}子句指定其他约束。例如，如果想要range只存储一个\texttt{date\_added}成员的元素，可以这样写:
 
 \begin{lstlisting}[style=styleCXX]
 template <typename Range, typename Comp>
@@ -116,9 +115,9 @@ concept sortable_indirectly_dated_range =
 requires(range_value_t<Range> v) { { v->date_added }; };
 \end{lstlisting}
 
-However, in our case, we don't need to constrain the type that much, as you should leave some flexibility when you're using concepts and define them so that it will make sense to reuse them.
+在例子中，不需要对类型进行那么多的约束，因为在使用概念和定义时，应该保留一定的灵活性，以便重用。
 
-What's important here is that you can use the requires clause to specify what code should be valid to call on your type when it meets the requirements for a concept. If you want, you can specify constraints on the type that's returned by each subexpression; for instance, to define something incrementable, you could use the following:
+这里重要的是，可以使用\texttt{requires}子句指定当类型满足某个概念的要求时，应该调用哪些代码。如果愿意，可以为每个子表达式返回的类型指定约束。例如，要定义一个可递增的数时，可以使用以下语句:
 
 \begin{lstlisting}[style=styleCXX]
 requires(I i) {
@@ -126,7 +125,7 @@ requires(I i) {
 }
 \end{lstlisting}
 
-Now that we have our concept, let's redefine the order\_items\_by\_date\_added function:
+现在有了自己的概念，可以用来重新定义\texttt{order\_items\_by\_date\_added}函数:
 
 \begin{lstlisting}[style=styleCXX]
 void order_items_by_date_added(
@@ -135,9 +134,9 @@ sortable_range<greater, decltype(&Item::date_added)> auto &items) {
 }
 \end{lstlisting}
 
-Now, our compiler will check if any range we pass to it is a sortable one and contains a date\_added member that can be sorted using std::ranges::greater\{\}.
+现在，编译器将检查传递给它的range是否可排序，并包含一个可以使用\texttt{std::ranges::greater\{\}}进行排序的\texttt{date\_added}成员。
 
-If we were to use the more constrained concept here, the function would look like this:
+若在这里使用更受约束的概念，函数看起来会像这样:
 
 \begin{lstlisting}[style=styleCXX]
 void order_items_by_date_added(
@@ -146,7 +145,7 @@ sortable_indirectly_dated_range<greater> auto &items) {
 }
 \end{lstlisting}
 
-Finally, let's redo our rendering function:
+最后，来重写呈现函数:
 
 \begin{lstlisting}[style=styleCXX]
 template <input_range Container>
@@ -159,7 +158,7 @@ render_item_gallery(const Container &items) {
 }
 \end{lstlisting}
 
-Here, you can see that a concept name can be used instead of the typename keyword in a template declaration. One line below this, you can see that the requires keyword can also be used to further constrain the appropriate types based on their traits. This can be handy if you don't want to specify a new concept.
+这里，可以看到在模板声明中可以使用概念名来代替\texttt{typename}关键字。再下一行，可以看到\texttt{requires}关键字还可以用于根据特征进一步约束类型。如果不想指定一个新概念，也很方便。
 
-That's it for concepts. Now, let's write some modular C++ code.
+这就是概念。现在，接下来编写一些模块化的C++代码。
 

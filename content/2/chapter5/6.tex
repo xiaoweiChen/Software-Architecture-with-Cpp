@@ -1,50 +1,49 @@
-The last big feature of C++ we'll discuss in this chapter is modules. They are yet one more addition to C++20 that has a great impact on building and partitioning code.
+本章讨论的C++的最后一个重要特性是模块。它们是对C++20的又一个补充，对代码的构建和划分有很大的影响。
 
-C++ has used \#include for a really long time now. However, this textual form of dependency inclusion has its flaws, as listed here:
+C++使用\texttt{\#include}已经有很长时间了。然而，这种文本形式的依赖包含有其缺陷，如下所示:
 
 \begin{itemize}
 \item 
-Due to the need to process lots of text (even a Hello World after preprocessing is around half a million lines of code), it's slow. This leads to one-definition rule (ODR) violations.
+由于需要处理大量文本(即使是预处理后的Hello World也需要大约50万行代码)，所以速度很慢。这将导致违反一个定义规则(ODR)。
 
 \item 
-The order of your includes matters, but it shouldn't. This one is twice as bad as
-the preceding one as it also leads to cyclic dependencies.
+顺序很重要，但不应该这样。这个问题是前一个问题的两倍，这还会导致循环依赖。
 
 \item 
-Finally, it's hard to encapsulate stuff that just needs to be in header files. Even if you put some stuff in a detailed namespace, someone will use it, as Hyrum's law predicts.
+最后，很难封装只需要放在头文件中的内容。即使你把一些东西放在一个详细的命名空间中，也会有人使用它，正如Hyrum定律所预测的那样。
 \end{itemize}
 
-Fortunately, this is when modules enter the game. They should solve the aforementioned flaws, bringing a great speedup to build times and better C++ scalability when it comes to building. With modules, you only export what you want to export, which results in good encapsulation. Having a specific order of dependency inclusion is no longer an issue too, as the order of imports doesn't matter.
+幸运的是，这正是模块入场的时候。它应该解决上述的缺陷，极大地加快构建速度，并在构建时提供更好的C++可扩展性。使用模块，可以只导出想要导出的内容，这将带来良好的封装。包含依赖项的特定顺序也不再是个问题，因为导入的顺序并不重要。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}Unfortunately, at the time of writing, compiler support for modules is still only partially done. This is why we decided to just showcase what was already available in GCC 11. Sadly, this means that stuff such as module partitions won't be covered here.
+\hspace*{0.7cm}不幸的是，在编写本文时，编译器对模块的支持仍然只是部分完成。这就是为什么我们决定只展示GCC 11中已有的功能。遗憾的是，这意味着像模块分区这样的东西将不会在这里出现。
 \end{tcolorbox}
 
-Each module, after compilation, will be compiled to not only the object file but also a module interface file. This means that instead of parsing a file with all of its dependencies, compilers can quickly know what types and functions a given module contains. All you need to do is to type the following:
+每个模块编译后，不仅会编译成目标文件，还会编译成模块接口文件。这意味着编译器可以快速知道一个给定模块包含什么类型和函数，而不是解析一个文件的所有依赖项。开发者所需要做的就是输入以下内容:
 
 \begin{lstlisting}[style=styleCXX]
 import my_module;
 \end{lstlisting}
 
-You can use it once my\_module has been compiled and available. The module itself should be defined in a .cppm file, but those are still not supported by CMake. You might be better off just naming them .cpp for the time being.
+当\texttt{my\_module}编译并可用，就可以使用了。模块本身应该定义在\texttt{.cppm}文件中，但CMake仍然不支持这些文件，所以最好暂时将它们的后缀改成\texttt{.cpp}。
 
-Without further ado, let's return to our Dominican Fair example and show how to use them in practice.
+言归正传，回到多米尼加博览会示例，并展示如何在实践中使用它们。
 
-First, let's create our first module for the customer code, starting with the following directive:
+首先，为客户代码创建第一个模块，从下面的指令开始:
 
 \begin{lstlisting}[style=styleCXX]
 module;
 \end{lstlisting}
 
-This statement marks that from this point on, everything will be private in this module. This marks a good place to put your includes and other content that won't be exported.
+这个语句标志着，从此以后，这个模块中的所有东西都是私有的。这是放置包含和其他不会导出的内容的好地方。
 
-Next, we must specify the name of the exported module:
+接下来，必须指定导出的模块名称:
 
 \begin{lstlisting}[style=styleCXX]
 export module customer;
 \end{lstlisting}
 
-This will be the name we'll use to import the module later. This line must come before the exported contents. Now, let's specify what our module will actually export, prefixing the definitions with the export keyword:
+这是稍后用于导入模块的名称，并且这一行必须在导出的内容之前。现在，让指定模块导出实际的内容，并在定义前加上\texttt{export}关键字:
 
 \begin{lstlisting}[style=styleCXX]
 export using CustomerId = int;
@@ -52,7 +51,7 @@ export using CustomerId = int;
 export CustomerId get_current_customer_id() { return 42; }
 \end{lstlisting}
 
-And done! Our first module is ready to be used. Let's create another one for the merchant:
+完成了!我们的第一个模块可以使用了。让为商人创建另一个实例:
 
 \begin{lstlisting}[style=styleCXX]
 module;
@@ -62,18 +61,18 @@ export struct Merchant {
 };
 \end{lstlisting}
 
-Pretty similar to our first module, here, we specified the name and the type to be exported (as opposed to a type alias and a function for the first one). You can export other definitions, such as templates, too. It gets tricky with macros, though, as you need to import <header\_file> for them to be visible.
+与第一个模块非常相似，这里指定了要导出的名称和类型(与第一个模块的类型别名和函数相反)。也可以导出其他定义，比如模板。但是，使用宏时需要一些技巧，因为需要导入\texttt{<header\_file>}才能看到。
 
-By the way, a good advantage of modules is that they don't allow macros to propagate to imported modules. This means that when you write code such as the following, the module won't have MY\_MACRO defined:
+顺便说一下，模块的一个优点是它们不允许宏传播到导入的模块中。这意味着当你写下面的代码时，模块不会定义\texttt{MY\_MACRO}:
 
 \begin{lstlisting}[style=styleCXX]
 #define MY_MACRO
 import my_module;
 \end{lstlisting}
 
-It helps to have determinism in modules as it protects you from breaking code in other modules.
+它有助于在模块中有决定论，因为它可以保护不破坏其他模块中的代码。
 
-Now, let's define a third module for our stores and items. We won't discuss exporting other functions, enums, and other types as it won't differ from the previous two modules. What's interesting is how the module file starts. First, let's include what we need in our private module section:
+现在，为商店和商品定义第三个模块。这里不会讨论导出其他函数、枚举和其他类型，因为它与前两个模块没有区别。有趣的是模块文件的启动方式。首先，在私有模块部分包含需要的内容:
 
 \begin{lstlisting}[style=styleCXX]
 module;
@@ -85,30 +84,30 @@ module;
 #include <vector>
 \end{lstlisting}
 
-In C++20, standard library headers are not modules yet, but this will likely change in the near future.
+在C++20标准中，标准库头文件还不是模块，但这在不久的将来可能会改变。
 
-Now, let's see what happens next:
+现在，看看接下来会发生什么:
 
 \begin{lstlisting}[style=styleCXX]
 export module store;
 export import merchant;
 \end{lstlisting}
 
-This is the interesting part. Our store module imports the merchant module we defined previously and then reexports it as part of the store's interface. This can be handy if your module is a facade for other ones, such as in module partitions in the near future (also part of C++20). When available, you will be able to split your module across multiple files. One of them could contain the following:
+这是有趣的部分。商店模块导入前面定义的商人模块，然后将其作为商店接口的一部分重新导出。如果模块是其他模块的外观，例如在不久的将来(也是C++20的一部分)的模块分区中，这将非常方便。如果可以，可以将模块拆分为多个文件。其中一个可以包含以下内容:
 
 \begin{lstlisting}[style=styleCXX]
 export module my_module:foo;
 export template<typename T> foo() {}
 \end{lstlisting}
 
-As we discussed previously, it would then be exported by the main file of your module as follows:
+正如前面所讨论的，然后会被模块的主文件导出，如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 export module my_module;
 export import :foo;
 \end{lstlisting}
 
-This concludes modules and the big C++ features that we planned for this chapter. Let's summarize what we've learned.
+这就总结了本章所规划的模块和主要的C++特性。现在，总结一下所了解的知识。
 
 
 
