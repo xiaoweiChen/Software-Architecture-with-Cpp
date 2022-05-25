@@ -1,6 +1,6 @@
-State is a design pattern meant to help change the behavior of an object when its internal state changes. The behavior for different states should be independent of each other so that adding new states doesn't affect the current ones. The simple approach of implementing all the behavior in the stateful object doesn't scale and is not open for extension. Using the state pattern, new behavior can be added by introducing new state classes and defining the transitions between them. In this section, we'll show a way to implement states and a state machine leveraging std::variant and statically polymorphic double dispatch. In other words, we'll build a finite state machine by joining the state and visitor patterns in a C++ way.
+状态是一种设计模式，用于在对象的内部状态发生变化时改变对象的行为。不同状态的行为应该相互独立，这样添加新状态就不会影响当前状态。在有状态对象中实现所有行为的简单方法无法扩展，也不允许扩展。使用状态模式，可以通过引入新的状态类，并定义它们之间的转换来添加新的行为。本节中，将展示一种实现状态的方法，以及使用\texttt{std::variant}和静态多态双重分发模式。换句话说，将以C++的方式连接状态模式和访问者模式，从而构建一个有限的状态机。
 
-First, let's define our states. In our example, let's model the states of a product in a store. They can be as follows:
+首先，定义状态。在示例中，为商店中的产品进行状态建模。如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 namespace state {
@@ -15,14 +15,14 @@ namespace state {
 } // namespace state
 \end{lstlisting}
 
-Our states can have properties of their own, such as the count of items left. Also, as opposed to dynamically polymorphic ones, they don't need to inherit from a common base. Instead, they are all stored in one variant, as shown next:
+状态可以拥有自己的属性，例如：剩余物品的数量。而且，与动态多态不同，不需要从公共基类继承。可以都存储在一个变量中，如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 using State = std::variant<state::Depleted, state::Available,
 state::Discontinued>;
 \end{lstlisting}
 
-Aside from states, we also need events for state transitions. Check the following code:
+除了状态之外，还需要事件来进行状态转换。看看以下代码:
 
 \begin{lstlisting}[style=styleCXX]
 namespace event {
@@ -40,7 +40,7 @@ namespace event {
 } // namespace event
 \end{lstlisting}
 
-As you can see, our events can also have properties and don't inherit from a common base. Now, we need to implement the transitions between the states. This can be done as follows:
+事件也可以具有属性，而不是继承自公共基。现在，需要实现状态之间的转换。可以这样做:
 
 \begin{lstlisting}[style=styleCXX]
 State on_event(state::Available available, event::DeliveryArrived
@@ -57,7 +57,7 @@ State on_event(state::Available available, event::Purchased purchased) {
 }
 \end{lstlisting}
 
-If a purchase is made, the state can change, but it can also stay the same. We can also use templates to handle several states at once:
+如果进行了购买，状态可以改变，但也可以保持不变。可以使用模板一次处理多个状态:
 
 \begin{lstlisting}[style=styleCXX]
 template <typename S> State on_event(S, event::Discontinued) {
@@ -65,7 +65,7 @@ template <typename S> State on_event(S, event::Discontinued) {
 }
 \end{lstlisting}
 
-If an item gets discontinued, it doesn't matter what state it was in. Okay, let's now implement the last supported transition:
+如果商品停产了，处于什么状态并不重要。现在，来实现最后一个受支持的转换:
 
 \begin{lstlisting}[style=styleCXX]
 State on_event(state::Depleted depleted, event::DeliveryArrived delivered)
@@ -74,16 +74,16 @@ State on_event(state::Depleted depleted, event::DeliveryArrived delivered)
 }
 \end{lstlisting}
 
-The next piece of the puzzle we need is a way to define multiple call operators in one object generically so that the best matching overload can be called. We'll use it later to call the transitions we just defined. Our helper can look as follows:
+需要解决的下一个难题是如何在一个对象中定义多个调用操作符，以便调用最佳匹配的重载。稍后将使用它来调用刚刚定义的转换。助手类可以这样写:
 
 \begin{lstlisting}[style=styleCXX]
 template<class... Ts> struct overload : Ts... { using Ts::operator()...; };
 template<class... Ts> overload(Ts...) -> overload<Ts...>;
 \end{lstlisting}
 
-We create an overload struct that will provide all the call operators passed to it during construction, using variable templates, a fold expression, and a class template argument deduction guide. For a more in-depth explanation of this, along with an alternative way of implementing visitation, refer to Bartłomiej Filipek's blog post in the Further reading section.
+创建一个重载结构，该结构将使用变量模板、折叠表达式和类模板参数推导指南提供在构造过程中传递给它的所有调用操作符。要了解更深入的解释，以及实现访问的另一种方法，请参阅Bartłomiej Filipek在扩展阅读部分的博客文章。
 
-We can now start implementing the state machine itself:
+现在可以开始实现状态机本身了:
 
 \begin{lstlisting}[style=styleCXX]
 class ItemStateMachine {
@@ -106,9 +106,9 @@ private:
 };
 \end{lstlisting}
 
-Our process\_event function will accept any of our defined events. It will call an appropriate on\_event function using the current state and the passed event and switch to the new state. If an on\_event overload is found for the given state and event, the first lambda will get called. Otherwise, the constraint won't be satisfied and the second, more generic overload will get called. This means if there's an unsupported state transition, we'll just throw an exception.
+\texttt{process\_event}函数将接受任何事件。它将使用当前状态和传递的事件调用适当的\texttt{on\_event}函数，并切换到新的状态。如果给定的状态和事件可以找到\texttt{on\_event}重载，将调用第一个lambda。否则，约束将不满足，第二个更通用的重载将调用。这意味着如果存在不受支持的状态转换，则会抛出一个异常。
 
-Now, let's provide a way to report the current state:
+现在，提供一种方法来报告当前状态:
 
 \begin{lstlisting}[style=styleCXX]
 std::string report_current_state() {
@@ -127,9 +127,9 @@ std::string report_current_state() {
 }
 \end{lstlisting}
 
-Here, we use our overload to pass three lambdas, each returning a report string generated by visiting our state object.
+这里，使用重载来传递三个lambdas，每个lambdas都返回一个通过访问状态对象生成的报告字符串。
 
-We can now call our solution:
+现在可以应用解决方案:
 
 \begin{lstlisting}[style=styleCXX]
 auto fsm = ItemStateMachine{};
@@ -147,7 +147,7 @@ std::cout << fsm.report_current_state() << '\n';
 // fsm.process_event(event::DeliveryArrived{1});
 \end{lstlisting}
 
-Upon running, this will yield the following output:
+运行时，将产生如下输出:
 
 \begin{tcblisting}{commandshell={}}
 Item is temporarily out of stock
@@ -158,8 +158,8 @@ Item is temporarily out of stock
 Item has been discontinued
 \end{tcblisting}
 
-That is, unless you uncomment the last line with the unsupported transition, in which case an exception will be thrown at the end.
+也就是说，除非用不支持的转换取消最后一行的注释。这种情况下，将在最后抛出异常。
 
-Our solution is much more performant than dynamic polymorphism-based ones, although the list of supported states and events is constrained to those provided at compile time. For more information on states, variants, and the various ways of visitations, see Mateusz Pusz's talk from CppCon 2018, also listed in the Further reading section.
+尽管支持的状态和事件列表仅限于编译时提供的状态和事件列表，但与基于动态多态的解决方案相比，解决方案的性能要好得多。更多关于状态、变量和各种访问方式的信息，请参见Mateusz Pusz在2018年CppCon上的讲话，该讲话在扩展阅读部分可以找到。
 
-Before we close this chapter, one last thing we'd like for you to learn about is handling memory. Let's begin our last section.
+在结束这一章之前，最后来了解一下处理内存。

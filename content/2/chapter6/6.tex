@@ -1,32 +1,32 @@
 
 
-Even if you don't have very limited memory, it's a good idea to look at how you use it. Usually, memory throughput is the performance bottleneck of modern-day systems, so it's always important to make good use of it. Performing too many dynamic allocations can slow down your program and lead to memory fragmentation. Let's learn a few ways to mitigate those issues.
+即使内存很多，了解如何使用它的也是个好主意。通常，内存吞吐量是现代系统的性能瓶颈，因此充分利用它很重要。执行太多的动态分配可能会降低程序的速度，并导致内存碎片。让我们来了解一些缓解这些问题的方法。
 
-\subsubsubsection{6.6.1\hspace{0.2cm}Reducing dynamic allocations using SSO/SOO}
+\subsubsubsection{6.6.1\hspace{0.2cm}使用SSO/SOO减少动态分配}
 
-Dynamic allocations can sometimes cause you other trouble than just throwing when you construct objects despite not having enough memory. They often cost you CPU cycles and can cause memory fragmentation. Fortunately, there is a way to protect against it. If you've ever used std::string (post GCC 5.0), you most probably used an optimization called Small String Optimization (SSO). This is one example of a more general optimization named Small Object Optimization (SSO), which can be spotted in types such as Abseil's InlinedVector. The main idea is pretty straightforward: if the dynamically allocated object is small enough, it should be stored inside the class that owns it instead of being dynamically allocated. In std::string's case, usually, there's a capacity, length, and the actual string to store. If the string is short enough (in GCC's case, on 64-bit platforms, it's 15 bytes), it will be stored in some of those members.
+动态分配有时会给带来其他麻烦，而不仅仅是在没有足够内存的情况下构造对象时抛出问题。它们通常会占用CPU周期，并可能导致内存碎片。幸运的是，有一种方法可以避免这种情况。如果曾经使用过\texttt{std::string}(GCC 5.0之后)，那么可能使用的优化是一种名为小字符优化(Small string optimization，SSO)的策略。这是一个名为小对象优化(Small Object optimization, SSO)的更通用的优化示例，可以在\Abseil的\texttt{InlinedVector}类型中看到。主要思想很简单:如果动态分配的对象足够小，就应该存储在拥有它的类中，而不是动态分配。在\texttt{std::string}中，通常有容量、长度和存储的实际字符串。如果字符串足够短(对于GCC来说，在64位平台上是15字节)，将存储在其中的一些成员中。
 
-Storing objects in place instead of allocating them somewhere else and storing just the pointer has one more benefit: less pointer chasing. Each time you need to reach to data stored behind a pointer, you increase the pressure on the CPU caches and risk needing to fetch data from the main memory. If this is a common pattern, it can influence the overall performance of your app, especially if the pointed-to addresses aren't guessed by the CPU's prefetcher. Using techniques such as SSO and SOO are invaluable in reducing those issues.
+就地存储对象，而不是进行分配，只存储指针还有一个好处:更少的指针跟踪。每次需要访问存储在指针后面的数据时，都会增加CPU缓存的压力，并面临从主存获取数据的风险。如果这是一个常见的模式，会影响应用程序的整体性能，特别是指向的地址没有被CPU的预取器猜到。使用SSO和SOO等技术对于减少这些问题十分有用。
 
-\subsubsubsection{6.6.2\hspace{0.2cm}Saving memory by herding COWs}
+\subsubsubsection{6.6.2\hspace{0.2cm}通过COW来节省内存}
 
-If you used GCC's std::string before GCC 5.0, you might have used a different optimization called Copy-On-Write (COW). The COW string implementation, when it had multiple instances created with the same underlying character array, was actually sharing the same memory address for it. When the string was written to, the underlying storage was copied — hence the name.
+如果您在GCC 5.0之前使用了GCC的\texttt{std::string}，那么可能使用了另一种名为Copy-On-Write(COW)的优化。当使用相同的底层字符数组创建多个实例时，COW字符串实现实际上共享相同的内存地址。将字符串写入时，将复制存储的数据——因此有了名称。
 
-This technique helped save memory and keep the caches hot, and often offered solid performance on a single thread. Beware of using it in multi-threaded contexts, though. The need for using locks can be a real performance killer. As with any performance-related topic, it's best to just measure whether in your case it's the best tool for the job.
+这种技术有助于节省内存并保持缓存热度，通常在单个线程上提供稳定的性能。但要注意不要在多线程上下文中使用它，使用锁可能是真正的性能杀手。与任何与性能相关的主题一样，最好只是衡量它是否匹配目前的工作。
 
-Let's now discuss a feature of C++17 that can help you achieve good performance with dynamic allocations.
+现在来讨论C++17的一个特性，可以通过动态分配实现良好的性能。
 
-\subsubsubsection{6.6.3\hspace{0.2cm}Leveraging polymorphic allocators}
+\subsubsubsection{6.6.3\hspace{0.2cm}使用多态分配器}
 
-The feature we're talking about is polymorphic allocators. To be specific, the std::pmr::polymorphic\_allocator and the polymorphic std::pmr::memory\_resource class that the allocator uses to allocate memory.
+这里讨论的特性是多态分配器。具体来说，是分配程序用来分配内存的\texttt{std::pmr::polymorphic\_allocator}和多态的\texttt{std::pmr::memory\_resource}类。
 
-In essence, it allows you to easily chain memory resources to make the best use of your memory. Chains can be as simple as one resource that reserves a big chunk and distributes it, falling back to another that simply calls new and delete if it depletes memory. They can also be much more complex: you can build a long chain of memory resources that handle pools of different sizes, offer thread-safety only when needed, bypass the heap and go for the system's memory directly, return you the last freed chunk of memory to provide cache hotness, and do other fancy stuff. Not all of these capabilities are offered by the standard polymorphic memory resources, but thanks to their design, it's easy to extend them.
+本质上，可以轻松地链接内存资源，以最大限度地利用内存。链的实现可以很简单，比如将资源保留一个大块并分发，然后回到另一个资源，如果它耗尽了，则只调用new和delete。实现也可以更复杂:可以构建一个处理不同大小的池的长内存资源链，只在需要时提供线程安全，绕过堆并直接获取系统内存，返回最后释放的内存块以提供缓存热度，以及做其他有趣的事情。所有这些功能都是由标准的多态内存资源提供的，因为它们的设计，想扩展他们就会很容易。
 
-Let's first tackle the topic of memory arenas.
+让我们先来讨论存储区。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Using memory arenas}
+\textbf{存储区}
 
 A memory arena, also called a region, is just a large chunk of memory that exists for a limited time. You can use it to allocate smaller objects that you use for the lifetime of the arena. Objects in the arena can be either deallocated as usual or erased all at once in a process called winking out. We'll describe it later on.
 
@@ -53,13 +53,13 @@ The first one gets the resource passed explicitly, though. Let's now go through 
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Using the monotonic memory resource}
+\textbf{单调内存资源}
 
 The first one we'll discuss is std::pmr::monotonic\_buffer\_resource. It's a resource that only allocates memory and doesn't do anything on deallocation. It will only deallocate memory when the resource is destructed or on an explicit call to release(). This, connected with no thread safety, makes this type extremely performant. If your application occasionally needs to perform a task that does lots of allocations on a given thread, then releases all the objects used at once afterward, using monotonic resources will yield great gains. It's also a great base building block for chains of resources.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Using pool resources}
+\textbf{资源池}
 
 A common combo of two resources is to use a pool resource on top of a monotonic buffer resource. The standard pool resources create pools of different-sized chunks. There are two types in std::pmr, unsynchronized\_pool\_resource for use when only one thread allocates and deallocates from it and synchronized\_pool\_resource for multi-threaded use. Both should provide you with much better performance compared to the global allocator, especially when using the monotonic buffer as their upstream resource. If you wonder how to chain them, here's how:
 
@@ -80,7 +80,7 @@ You can pass a std::pmr::pool\_options object to both the pool types to limit th
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Writing your own memory resource}
+\textbf{编写自己的内存资源}
 
 If the standard memory resources don't suit all your needs, you can always create a custom one quite simply. For instance, a good optimization that not all standard library implementations offer is to keep track of the last chunks of a given size that were released and return them back on the next allocations of given sizes. This Most Recently Used cache can help you increase the hotness of data caches, which should help your app's performance. You can think of it as a set of LIFO queues for chunks.
 
@@ -130,7 +130,7 @@ Aside from tracking allocations, we can also use pmr to guard us against allocat
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Ensuring there are no unexpected allocations}
+\textbf{确保没有意外的分配}
 
 The special std::pmr::null\_memory\_resource() will throw an exception when anyone tries to allocate memory using it. You can safeguard from performing any allocations using pmr by setting it as the default resource as shown next:
 
@@ -153,7 +153,7 @@ Let's move on to our last item in this chapter.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Winking out memory}
+\textbf{清空内存}
 
 Sometimes not having to deallocate the memory, as the monotonic buffer resource does, is still not enough for performance. A special technique called winking out can help here. Winking out objects means that they're not only not deallocated one by one, but their constructors aren't called too. The objects simply evaporate, saving time that would normally be spent calling destructors for each object and their members (and their members...) in the arena.
 
