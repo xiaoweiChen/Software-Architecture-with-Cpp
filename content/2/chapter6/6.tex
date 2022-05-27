@@ -4,7 +4,7 @@
 
 \subsubsubsection{6.6.1\hspace{0.2cm}使用SSO/SOO减少动态分配}
 
-动态分配有时会给带来其他麻烦，而不仅仅是在没有足够内存的情况下构造对象时抛出问题。它们通常会占用CPU周期，并可能导致内存碎片。幸运的是，有一种方法可以避免这种情况。如果曾经使用过\texttt{std::string}(GCC 5.0之后)，那么可能使用的优化是一种名为小字符优化(Small string optimization，SSO)的策略。这是一个名为小对象优化(Small Object optimization, SSO)的更通用的优化示例，可以在\Abseil的\texttt{InlinedVector}类型中看到。主要思想很简单:如果动态分配的对象足够小，就应该存储在拥有它的类中，而不是动态分配。在\texttt{std::string}中，通常有容量、长度和存储的实际字符串。如果字符串足够短(对于GCC来说，在64位平台上是15字节)，将存储在其中的一些成员中。
+动态分配有时会给带来其他麻烦，而不仅仅是在没有足够内存的情况下构造对象时抛出问题。它们通常会占用CPU周期，并可能导致内存碎片。幸运的是，有一种方法可以避免这种情况。如果曾经使用过\texttt{std::string}(GCC 5.0之后)，那么可能使用的优化是一种名为小字符优化(Small string optimization，SSO)的策略。这是一个名为小对象优化(Small Object optimization, SSO)的更通用的优化示例，可以在Abseil的\texttt{InlinedVector}类型中看到。主要思想很简单:如果动态分配的对象足够小，就应该存储在拥有它的类中，而不是动态分配。在\texttt{std::string}中，通常有容量、长度和存储的实际字符串。如果字符串足够短(对于GCC来说，在64位平台上是15字节)，将存储在其中的一些成员中。
 
 就地存储对象，而不是进行分配，只存储指针还有一个好处:更少的指针跟踪。每次需要访问存储在指针后面的数据时，都会增加CPU缓存的压力，并面临从主存获取数据的风险。如果这是一个常见的模式，会影响应用程序的整体性能，特别是指向的地址没有被CPU的预取器猜到。使用SSO和SOO等技术对于减少这些问题十分有用。
 
@@ -28,20 +28,20 @@
 \noindent
 \textbf{存储区}
 
-A memory arena, also called a region, is just a large chunk of memory that exists for a limited time. You can use it to allocate smaller objects that you use for the lifetime of the arena. Objects in the arena can be either deallocated as usual or erased all at once in a process called winking out. We'll describe it later on.
+存储区，是在有限时间内存在的大块内存。可以用分配在存储区生命周期中使用的较小的对象。存储区中的对象也可以释放，也可以在清空内存的过程中立即删除。
 
-Arenas have several great advantages over the usual allocations and deallocations – they increase performance because they limit the memory allocations that need to grab upstream resources. They also reduce fragmentation of memory, because any fragmentation that would happen will happen inside the arena. Once an arena's memory is released, the fragmentation is no more as well. A great idea is to create separate arenas per thread. If only a single thread uses an arena, it doesn't need to use any locking or other thread-safety mechanisms, reducing thread contention and giving you a nice boost in performance.
+与通常的分配和释放方式相比，存储区有几大优势——因为限制了需要获取上游资源的内存分配，可以提高性能。因为可能发生的碎片化都将发生在区域内部，还还减少了内存的碎片化。当区域内存释放后，也就不存在碎片化了。一个好的方式是为每个线程创建独立的存储区。如果只有一个线程使用存储区，那么不需要使用锁或其他线程安全的机制，从而可以减少线程争用，并在性能上带来重大的提升。
 
-If your program is single-threaded, a low-cost solution to increase its performance could be as follows:
+如果程序是单线程的，提高其性能的低成本解决方案可以如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 auto single_threaded_pool = std::pmr::unsynchronized_pool_resource();
 std::pmr::set_default_resource(&single_threaded_pool);
 \end{lstlisting}
 
-The default resource if you won't set any explicitly will be new\_delete\_resource, which calls new and delete each time just like regular std::allocator does, and with all the thread-safety it provides (and costs).
+如果不显式设置任何资源，默认资源将是\texttt{new\_delete\_resource}，会像常规的\texttt{std::allocator}一样每次调用new和delete，并保证线程的安全性(和成本)。
 
-If you use the preceding code snippet, all the allocations done using pmr allocators would be done with no locks. You still need to actually use the pmr types, though. To do so with standard containers, for instance, you need to simply pass std::pmr::polymorphic\_allocator<T> as the allocator template parameter. Many standard containers have pmr-enabled type aliases. The two variables created next are of the same type and both will use the default memory resource:
+如果使用前面的代码，那么使用pmr分配器完成的所有分配都不需要锁，但仍需要使用pmr类型。想要在标准容器中这样使用，就需要简单地传递\texttt{std::pmr::polymorphic\_allocator<T>}作为\texttt{allocator}模板参数。许多标准容器都有启用pmr的类型别名。下面创建的两个变量是相同类型的，它们都使用默认的内存资源:
 
 \begin{lstlisting}[style=styleCXX]
 auto ints = std::vector<int,
@@ -49,19 +49,19 @@ std::pmr::polymorphic_allocator<int>>(std::pmr::get_default_resource());
 auto also_ints = std::pmr::vector<int>{};
 \end{lstlisting}
 
-The first one gets the resource passed explicitly, though. Let's now go through the resources available in pmr.
+但第一个函数会显式传递资源。现在让我们了解一下pmr中可用的资源。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{单调内存资源}
+\textbf{单调内存}
 
-The first one we'll discuss is std::pmr::monotonic\_buffer\_resource. It's a resource that only allocates memory and doesn't do anything on deallocation. It will only deallocate memory when the resource is destructed or on an explicit call to release(). This, connected with no thread safety, makes this type extremely performant. If your application occasionally needs to perform a task that does lots of allocations on a given thread, then releases all the objects used at once afterward, using monotonic resources will yield great gains. It's also a great base building block for chains of resources.
+第一个是\texttt{std::pmr::monotonic\_buffer\_resource}，它是一个只分配内存，不做关于回收的任何事情。它只会在内存销毁或显式调用\texttt{release()}时释放内存。由于不保证线程安全，使得这种类型具有极高的性能。如果应用程序偶尔需要在一个给定的线程上执行大量分配资源的任务，然后释放之后一次使用的所有对象，使用单调的内存会有性能上的很大收益。这也是构建资源链的重要基础模块。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{资源池}
 
-A common combo of two resources is to use a pool resource on top of a monotonic buffer resource. The standard pool resources create pools of different-sized chunks. There are two types in std::pmr, unsynchronized\_pool\_resource for use when only one thread allocates and deallocates from it and synchronized\_pool\_resource for multi-threaded use. Both should provide you with much better performance compared to the global allocator, especially when using the monotonic buffer as their upstream resource. If you wonder how to chain them, here's how:
+两种资源的常见组合是在单调内存上使用资源池。标准资源池可以创建不同大小的块的池。在\texttt{std::pmr}中有两种类型，\texttt{unsynchronized\_pool\_resource}只在一个线程上分配和释放时使用，\texttt{synchronized\_pool\_resource}适用于多线程使用。两者都能提供比全局分配器更好的性能，特别是在使用单调内存区作为其上游资源时。如果想知道如何锁住它们，可以参考以下代码:
 
 \begin{lstlisting}[style=styleCXX]
 auto buffer = std::array<std::byte, 1 * 1024 * 1024>{};
@@ -74,17 +74,17 @@ std::pmr::unsynchronized_pool_resource{pool_options,
 	&monotonic_resource};
 \end{lstlisting}
 
-We create a 1 MB buffer for the arena to reuse. We pass it to a monotonic resource, which is then passed to an unsynchronized pool resource, creating a simple yet efficient chain of allocators that won't call new until all the initial buffer is used up.
+创建了一个1MB的缓冲区供区域重用。这里将其传递给一个单调内存，然后将其传递给一个不同步的资源池，并创建一个简单而有效的分配器链，在所有初始内存用完之前不会调用new。
 
-You can pass a std::pmr::pool\_options object to both the pool types to limit the max count of blocks of a given size (max\_blocks\_per\_chunk) or the size of the largest block (largest\_required\_pool\_block). Passing 0 causes the implementation's default to be used. In the case of GCC's library, the actual blocks per chunk differ depending on the block size. If the max size is exceeded, the pool resource will allocate directly from its upstream resource. It also goes to the upstream resource if the initial memory was depleted. In this case, it allocates geometrically growing chunks of memory.
+可以传递\texttt{std::pmr::pool\_options}对象给这两种池类型，以限制给定块的最大数量(\texttt{max\_blocks\_per\_chunk})或最大块的大小(\texttt{max\_required\_pool\_block})。传递0将使用实现的默认值。在GCC的情况下，每个块的实际块取决于块的大小。如果超过了最大的内存大小，资源池将直接从其上游资源分配。如果初始内存耗尽，也会转到上游资源。在这种情况下，会分配以几何倍数增长的内存块。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{编写自己的内存资源}
 
-If the standard memory resources don't suit all your needs, you can always create a custom one quite simply. For instance, a good optimization that not all standard library implementations offer is to keep track of the last chunks of a given size that were released and return them back on the next allocations of given sizes. This Most Recently Used cache can help you increase the hotness of data caches, which should help your app's performance. You can think of it as a set of LIFO queues for chunks.
+如果标准内存资源不能满足需求，可以简单地创建一个自定义内存资源，并不是所有的标准库实现都会提供很好的优化，即跟踪最后释放的大小给定的内存块，并在给定大小的下一个分配中进行返回。最近使用的缓存可以帮助你增加数据缓存的热度，这有助于应用的性能。可以将它看作一组块的后进先出队列。
 
-Sometimes you might also want to debug allocations and deallocations. In the following snippet, I have written a simple resource that can help you with this task:
+有时，可能还想调试分配和释放。下面的代码段中，我写了一个简单的资源器，可以完成这个任务:
 
 \begin{lstlisting}[style=styleCXX]
 class verbose_resource : public std::pmr::memory_resource {
@@ -94,7 +94,7 @@ public:
 		: upstream_resource_(upstream_resource) {}
 \end{lstlisting}
 
-Our verbose resource inherits from the polymorphic base resource. It also accepts an upstream resource, which it will use for actual allocations. It has to implement three private functions – one for allocating, one for deallocating, and one for comparing instances of the resource itself. Here's the first one:
+\texttt{verbose\_resource}继承\texttt{memory\_resourc}，可以接受上游资源，用于实际的分配。其必须实现三个私有函数——一个用于分配，一个用于释放，一个用于比较资源本身的实例。先是第一个:
 
 \begin{lstlisting}[style=styleCXX]
 private:
@@ -104,7 +104,7 @@ void *do_allocate(size_t bytes, size_t alignment) override {
 }
 \end{lstlisting}
 
-All it does is print the allocation size on the standard output and then use the upstream resource to allocate memory. The next one will be similar:
+确实是在标准输出上打印分配大小，然后使用上游资源来分配内存。下一个类似:
 
 \begin{lstlisting}[style=styleCXX]
 	void do_deallocate(void *p, size_t bytes, size_t alignment) override {
@@ -113,7 +113,7 @@ All it does is print the allocation size on the standard output and then use the
 	}
 \end{lstlisting}
 
-We log how much memory we deallocate and use the upstream to perform the task. Now the last required function is stated next:
+记录释放和使用上游执行任务的内存数量。下面是最后一个必需的函数:
 
 \begin{lstlisting}[style=styleCXX]
 	[[nodiscard]] bool
@@ -122,23 +122,23 @@ We log how much memory we deallocate and use the upstream to perform the task. N
 	}
 \end{lstlisting}
 
-We simply compare the addresses of the instances to know whether they're equal. The [[nodiscard]] attribute helps us be sure that the caller actually consumes the returned value, which can help us avoid accidental misuse of our function.
+只要比较实例的地址就可以知道是否相等。\texttt{[[nodiscard]]}属性可以确保调用者实际上使用了返回的值，这可以避免函数的滥用。
 
-That's it. For a powerful feature such as the pmr allocators, the API isn't that complex now, isn't it?
+就是这样。对于像pmr分配器这样强大的特性，API现在还不怎么复杂，不是吗?
 
-Aside from tracking allocations, we can also use pmr to guard us against allocating when we shouldn't.
+除了跟踪分配之外，还可以使用pmr来避免在不应该分配时进行分配。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{确保没有意外的分配}
 
-The special std::pmr::null\_memory\_resource() will throw an exception when anyone tries to allocate memory using it. You can safeguard from performing any allocations using pmr by setting it as the default resource as shown next:
+\texttt{std::pmr::null\_memory\_resource()}将在试图使用它分配内存时抛出异常。通过将pmr设置为默认资源，从而避免使用pmr进行任何分配，如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 std::pmr::set_default_resource(null_memory_resource());
 \end{lstlisting}
 
-You can also use it to limit allocation from the upstream when it shouldn't happen. Check the following code:
+还可以用它来限制不应该发生的上游分配。检查以下代码:
 
 \begin{lstlisting}[style=styleCXX]
 auto buffer = std::array<std::byte, 640 * 1024>{}; // 640K ought to be
@@ -147,23 +147,23 @@ auto resource = std::pmr::monotonic_buffer_resource{
 	buffer.data(), buffer.size(), std::pmr::null_memory_resource()};
 \end{lstlisting}
 
-If anybody tries to allocate more than the buffer size we set, std::bad\_alloc would be thrown.
+若试图分配超过设置的缓冲区大小，将抛出\texttt{std::bad\_alloc}异常。
 
-Let's move on to our last item in this chapter.
+接着讨论本章的最后一项内容。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{清空内存}
+\textbf{闪烁清理内存}
 
-Sometimes not having to deallocate the memory, as the monotonic buffer resource does, is still not enough for performance. A special technique called winking out can help here. Winking out objects means that they're not only not deallocated one by one, but their constructors aren't called too. The objects simply evaporate, saving time that would normally be spent calling destructors for each object and their members (and their members...) in the arena.
+有时，不必释放内存(如单调内存)仍然不足以提高性能。一种叫做“闪烁清理”的技术可以解决这个问题。其意味着不会逐个释放，而且构造函数也不会调用。对象只是蒸发，节省了在内存区中为每个对象及其成员(及其成员…)调用析构函数的时间。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}This is an advanced topic. Be careful when using this technique, and only use it if the possible gain is worth it.
+\hspace*{0.7cm}这是一个高级话题。使用这个技巧时要小心，只有在可能有性能收益的时候使用。
 \end{tcolorbox}
 
-This technique can save your precious CPU cycles, but it's not always possible to use it. Avoid winking out memory if your objects handle resources other than memory. Otherwise, you will get resource leaks. The same goes if you depend on any side effects the destructors of your objects would have.
+这种技术可以节省宝贵的CPU周期，但并不总可以使用。如果对象处理的是内存以外的资源，则需要避免闪烁清理内存。否则，就会出现资源泄漏。如果依赖于对象的析构函数有副作用，情况也是如此。
 
-Let's now see winking out in action:
+现在让我们看看“闪烁”的动作:
 
 \begin{lstlisting}[style=styleCXX]
 auto verbose = verbose_resource(std::pmr::get_default_resource());
@@ -176,9 +176,9 @@ vector->push_back("first one");
 vector->emplace_back("long second one that must allocate");
 \end{lstlisting}
 
-Here, we created a polymorphic allocator by hand that'll use our default resource – a monotonic one that logs each time it reaches upstream. To create objects, we'll use a C++20 addition to pmr, the new\_object function. We create a vector of strings. We can pass the first one using push\_back, because it's small enough to fit into the small-string buffer we have thanks to SSO. The second string would need to allocate a string using the default resource and only then pass it to our vector if we used push\_back. Emplacing it causes the string to be constructed inside the vector's functions (not before the call), so it will use the vector's allocator. Finally, we don't call the destructors of allocated objects anywhere, and just deallocate everything at once, when we exit the scope. This should give us hard-to-beat performance.
+这里，手工创建了一个多态分配器，将使用默认资源——单调内存资源，每次它到达上游时都会在日志中记录。为了创建对象，这里使用一个在C++20的pmr中新加入的函数，即\texttt{new\_object}函数。这里创建了一个字符串向量，可以使用\texttt{push\_back}传递第一个字符串，因为它足够小，可以放入SSO提供的小字符串缓冲区中。第二个字符串需要使用默认资源分配一个字符串，只有在使用\texttt{push\_back}时才将它传递给\texttt{vector}。绑定会导致字符串在\texttt{vector}函数中构造(而不是在调用之前)，所以这里会使用\texttt{vector}的分配器。最后，不会在其他地方调用已分配对象的析构函数，而是在退出作用域时立即释放所有对象。这将给我们带来非常可观的性能表现。
 
-That was the last item on our list for this chapter. Let's summarize what we've learned.
+最后，来总结一下了解到的知识。
 
 
 
