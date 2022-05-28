@@ -1,7 +1,7 @@
 
-In this section, we'll delve into CMake scripts, the de facto standard build system generator used for C++ projects worldwide.
+本节中，将深入研究CMake脚本，它是全世界范围内用于C++项目的标准构建系统生成器。
 
-\subsubsubsection{7.3.1\hspace{0.2cm}Introducing CMake}
+\subsubsubsection{7.3.1\hspace{0.2cm}了解CMake}
 
 What does it mean that CMake is a build system generator and not a build system per se? Simply that CMake can be used to generate various types of build systems. You can use it to generate Visual Studio projects, Makefile projects, Ninja-based ones, Sublime, Eclipse, and a few others.
 
@@ -15,7 +15,7 @@ CMake files can be written in two styles: an obsolete one, based on variables, a
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Creating CMake projects}
+\textbf{创建CMake工程}
 
 Each CMake project should have the following lines in their top-level CMakeLists.txt file:
 
@@ -59,7 +59,7 @@ include(CommonCompileFlags).
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Distinguishing between CMake directory variables}
+\textbf{CMake内置变量}
 
 Navigating through the directories in CMake has a common pitfall that not everyone is aware of. When writing CMake scripts, try to distinguish between the following built-in variables:
 
@@ -93,7 +93,7 @@ In your top-level CMakeLists.txt file, you will probably want to call add\_subdi
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Specifying CMake targets}
+\textbf{指定CMake目标}
 
 In the src directory, you should have another CMakeLists.txt file, this time probably defining a target or two. Let's add an executable for a customer microservice for the Dominican Fair system we mentioned earlier in the book:
 
@@ -149,9 +149,9 @@ Finally, we link our executable with the added library. Try to always specify th
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Specifying the output directories}
+\textbf{指定输出目录}
 
-Once you build your code using commands such as cmake --build ., you might want to know where to find the build artifacts. By default, CMake will create them in a directory matching the source directory they were defined in. For instance, if you have a src/CMakeLists.txt file with an add\_executable directive, then the binary will land in your build directory's src subdirectory by default. We can override this using code such as the following: 
+Once you build your code using commands such as cmake -\,-build ., you might want to know where to find the build artifacts. By default, CMake will create them in a directory matching the source directory they were defined in. For instance, if you have a src/CMakeLists.txt file with an add\_executable directive, then the binary will land in your build directory's src subdirectory by default. We can override this using code such as the following: 
 
 \begin{lstlisting}[style=styleCMake]
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
@@ -161,7 +161,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 This way, the binaries and DLL files will land in the bin subdirectory of your project's build directory, while static and shared Linux libraries will be placed in the lib subdirectory.
 
-\subsubsubsection{7.3.2\hspace{0.2cm}Using generator expressions}
+\subsubsubsection{7.3.2\hspace{0.2cm}生成器表达式}
 
 Setting compile flags in a way to support both single- and multi-configuration generators can be tricky, as CMake executes if statements and many other constructs at configure time, not at build/install time.
 

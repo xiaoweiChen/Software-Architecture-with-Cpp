@@ -115,38 +115,45 @@ using conditional_t = conditional<B,T,F>::type;
 
 如果项目需要很长时间才能链接，也有一些方法可以解决这个问题。使用不同的链接器，如LLVM的LLD或GNU的Gold，可以有很大的帮助，因为可以使用多线程链接。如果无法使用不同的链接器，可以尝试使用\texttt{-fvisibility-hidden}或\texttt{-fvisibility-inlineshidden}这样的标志，并在源代码中使用适当的注释，只标记希望在动态库中可见的函数。这样，链接器要做的工作就更少了。如果正在对链接时间进行优化，那么可以尝试只对性能关键的构建进行优化:计划分析的构建和那些用于生产的构建。否则，可能会浪费开发人员的时间。
 
-If you're using CMake and aren't tied to a specific generator (for example, CLion requires using the Code::Blocks generator), you can replace the default Make generator with a faster one. Ninja is a great one to start with as it was created specifically to reduce build times. To use it, just pass -G Ninja when invoking CMake.
+如果正在使用CMake，并且没有绑定到特定的生成器(例如，CLion需要使用Code::Blocks生成器)，可以用更快的生成器替换默认的Make生成器。Ninja是一个很好的开始，它专门为减少构建时间而创建的，只需在调用CMake时传递\texttt{-G Ninja}就可以使用。
 
-There are still two more great tools that will surely give you a boost. One of them is Ccache.It's a tool that runs its cache of C an d C++ compilation outputs. If you're trying to build the same thing twice, it will get the results from the cache instead of running the compilation. It keeps the statistics, such as cache hits and misses, can remember the warnings that it should emit when compiling a specific file, and has many configuration options that you can store in the ~/.ccache/ccache.conf file. To obtain its statistics, just run ccache -\,-show-stats.
+还有两个很棒的工具，其中一个就是Ccache。它是一个执行C和C++编译输出缓存的工具。如果试图构建相同的内容两次，将从缓存中获得结果，而不是运行编译。它保留统计数据，例如：缓存命中和未命中，可以记住编译特定文件时应该发出的警告，并且有许多配置选项可以存储在\texttt{~/.ccache/ccache.conf}文件中。要获取它的统计信息，只需运行\texttt{ccache -\,-show-stats}即可。
 
-The second tool is IceCC (or Icecream). It's a fork of distcc, essentially a tool to distribute your builds across hosts. With IceCC, it's easier to use a custom toolchain. It runs the iceccd daemon on each host and an icecc-scheduler service that manages the whole cluster. The scheduler, unlike in distcc, makes sure to only use the idle cycles on each machine, so you won't end up overloading other people's workstations.
+第二个工具是IceCC(或Icecream)。它是distcc的一个分支，本质上是一个跨主机分发构建的工具。有了IceCC，使用自定义工具链就更容易了。它在每个主机上运行iceccd守护进程，并运行一个icecc-scheduler服务来管理整个集群。与distcc不同的是，调度程序确保只使用每台机器上的空闲周期，因此不会导致其他人的工作机超载。
 
-To use both IceCC and Ccache for your CMake builds, just add -DCMAKE\_C\_COMPILER\_LAUNCHER="ccache;icecc" -DCMAKE\_CXX\_COMPILER\_LAUNCHER="ccache;icecc" to your CMake invocation. If you're compiling on Windows, instead of the last two tools, you could use clcache and Incredibuild or look for other alternatives.
+要使用IceCC和Ccache为您的CMake构建，只需在CMake调用中添加：
 
-Now that you know how to build fast, let's move on to another important topic.
+\begin{tcblisting}{commandshell={}}
+-DCMAKE_C_COMPILER_LAUNCHER="ccache;icecc"
+-DCMAKE_CXX_COMPILER_LAUNCHER="ccache;icecc"
+\end{tcblisting}
+
+如果在Windows上编译，想使用其他类似的工具，可以选择使用clcache和Incredibuild或其他替代工具。
+
+现在已经了解了如何快速构建，接下来继续讨论另一个重要的话题。
 
 \subsubsubsection{7.2.3\hspace{0.2cm}寻找代码的潜在问题}
 
-Even the quickest builds aren't worth much if your code has bugs. There are dozens of flags to warn you of potential issues in your code. This section will try to answer which ones you should consider enabling.
+如果代码有bug，即使是最快的构建也没有多大价值。有许多标志可以用来警告代码中可能存在的问题。本节将展示应该考虑启用哪些选项。
 
-First, let's start with a slightly different matter: how not to get warned about issues with code from other libraries. Getting warned about issues that you can't really fix isn't useful. Fortunately, there are compiler switches to disable such warnings. In GCC, for instance, you have two types of include files: regular (passed using -I) and system ones (passed using -isystem). If you specify a directory using the latter, you won't get warnings from the headers it contains. MSVC has an equivalent for -isystem: /external:I.Additionally, it has other flags to handle external includes, such as /external:anglebrackets, which tells the compiler to treat all files included using angle brackets as external ones, thus disabling warnings for them. You can specify a warning level for external files. You can also keep warnings coming from template instantiations caused by your code using /external:templates-. If you're looking for a portable way to mark include paths as system/external ones, and you're using CMake, you can add the SYSTEM keyword to a target\_include\_directories directive.
+首先，让从一个稍微不同的问题开始:如何不收到来自其他库的代码问题的警告。对于无法解决的问题上的警告没有任何价值。幸运的是，有一些编译器开关可以禁用此类警告。例如，在GCC中，有两种类型的包含文件:常规文件(使用\texttt{-I}传递)和系统文件(使用\texttt{-system}传递)。如果使用后者指定目录，则不会从相应的头文件中获得警告。MSVC有一个\texttt{-system}的等价选项:\texttt{/external:I}。此外，它还有其他标志来处理外部包含，比如\texttt{/external:anglebrackets}，它告诉编译器将使用尖括号包含的所有文件视为外部文件，从而禁用对它们的警告。可以为外部文件指定警告级别，也可以让警告来自于使用\texttt{/external}进行模板实例化的代码:如果正在寻找一种可移植的方式来将包含路径标记为系统/外部路径，并且正在使用CMake，可以将\texttt{SYSTEM}关键字添加到\texttt{target\_include\_directories}指令的参数中。
 
-Speaking of portability, if you want to be conformant to a C++ standard (and you should), consider adding -pedantic to your compile options for GCC or Clang, or the /permissive- option for MSVC. This way, you'll get informed about every non-standard extension that you might be using. If you're using CMake, add the following line for each of your targets, set\_target\_properties(<target> PROPERTIES CXX\_EXTENSIONS OFF), to disable compiler-specific extensions.
+说到可移植性，如果想要符合C++标准，考虑在GCC或Clang的编译选项中加入\texttt{-pedantic}，或者在MSVC中加入\texttt{/permissive-}选项。这样，就会了解每个可能使用非标准扩展的模块。如果正在使用CMake，为每个目标添加设置相应的属性，\texttt{set\_target\_properties(<target> PROPERTIES CXX\_EXTENSIONS OFF)}以禁用特定于编译器的扩展。
 
-If you're using MSVC, strive to compile your code with /W4, since it enables most of the important warnings. For GCC and Clang, try to use -Wall -Wextra -Wconversion -Wsign-conversion. The first one, despite its name, enables only some common warnings. The second, however, adds another bunch of warnings. The third one is based on the tips from a great book by Scott Meyers, titled Effective C++ (it's a set of good warnings, but check that it's not too noisy for your needs). The last two are about type conversions and signedness conversions. All those flags together create a sane safety net, but you can, of course, look for more flags to enable. Clang has a -Weverything flag. Try to periodically run a build with it to discover new, potential warnings that could be worth enabling in your codebase. You might be surprised at how many messages you get with this flag, although enabling some of the warning flags might not be worth the hassle. An MSVC alternative is named /Wall. Take a look at the following tables to see some other interesting options that are not enabled by the preceding 9:
+如果正在使用MSVC，请尝试使用\texttt{/W4}来编译代码，因为它启用了大多数重要的警告。对于GCC和Clang，尝试使用\texttt{-Wall -Wextra -Wconversion -Wsign-conversion}。第一个，尽管它的名字，只启用一些常见的警告。然而，第二个又增加了一堆警告。第三个是基于Scott Meyers的著作《Effective C++》中的提示(这是一组很好的警告，但是要确保是否符合需求)。后两个是关于类型转换和签名转换的。所有这些标志创建了一个完整的安全网，当然可以启用更多的标志。Clang有一个\texttt{-Weverything}标志，尝试使用它运行构建，可以发现新的警告。虽然启用一些警告标志可能没这么麻烦，但是开发者可能会对使用此标志获得的消息数量感到惊讶。MSVC的一个替代方案命名为\texttt{/Wall}。看看下面的表格，了解一下其他没有启用的有趣选项:
 
 GCC/Clang:
 \begin{table}[H]
 	\begin{tabular}{|l|l|}
 		\hline
-		\textbf{Flag}         & \textbf{Meaning}                                                                                                                                    \\ \hline
-		-Wduplicated-cond     & \begin{tabular}[c]{@{}l@{}}Warn when the same condition is used in if and else-if\\ blocks.\end{tabular}                                            \\ \hline
-		-Wduplicated-branches & Warn if both branches contain the same source code.                                                                                                 \\ \hline
-		-Wlogical-op          & \begin{tabular}[c]{@{}l@{}}Warn when operands in logical operations are the same and\\ when a bitwise operator should be used instead.\end{tabular} \\ \hline
-		-Wnon-virtual-dtor    & \begin{tabular}[c]{@{}l@{}}Warn when a class has virtual functions but not a virtual\\ destructor.\end{tabular}                                     \\ \hline
-		-Wnull-dereference    & \begin{tabular}[c]{@{}l@{}}Warn about null dereferences. This check may be inactive in\\ unoptimized builds.\end{tabular}                           \\ \hline
-		-Wuseless-cast        & Warn when casting to the same type.                                                                                                                 \\ \hline
-		-Wshadow              & \begin{tabular}[c]{@{}l@{}}A whole family of warnings about declarations that shadow\\ other, previous declarations.\end{tabular}                   \\ \hline
+		\textbf{标志}         & \textbf{含义}                                                                                                                                    \\ \hline
+		-Wduplicated-cond     & \begin{tabular}[c]{@{}l@{}}当在if和else-if块中使用相同的条件时发出警告\end{tabular}                                            \\ \hline
+		-Wduplicated-branches & 如果两个分支包含相同的源代码，则发出警告。                                                                                                 \\ \hline
+		-Wlogical-op          & \begin{tabular}[c]{@{}l@{}}当逻辑操作中的操作数相同且应该使用位操作符时发出警告。\end{tabular} \\ \hline
+		-Wnon-virtual-dtor    & \begin{tabular}[c]{@{}l@{}}当类有虚函数，但没有虚析构函数时发出警告。\end{tabular}                                     \\ \hline
+		-Wnull-dereference    & \begin{tabular}[c]{@{}l@{}}警告空解引用。在未优化的构建中，此检查可能是不开启的。\end{tabular}                           \\ \hline
+		-Wuseless-cast        & 转换为相同类型时发出警告。                                                                                                                 \\ \hline
+		-Wshadow              & \begin{tabular}[c]{@{}l@{}}A 所有关于覆盖了之前声明的警告。\end{tabular}                   \\ \hline
 	\end{tabular}
 \end{table}
 
@@ -156,19 +163,19 @@ MSVC:
 	\begin{tabular}{|l|l|}
 		\hline
 		\textbf{Flag} & \textbf{Meaning}                                      \\ \hline
-		/w44640       & Warn on non-thread-safe static member initialization. \\ \hline
+		/w44640       & 对非线程安全的静态成员初始化发出警告。 \\ \hline
 	\end{tabular}
 \end{table}
 
-One last thing worth mentioning is the question: to -Werror (or /WX on MSVC) or not to - Werror? This really depends on your personal preferences as issuing errors instead of warnings has its pros and cons. On the plus side, you won't let any of your enabled warnings slip by. Your CI build will fail and your code won't compile. When running multi-threaded builds, you won't lose any warnings in the quickly passing compilation messages. However, there are some minuses too. You won't be able to upgrade your compiler if it enables any new warnings or just detects more issues. The same goes for dependencies, which can deprecate some functions they provide. You won't be able to deprecate anything in your code if it's used by other parts of your project. Fortunately, you can always use a mixed solution: strive to compile with -Werror, but disable it when you need to do the things it inhibits. This requires discipline, as if any new warnings are to slip in, you may have a hard time eliminating them.
+最后一个问题:何时使用\texttt{-Werror}(或/WX在MSVC)或不使用\texttt{-Werror}？这实际上取决于个人偏好，因为发出错误而不是警告有其优点和缺点。从积极的方面来说，不会让警告溜走。CI构建将失败，代码将无法编译。在运行多线程构建时，不会在快速传递的编译消息中丢失警告。然而，也有一些缺点。如果编译器启用了新的警告或只是检测到更多问题，那么就无法升级编译器。依赖关系也是如此，依赖关系会使一些函数不受欢迎。如果代码中的内容在项目的其他部分使用，就不能弃用它。幸运的是，可以使用混合解决方案:使用\texttt{-Werror}进行编译，但在需要时禁用它。这就需要有纪律，如果有新的警告出现，可能很难消除。
 
 \subsubsubsection{7.2.4\hspace{0.2cm}使用以编译器为中心的工具}
 
-Nowadays, compilers allow you to do much more with them than a few years back. This is owing to the introduction of LLVM and Clang. By providing APIs and a modular architecture allowing easy reuse, caused tools such as sanitizers, automatic refactoring, or code completion engines to flourish. You should consider taking advantage of what this compiler infrastructure offers you. Use clang-format to ensure all the code in your code base conforms to a given standard. Consider adding pre-commit hooks using the precommit tool to reformat new code before commit. You can also add Python and CMake formatters to the mix. Statically analyze the code using clang-tidy – a tool that actually understands your code instead of just reasoning about it. There's a ton of different checks this tool can perform for you, so be sure to customize the list and options to your specific needs. You can also run nightly or weekly tests of your software with sanitizers enabled. This way, you can detect threading issues, undefined behavior, memory access, management issues, and more. Running tests using debug builds can also be of value if your release builds have assertions disabled.
+与几年前相比，编译器可以做更多的事情，这是由于LLVM和Clang的引入。通过提供API和重用的模块化架构，使消毒工具、自动重构或代码完成引擎等工具蓬勃发展，并可以利用这个编译器基础设施提供的优势。使用clang-format来确保代码库中的所有代码都符合给定的标准。考虑添加预提交钩子，使用预提交工具在提交之前重新格式化新代码。也可以添加Python和CMake格式器。使用clang-tidy静态分析代码——这个工具能够理解代码，而不仅仅是对代码进行推演。这个工具可以执行不同的检查，所以一定要根据特定需求定制列表和选项。还可以在启用杀毒软件的情况下，每晚或每周运行软件测试。通过这种方式，可以检测线程问题、未定义的行为、内存访问、管理问题等等。如果发布版本禁用了断言，那么使用调试版本运行测试也可以。
 
-If you think that more could be done, you can consider writing your own code refactorizations using Clang's infrastructure. There's already a clang-rename tool if you want to see how to create an LLVM-based tool of your own. Additional checks and fix-its for clang-tidy are also not that hard to create, and they can save you hours of manual labor.
+如果认为还可以做得更多，可以考虑使用Clang的基础架构编写自己的代码重构。如果想了解如何创建自己的基于llvm的工具，那么已经有一个clang-rename工具。对clang-tidy进行额外的检查和修复也不是那么难，这个工具可以节省几个小时的体力劳动。
 
-You can integrate many tools into your building process. Let's now discuss the heart of the process: the build system.
+可以将许多工具集成到构建过程中。现在让就讨论这个过程的核心:构建系统。
 
 
 
