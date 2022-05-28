@@ -1,69 +1,69 @@
 
-Compilers are one of the most important tools in every programmer's workshop. That's why getting to know them well can help you out in many different ways, on countless occasions. In this section, we'll describe a few tips to use them effectively. This will only touch the tip of the iceberg as whole books can be written about these tools and their vast variety of available flags, optimizations, functionalities, and other specifics. GCC even has a wiki page with a list of books about compilers! You can find it in the Further reading section at the end of this chapter.
+编译器是每个开发者工作中最重要的工具之一，这就是为什么了解他们非常重要。本节中，将介绍一些有用的技巧。这只是冰山一角，因为关于这些工具及其各种可用标志、优化、功能和其他细节汇总起来就是可以成书的量级，GCC还有有一个专门的Wiki页面，里面有关于编译器的书籍列表!可以在本章末尾的扩展阅读中找到它。
 
-\subsubsubsection{7.2.1\hspace{0.2cm}Using multiple compilers}
+\subsubsubsection{7.2.1\hspace{0.2cm}多编译器}
 
-One of the things you should consider in your build process is using multiple compilers instead of just one, the reason being the several benefits that come with it. One of them is that they can detect different issues with your code. For instance, MSVC has signedness checks enabled by default. Using several compilers can help with potential portability issues you may encounter in the future, especially when a decision is made to also compile your code on a different OS, such as moving from Linux to Windows or the other way. To make such efforts at no cost, you should strive to write portable, ISO C++-compliant code. One of the benefits of Clang is that it strives for compliance with the C++ standards more than GCC. If you're using MSVC, try adding the /permissive- option (available since Visual Studio 17; enabled by default for projects created using version 15.5+). For GCC, try not to use the GNU variants when choosing the C++ standard for your code (for example, prefer -std=c++17 to -std=gnu++17). If performance is your goal, being able to build your software with a wide range of compilers will also allow you to pick the one that will offer the fastest binaries for your specific use cases. 
+构建过程中，需要考虑使用多个编译器，而非一个，原因是它们可以检测代码中的不同问题。例如，MSVC默认启用签名检查。使用多个编译器可以提前发现可能遇到的可移植性问题，特别是决定在不同的操作系统上编译代码时，例如：从Linux迁移到Windows或其他。要无痛完成这些工作，需要编写可移植的、符合ISO C++的代码。Clang是一个比较好的选择，它力求比GCC更符合C++标准。如果正在使用MSVC，可以试着添加\texttt{/permissive-}选项(在Visual Studio 17加入，对于使用15.5+版本创建的项目默认启用)。对于GCC，在为代码选择C++标准时尽量不要使用GNU扩展(例如，使用\texttt{-std=c++17}而不是\texttt{-std=gnu++17})。如果目标是性能，那么使用各种编译器来构建也可以为特定的用例，选择运行最快的二进制文件。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}Regardless of which compiler you choose for your release builds, consider using Clang for development. It runs on macOS, Linux, and Windows, supports the same set of flags as GCC, and aims to provide the fastest build times and concise compilation errors.
+\hspace*{0.7cm}无论为发布版本选择哪种编译器，都可以考虑使用Clang进行开发。它可以在macOS、Linux和Windows上运行，支持与GCC相同的标志集，旨在提供最快的构建时间和简明的编译错误。
 \end{tcolorbox}
 
-If you're using CMake, you have two common ways to add another compiler. One is to pass the appropriate compilers when invoking CMake, like so:
+如果正在使用CMake，有两种常见的方法来添加另一个编译器。一种是在调用CMake时传递相应的编译器，像这样:
 
 \begin{tcblisting}{commandshell={}}
 mkdir build-release-gcc
 cd build-release-gcc
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/gcc -
-DCMAKE_CXX_COMPILER=/usr/bin/g++
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/gcc \
+  -DCMAKE_CXX_COMPILER=/usr/bin/g++
 \end{tcblisting}
 
-It's also possible to just set CC and CXX before invoking CMake, but those variables are not honored on all platforms (such as macOS).
+也可以在调用CMake之前设置\texttt{CC}和\texttt{CXX}，但这些环境变量在不同的平台(如macOS)上有所不同。
 
-Another approach is to use toolchain files. It's probably an overkill if you just need to use a different compiler, but it's the go-to solution when you want to cross-compile. To use a toolchain file, you should pass it as a CMake argument: -DCMAKE\_TOOLCHAIN\_FILE=toolchain.cmake. 
+另一种方法是使用工具链文件。如果只是需要使用不同的编译器，这可能没必要，但若想要交叉编译时，这是首选的解决方案。要使用一个工具链文件，应该作为一个参数传递给CMake:\texttt{-DCMAKE\_TOOLCHAIN\_FILE=toolchain.cmake}。
 
-\subsubsubsection{7.2.2\hspace{0.2cm}Reducing build times}
+\subsubsubsection{7.2.2\hspace{0.2cm}减少构建时间}
 
-Every year, programmers spend countless hours waiting for their builds to complete. Reducing build times is an easy way to improve the productivity of whole teams, so let's discuss a few approaches to doing it.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Using a fast compiler}
-
-One of the simplest ways to have faster builds is sometimes to upgrade your compiler. For instance, by upgrading Clang to 7.0.0, you could shave up to 30\% off of build times using Precompiled Header (PCH) files. Since Clang 9, it has gained the -ftime-trace option, which can provide you with information on the compilation times of all the files it processes. Other compilers have similar switches, too: check out GCC's -ftime-report or MSVC's /Bt and /d2cgsummary. Often you can get faster compiles by switching the compiler, which is especially useful on your development machine; for example, Clang usually compiles code faster than GCC.
-
-Once you have a fast compiler, let's take a look at what it needs to compile.
+每年，程序员都要花费无数个小时等待他们的构建完成。减少构建时间是提高整个团队生产力的一种简单方法，所以这里讨论一些实现它的方法。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Rethinking templates}
+\textbf{快速编译器}
 
-Different parts of the compilation process take a different amount of time to complete. This is especially important for compile-time constructs. One of Odin Holmes' interns, Chiel Douwes, created the so-called Rule of Chiel based on benchmarking the compile-time costs of various template operations. This, and other type-based template metaprogramming tricks, can be seen in the Type Based Template Metaprogramming is Not Dead lecture by Odin Holmes. From fastest to slowest, they are as follows:
+提高构建速度的最简单方法之一就是升级编译器。例如，通过将Clang升级到7.0.0，可以使用预编译头(PCH)文件节省多达30\%的构建时间。从Clang 9开始，就有了了\texttt{-ftime-trace}选项，该选项可以提供有关它处理的所有文件的编译时间的信息。其他编译器也有类似的开关:查看GCC的\texttt{-ftime}报告或MSVC的/Bt和\texttt{/d2cgsummary}。通常可以通过切换编译器来获得更快的编译速度，这在开发机器上特别有用，例如：Clang编译代码的速度通常比GCC快。
+
+当有了一个快速的编译器后，再来看看它需要编译什么。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{反思模板}
+
+编译过程的不同部分需要不同的时间来完成，这对于编译时构造尤其重要。Odin Holmes的实习生之一Chiel Douwes在对各种模板操作的编译时成本进行基准测试的基础上创建了所谓的Chiel规则。这一点，以及其他基于类型的模板元编程技巧，可以在Odin Holmes的《基于类型的模板元编程并未消亡》讲座中看到。从最快到最慢，排列如下:
 
 \begin{itemize}
 \item 
-Looking up a memoized type (for example, a template instantiation)
+查找已实例化的类型(例如，模板实例化)
 
 \item 
-Adding a parameter to an alias call
+将参数传递给别名调用
 
 \item 
-Adding a parameter to a type
+向类型添加参数
 
 \item 
-Calling an alias
+调用一个别名
 
 \item 
-Instantiating a type
+实例化一个类型
 
 \item 
-Instantiating a function template
+实例化一个函数模板
 
 \item 
-Using SFINAE (Substitution Failure Is Not an Error)
+使用SFINAE(替换失败不是错误)
 \end{itemize}
 
-To demonstrate this rule, consider the following code:
+为了演示该规则，看一下以下的代码:
 
 \begin{lstlisting}[style=styleCXX]
 template<bool>
@@ -82,7 +82,7 @@ template<bool B, typename T, typename F>
 using conditional_t = conditional<B>::template type<T, F>;
 \end{lstlisting}
 
-It defines a conditional template alias, which stores a type that resolves as T if condition B is true, and to F otherwise. The traditional way to write such a utility would be as follows:
+定义了一个条件模板别名，该别名存储一个类型，如果条件B为真，则解析为T，否则解析为F。编写这样一个实用程序的传统方法如下:
 
 \begin{lstlisting}[style=styleCXX]
 template<bool B, class T, class F>
@@ -99,21 +99,21 @@ template<bool B, class T, class F>
 using conditional_t = conditional<B,T,F>::type;
 \end{lstlisting}
 
-However, this second way is slower to compile than the first because it relies on creating template instances instead of type aliases.
+但第二种方法的编译速度比第一种方法慢，因为它依赖于创建模板实例，而不是类型别名。
 
-Let's now take a look at what tools and their features you can use to keep compile times low.
+现在，来看看可以使用哪些工具及其特性，可以用来减少编译的时间。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Leveraging tools}
+\textbf{利用工具}
 
-A common technique that can make your builds faster is to use a single compilation unit build, or unity build. It won't speed up every project, but it may be worth a shot if there's plenty of code in your header files. Unity builds work by just including all your .cpp files in one translation unit. Another similar idea is to use pre-compiled headers. Plugins such as Cotire for CMake will handle both of these techniques for you. CMake 3.16 also adds native support for unity builds, which you can enable either for one target, set\_target\_properties(<target> PROPERTIES UNITY\_BUILD ON), or globally by setting CMAKE\_UNITY\_BUILD to true. If you just want PCHs, you might want to take a look into CMake 3.16's target\_precompile\_headers.
+使用单个编译单元构建，或统一构建，可以使构建速度更快。它不会加快每个项目的速度，但若头文件中有大量的代码，可以试一试。统一构建是通过在一个转译单元中包含所有的\texttt{.cpp}文件来构建的。另一个类似的想法是使用预编译头文件。诸如CMake的Cotire插件可以使用这两种技术。CMake 3.16还增加了对统一构建的原生支持，可以为一个目标启用，\texttt{set\_target\_properties(<target> PROPERTIES UNITY\_BUILD ON)}，或者通过设置\texttt{CMAKE\_UNITY\_BUILD}为true来启用全局统一构建。如果只是想要PCH(预编译头文件)，只需要去看看CMake 3.16的\texttt{target\_precompile\_headers}就好。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
-\hspace*{0.7cm}If you feel like you are including too much in your C++ files, consider using a tool named include-what-you-use to tidy them up. Preferring forward declaring types and functions to including header files can also go a long way in reducing the compilation times.
+\hspace*{0.7cm}若在C++文件中包含了太多的内容，可以考虑使用一个名为include-what-you-use的工具进行整理。可以将声明类型和函数放到头文件中，并且可以减少编译时间。
 \end{tcolorbox}
 
-If your project takes forever to link, there are some ways to deal with this as well. Using a different linker, such as LLVM's LLD or GNU's Gold, can help a lot, especially since they allow multi-threaded linking. If you can't afford to use a different linker, you can always experiment with flags such as -fvisibility-hidden or -fvisibility-inlineshidden and mark only the functions you want to have visible in your shared library with an appropriate annotation in the source code. This way, the linker will have less work to perform. If you're using link-time optimization, try to only do that for the builds that are performance-critical: those that you plan to profile and those meant for production. Otherwise, you'll probably just waste your developers' time.
+如果项目需要很长时间才能链接，也有一些方法可以解决这个问题。使用不同的链接器，如LLVM的LLD或GNU的Gold，可以有很大的帮助，因为可以使用多线程链接。如果无法使用不同的链接器，可以尝试使用\texttt{-fvisibility-hidden}或\texttt{-fvisibility-inlineshidden}这样的标志，并在源代码中使用适当的注释，只标记希望在动态库中可见的函数。这样，链接器要做的工作就更少了。如果正在对链接时间进行优化，那么可以尝试只对性能关键的构建进行优化:计划分析的构建和那些用于生产的构建。否则，可能会浪费开发人员的时间。
 
 If you're using CMake and aren't tied to a specific generator (for example, CLion requires using the Code::Blocks generator), you can replace the default Make generator with a faster one. Ninja is a great one to start with as it was created specifically to reduce build times. To use it, just pass -G Ninja when invoking CMake.
 
@@ -125,7 +125,7 @@ To use both IceCC and Ccache for your CMake builds, just add -DCMAKE\_C\_COMPILE
 
 Now that you know how to build fast, let's move on to another important topic.
 
-\subsubsubsection{7.2.3\hspace{0.2cm}Finding potential code issues}
+\subsubsubsection{7.2.3\hspace{0.2cm}寻找代码的潜在问题}
 
 Even the quickest builds aren't worth much if your code has bugs. There are dozens of flags to warn you of potential issues in your code. This section will try to answer which ones you should consider enabling.
 
@@ -162,7 +162,7 @@ MSVC:
 
 One last thing worth mentioning is the question: to -Werror (or /WX on MSVC) or not to - Werror? This really depends on your personal preferences as issuing errors instead of warnings has its pros and cons. On the plus side, you won't let any of your enabled warnings slip by. Your CI build will fail and your code won't compile. When running multi-threaded builds, you won't lose any warnings in the quickly passing compilation messages. However, there are some minuses too. You won't be able to upgrade your compiler if it enables any new warnings or just detects more issues. The same goes for dependencies, which can deprecate some functions they provide. You won't be able to deprecate anything in your code if it's used by other parts of your project. Fortunately, you can always use a mixed solution: strive to compile with -Werror, but disable it when you need to do the things it inhibits. This requires discipline, as if any new warnings are to slip in, you may have a hard time eliminating them.
 
-\subsubsubsection{7.2.4\hspace{0.2cm}Using compiler-centric tools}
+\subsubsubsection{7.2.4\hspace{0.2cm}使用以编译器为中心的工具}
 
 Nowadays, compilers allow you to do much more with them than a few years back. This is owing to the introduction of LLVM and Clang. By providing APIs and a modular architecture allowing easy reuse, caused tools such as sanitizers, automatic refactoring, or code completion engines to flourish. You should consider taking advantage of what this compiler infrastructure offers you. Use clang-format to ensure all the code in your code base conforms to a given standard. Consider adding pre-commit hooks using the precommit tool to reformat new code before commit. You can also add Python and CMake formatters to the mix. Statically analyze the code using clang-tidy – a tool that actually understands your code instead of just reasoning about it. There's a ton of different checks this tool can perform for you, so be sure to customize the list and options to your specific needs. You can also run nightly or weekly tests of your software with sanitizers enabled. This way, you can detect threading issues, undefined behavior, memory access, management issues, and more. Running tests using debug builds can also be of value if your release builds have assertions disabled.
 
