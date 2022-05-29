@@ -1,13 +1,13 @@
 
-There are several ways for you to fetch the external projects you depend on. For instance, you could add them as a Conan dependency, use CMake's find\_package to look for a version provided by the OS or installed in another way, or fetch and compile the dependency yourself.
+有几种方法可以获取所依赖的外部项目。例如，可以将它们添加为一个Conan依赖，使用CMake的\texttt{find\_package}来查找操作系统提供的或以其他方式安装的版本，或者自己获取和编译依赖。
 
-The key message of this section is: if you can, you should use Conan. This way, you'll end up using one version of the dependency that matches your project's and its dependencies' requirements.
+这一节的关键是:如果可以，使用Conan。这样，就可以使用与项目及其依赖项需求相匹配的依赖项版本。
 
-If you're aiming to support multiple platforms, or even multiple versions of the same distribution, using Conan or compiling everything yourself are the ways to go. This way, you'll use the same dependency version regardless of the OS you compile on.
+如果目标是支持多个平台，甚至同一发行版本的多个版本，使用Conan或自行编译都是可行的方法。这样，无论您在哪个操作系统上编译，都可以使用相同的依赖版本。
 
-Let's discuss a few ways of grabbing your dependencies offered by CMake itself, and then jump to using the multi-platform package manager named Conan.
+现在来讨论一下获取CMake本身提供的依赖项的几种方法，然后跳转到使用Conan的多平台包管理器。
 
-\subsubsubsection{7.4.1\hspace{0.2cm}Fetching dependencies}
+\subsubsubsection{7.4.1\hspace{0.2cm}获取依赖项}
 
 One of the possible ways to prepare your dependencies from the source is to use CMake's built-in FetchContent module. It will download your dependencies and then build them for you as a regular target.
 
@@ -43,7 +43,7 @@ Now, we can read the properties of our external library and populate (that is, c
 
 If you're not fond of building your dependencies together with your project, perhaps the next way of integrating your dependencies will be more suitable for you.
 
-\subsubsubsection{7.4.2\hspace{0.2cm}Using find scriptse}
+\subsubsubsection{7.4.2\hspace{0.2cm}查找脚本}
 
 Assuming your dependency is available somewhere on your host, you can just call find\_package to try to search for it. If your dependency provides a config or targets files (more on those later), then just writing this one simple command is all you need. That is, of course, assuming that the dependencies are already available on your machine. If not, it's your responsibility to install them before running CMake for your project.
 
@@ -71,7 +71,7 @@ target_link_libraries(MyTarget PUBLIC Boost::Beast)
 
 Now that you know how to properly use a find script, let's learn how to write one on your own.
 
-\subsubsubsection{7.4.3\hspace{0.2cm}Writing find scripts}
+\subsubsubsection{7.4.3\hspace{0.2cm}编写查找脚本}
 
 If your dependency is neither providing config and target files nor has anyone written a find module for it, you can always write such a module yourself.
 
@@ -201,7 +201,7 @@ This is how you can write the find module yourself.
 
 Let's now show how to use a proper package manager instead of doing the heavy lifting yourself.
 
-\subsubsubsection{7.4.4\hspace{0.2cm}Using the Conan package manager}
+\subsubsubsection{7.4.4\hspace{0.2cm}使用Conan包管理器}
 
 Conan is an open source, decentralized package manager for native packages. It supports multiple platforms and compilers. It can also integrate with multiple build systems.
 
@@ -209,7 +209,7 @@ If a package has not already been built for your environment, Conan will handle 
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Preparing Conan profiles}
+\textbf{准备使用Conan}
 
 If this is the first time you're running Conan, it will create a default profile based on your environment. You might want to modify some of its settings either by creating a new profile or by updating the default one. Assuming we're using Linux and want to compile everything using GCC 9.x, we could run the following:
 
@@ -228,7 +228,7 @@ Now that we've set Conan up, let's show how to grab our dependencies using Conan
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Specifying Conan dependencies}
+\textbf{指定Conan的依赖}
 
 Our project relies on the C++ REST SDK. To tell this to Conan, we need to create a file called conanfile.txt. In our case, it will contain the following:
 
@@ -255,7 +255,7 @@ Once we have conanfile.txt in place, let's tell Conan to use it.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Installing Conan dependencies}
+\textbf{安装Conan的依赖}
 
 To use our Conan packages in CMake code, we must first install them. In Conan, this means downloading the sources and building them or downloading prebuilt binaries, as well as creating configuration files that we'll use in CMake. To make Conan handle this for us after we have created our build directory, we should cd into it and simply run the following:
 
@@ -270,7 +270,7 @@ If the CMake generator we plan to use was not specified in conanfile.txt, we can
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Using Conan targets from CMake}
+\textbf{使用CMake的Conan目标}
 
 Once Conan finishes downloading, building, and configuring our dependencies, we need to tell CMake to use them. 
 
@@ -300,7 +300,7 @@ This way, we'll get an error during CMake's configuration when the package is no
 
 Now that we have compiled and linked our targets just the way we wanted, it's time to put them to the test.
 
-\subsubsubsection{7.4.5\hspace{0.2cm}Adding tests}
+\subsubsubsection{7.4.5\hspace{0.2cm}添加测试}
 
 CMake has its own test driver program named CTest. It's easy to add new test suites to it from your CMakeLists either on your own or using the many integrations provided by testing frameworks. Later in the book, we'll discuss testing in depth, but let's first show how to quickly and cleanly add unit tests based on the GoogleTest, or GTest, testing framework.
 
