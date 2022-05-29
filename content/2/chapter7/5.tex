@@ -1,21 +1,21 @@
 
-CMake has built-in utilities that can come a long way when it comes to distributing the results of your builds. This section will describe installing and exporting utilities and the differences between them. Later sections will show you how to package your code using CPack, and how to do it using Conan. 
+CMake有内置的实用程序，在分发构建的结果时，这些实用程序可以大有作为。本节将描述安装和导出实用程序，以及它们之间的区别。后面的小节将展示如何使用CPack打包代码，以及如何使用Conan进行打包。
 
-Installing and exporting is not that important for microservices per se, but it's very useful if you're delivering libraries for others to reuse.
+安装和导出对于微服务本身并不是那么重要，但如果会交付库供他人重用，这就就非常有用了。
 
-\subsubsubsection{7.5.1\hspace{0.2cm}Installing}
+\subsubsubsection{7.5.1\hspace{0.2cm}安装}
 
-If you have written or used Makefiles, you've most probably invoked make install at one point and seen how the deliverables of a project were installed either in the OS directories or in another directory of your choosing. If you're using make with CMake, using the steps from this section will allow you to install the deliverables in the same way. If not, you'll still be able to call the install target, of course. Aside from that, in both cases, you will then have an easy way to leverage CPack for creating packages based on your installation commands.
+如果编写或使用过Makefile，那么应该用过\texttt{make install}，并看到过项目的可交付成果是如何安装在OS目录或选择的另一个目录中的。如果正在使用make与CMake，使用本节的步骤将可以以相同的方式安装可交付成果。当然，如果没有，仍然可以使用安装目标。除此之外，在这两种情况下，将有一种简单的方法来使用CPack根据安装命令来创建安装包。
 
-If you're on Linux, it's probably a good idea to preset some installation directories based on the conventions of the OS by calling the following:
+如果在Linux系统上，通过调用下面的命令根据操作系统的惯例预先设置一些安装目录，可能是个不错的方式:
 
 \begin{lstlisting}[style=styleCMake]
 include(GNUInstallDirs)
 \end{lstlisting}
 
-This will make the installer use a directory structure made of bin, lib, and similar other directories. Such directories can be also set manually using a few CMake variables.
+这将使安装程序使用由bin、lib和其他类似目录组成的目录结构。这样的目录也可以手动设置一些CMake变量。
 
-Creating an install target consists of a few more steps. First and foremost is to define the targets we want to install, which in our case will be the following:
+创建安装目标还包括几个步骤。首先，也是最重要的是定义想要安装的目标，在例子中如下所示:
 
 \begin{lstlisting}[style=styleCMake]
 install(
@@ -26,9 +26,9 @@ install(
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 \end{lstlisting}
 
-This tells CMake to expose our library and executable defined earlier in this chapter as CustomerTargets, using the directories we set earlier.
+这告诉CMake将本章前面定义的库和可执行文件公开为\texttt{CustomerTargets}，使用前面设置的目录。
 
-If you plan to install different configurations of your library to different folders, you could use a few invocations of the preceding command, like so:
+如果计划将库的不同配置安装到不同的文件夹中，可以这样:
 
 \begin{lstlisting}[style=styleCMake]
 install(TARGETS libcustomer customer
@@ -42,16 +42,16 @@ install(TARGETS libcustomer customer
 	RUNTIME DESTINATION Release/bin)
 \end{lstlisting}
 
-You can notice that we specify the directories for executables and libraries, but not for include files. We need to provide them in another command, like so:
+可以注意到，这里为可执行文件和库指定了目录，但没有为包含文件指定目录。这需要在另一个命令中提供它们，像这样:
 
 \begin{lstlisting}[style=styleCMake]
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
 	DESTINATION include)
 \end{lstlisting}
 
-This means that the top-level include directory's contents will be installed in the include directory under the installation root. The slash after the first path fixes some path issues, so take note to use it.
+这意味着顶层\texttt{include}目录的内容将安装在安装根目录下的\texttt{include}目录中。第一个路径后的斜杠修复了一些路径问题，所以需要留意一下它。
 
-So, we have our set of targets; now we need to generate a file that another CMake project could read to understand our targets. This can be done in the following way:
+现在有一系列的目标，需要生成一个文件，让另一个CMake项目可以了解相应的意图。这可以通过以下方式实现:
 
 \begin{lstlisting}[style=styleCMake]
 install(
@@ -61,11 +61,11 @@ install(
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Customer)
 \end{lstlisting}
 
-This command takes our target set and creates a CustomerTargets.cmake file that will contain all the info about our targets and their requirements. Each of our targets will get prefixed with a namespace; for example, customer will become domifair::customer. The generated file will get installed in a subdirectory of the library folder in our installation tree.
+这个命令接受目标集，并创建一个CustomerTargets.cmake文件，将包含关于目标和要求的所有信息。每个目标都有一个名称空间前缀，例如：\texttt{customer}将变成\texttt{domifair::customer}。生成的文件将安装在安装树中的库文件夹子目录中。
 
-To allow dependant projects to find our targets using CMake's find\_package command, we need to provide a CustomerConfig.cmake file. If your target doesn't have any dependencies, you can just export the preceding targets directly to that file instead of the targets file. Otherwise, you should write your own config file that will include the preceding targets file.
+为了让依赖项目使用CMake的\texttt{find\_package}找到相应的目标，需要提供一个CustomerConfig.cmake文件。如果目标没有依赖项，可以直接将前面的目标导出到该文件，而不是目标文件。否则，应该编写包含上述目标文件的自己的配置文件。
 
-In our case, we want to reuse some CMake variables, so we need to create a template and use the configure\_file command to fill it in:
+在例子中，想要重用一些CMake变量，所以需要创建一个模板，并使用\texttt{configure\_file}对其进行填充:
 
 \begin{lstlisting}[style=styleCMake]
 configure_file(${PROJECT_SOURCE_DIR}/cmake/CustomerConfig.cmake.in
@@ -131,7 +131,7 @@ Note that if we don't install into the root of our Unix tree, we'll have to prov
 
 Let's now look at yet another way you could reuse what you just built.
 
-\subsubsubsection{7.5.2\hspace{0.2cm}Exporting}
+\subsubsubsection{7.5.2\hspace{0.2cm}导出}
 
 Exporting is a technique to add information about a package that you built locally to CMake's package registry. This is useful when you want your targets to be visible right from their build directories, even without installation. A common use for exporting is when you have several projects checked out on your development machine and you build them locally.
 
@@ -160,7 +160,7 @@ First, we find the C++ REST SDK, and only afterward do we look for our package t
 
 Let's now move on to a third way of exposing your targets to the external world.
 
-\subsubsubsection{7.5.3\hspace{0.2cm}Using CPack}
+\subsubsubsection{7.5.3\hspace{0.2cm}CPack}
 
 In this section, we'll describe how to use CPack, the packaging tool that comes with CMake. CPack allows you to easily create packages in various formats, ranging from ZIP and TGZ archives through to DEB and RPM packages, and even installation wizards such as NSIS or a few OS X-specific ones. Once you have your installation logic in place, it's not hard to integrate the tool. Let's show how to use CPack to package our project.
 

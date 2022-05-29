@@ -9,15 +9,15 @@
 
 \subsubsubsection{7.4.1\hspace{0.2cm}获取依赖项}
 
-One of the possible ways to prepare your dependencies from the source is to use CMake's built-in FetchContent module. It will download your dependencies and then build them for you as a regular target.
+从源代码中准备依赖项的一种方法是使用CMake的内置\texttt{FetchContent}模块。它可以下载依赖项，然后作为常规目标为对其进行构建。
 
-The feature arrived in CMake 3.11. It's a replacement for the ExternalProject module, which had many flaws. One of them was that it cloned the external repository during build time, so CMake couldn't reason about the targets that the external project defined, as well as about their dependencies. This made many projects resort to manually defining the include directories and library paths of such external targets and ignoring their required  interface compilation flags and dependencies completely. Ouch. FetchContent doesn't have such issues, so it's recommended you use it instead.
+新特性出现在CMake 3.11中。它是\texttt{ExternalProject}模块的替代品，\texttt{ExternalProject}模块有很多缺陷。其中之一是，构建期间克隆外部存储库，因此CMake无法推断外部项目定义的目标，及其依赖关系。这使得许多项目需要手动定义此类外部目标的\texttt{include}目录和\texttt{lib}路径，从而完全忽略所需接口编译标志和依赖关系。而\texttt{FetchContent}就没有这样的问题，所以推荐使用。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}Before we show how to use it, you must know that both FetchContent and ExternalProject (as well as using Git submodules and similar methods) have one important flaw. If you have many dependencies using the same third-party library themselves, you might end up with having multiple versions of the same project, such as a few versions of Boost. Using package managers such as Conan can help you avoid such issues.
+\hspace*{0.7cm}展示如何使用之前，必须知道\texttt{FetchContent}和\texttt{ExternalProject}(以及使用Git子模块和类似的方法)都有一个重要的缺陷。如果有许多依赖项使用相同的第三方库本身，那么可能最终会拥有同一个项目的多个版本，例如Boost的几个版本。使用类似Conan的包管理器则可以避免此类问题的发生。
 \end{tcolorbox}
 
-For the sake of an example, let's demonstrate how to integrate GTest into your project using the aforementioned FetchContent feature. First, create a FetchGTest.cmake file and put it in the cmake directory in our source tree. Our FetchGTest script will be defined as follows:
+作为示例，演示如何使用\texttt{FetchContent}特性将GTest集成到项目中。首先，创建一个\texttt{FetchGTest.cmake}文件，并把它放在源码树中的cmake目录中。\texttt{FetchGTest}脚本将有如下定义:
 
 \begin{lstlisting}[style=styleCMake]
 include(FetchContent)
@@ -37,19 +37,19 @@ endif()
 message(STATUS "GTest binaries are present at ${googletest_BINARY_DIR}")
 \end{lstlisting}
 
-First, we include the built-in FetchContent module. Once the module is loaded, we declare the dependency using FetchContent\_Declare. Now, let's name our dependency and specify the repository that CMake will clone, along with the revision that it will check out.
+首先，包含内置的\texttt{FetchContent}模块。加载模块后，使用\texttt{FetchContent\_Declare}声明该依赖。现在，命名依赖项，并指定CMake克隆的存储库，以及相应的提交版本。
 
-Now, we can read the properties of our external library and populate (that is, check it out) it if that wasn't done already. Once we have the sources, we can process them using add\_subdirectory. The EXCLUDE\_FROM\_ALL option will tell CMake to not build those targets if they're not needed by other targets when we run a command such as make all. After successfully processing the directory, our script will print a message denoting the directory in which GTests libraries will land after being built.
+现在，可以读取外部库的属性并填充(如果还没有完成的话)。当有了源码，就可以使用\texttt{add\_subdirectory}进行处理。在运行make all等命令时，如果其他目标不需要这些目标，那么\texttt{EXCLUDE\_FROM\_ALL}选项会告诉CMake不要构建这些目标。在成功处理目录之后，脚本将打印一条消息，指出构建后GTests库将在其中放置的目录。
 
-If you're not fond of building your dependencies together with your project, perhaps the next way of integrating your dependencies will be more suitable for you.
+若不喜欢将依赖关系与项目一起构建，也许下一种集成依赖关系的方法将更适合。
 
-\subsubsubsection{7.4.2\hspace{0.2cm}查找脚本}
+\subsubsubsection{7.4.2\hspace{0.2cm}find脚本}
 
-Assuming your dependency is available somewhere on your host, you can just call find\_package to try to search for it. If your dependency provides a config or targets files (more on those later), then just writing this one simple command is all you need. That is, of course, assuming that the dependencies are already available on your machine. If not, it's your responsibility to install them before running CMake for your project.
+假设依赖项在本地上的某个地方可用，只需使用\texttt{find\_package}尝试搜索它即可。如果依赖项提供了配置或目标文件(稍后会详细介绍)，那么只需要编写这个简单的命令就可以了。当然，前提是依赖项在本地可用。如果不可用，使用者有责任在项目运行CMake之前安装它们。
 
-To create the preceding files, your dependency would need to use CMake, which is not always the case. How could you deal with those libraries that don't use CMake? If the library is popular, chances are someone already created a find script for you to use. The Boost libraries in versions older than 1.70 were a common example of this approach. CMake comes with a FindBoost module that you can execute by just running find\_package(Boost).
+要创建上述文件，依赖项将需要使用CMake，但并非总是如此。如何处理那些不使用CMake的库？如果该库很受欢迎，那么很可能已经有人创建了find脚本供他人使用。1.70以上版本的Boost库就是这种方法的一个常见示例。CMake附带了一个FindBoost模块，可以通过\texttt{find\_package(Boost)}来执行。
 
-To find Boost using the preceding module, you would first need to install it on your system. After that, in your CMake lists, you should set any options that you find reasonable. For instance, to use dynamic and multi-threaded Boost libraries, not linked statically to the C++ runtime, specify the following:
+要使用前面的模块找到Boost，首先需要在系统上安装它。之后，在CMake列表中，应该设置合理的选项。例如，要使用动态和多线程Boost库，而不是静态链接到C++运行时，请参考以下代码:
 
 \begin{lstlisting}[style=styleCMake]
 set(Boost_USE_STATIC_LIBS OFF)
@@ -57,32 +57,32 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 \end{lstlisting}
 
-Then, you need to actually search for the library, as shown next:
+然后，需要搜索库，如下所示:
 
 \begin{lstlisting}[style=styleCMake]
 find_package(Boost 1.69 EXACT REQUIRED COMPONENTS Beast)
 \end{lstlisting}
 
-Here, we specified that we want to just use Beast, a great networking library that comes as part of Boost. Once found, you could link it to your target as follows:
+这里只使用Beast，它是Boost的一部分，是一个很棒的网络库。当找到该库，可以链接到目标，代码如下所示:
 
 \begin{lstlisting}[style=styleCMake]
 target_link_libraries(MyTarget PUBLIC Boost::Beast)
 \end{lstlisting}
 
-Now that you know how to properly use a find script, let's learn how to write one on your own.
+现在已经知道了如何正确地使用find脚本，接下来了解如何编写find脚本。
 
-\subsubsubsection{7.4.3\hspace{0.2cm}编写查找脚本}
+\subsubsubsection{7.4.3\hspace{0.2cm}编写find脚本}
 
-If your dependency is neither providing config and target files nor has anyone written a find module for it, you can always write such a module yourself.
+如果依赖项既没有提供配置文件和目标文件，也没有人为它编写find模块，那可以自己编写这样的模块。
 
-This is not something you'll do very often, so we'll try to just skim the topic. For an in-depth description, you should also read the guidelines in the official CMake documentation (linked in the Further reading section) or just look at a few find modules installed with CMake (usually in a directory such as /usr/share/cmake-3.17/Modules on Unix systems). For simplicity, we assume there's just one configuration of your dependency that you'd like to find, but it's possible to find Release and Debug binaries separately. This will result in different targets with different associated variables being set.
+这应该不会是经常要做的事情，所以本小节如果不需要可以略过。要获得更多的描述，也应该阅读CMake官方文档中的指南(链接在扩展阅读部分)或只看一些安装了CMake的模块(通常在Unix系统上的目录如\texttt{/usr/share/cmake-3.17/Modules})。简单起见，假设只需要找到一个依赖项的配置，但是可以分别找到Release和Debug二进制文件。这将使设置不同的目标，关联不同的变量。
 
-The script name determines the argument you'll pass to find\_package; for example, if you wish to end up with find\_package(Foo), then your script should be named FindFoo.cmake.
+脚本名决定了你将传递给\texttt{find\_package}。例如，如果希望以\texttt{find\_package(Foo)}结束，那么脚本应该命名为\texttt{FindFoo.cmake}。
 
-A good practice is to start your script with a reStructuredText section describing what your script will actually do, which variables it will set, and so on. An example of such a description could be as follows:
+一个好的方式是用reStructuredText部分开始脚本，描述脚本实际将做什么，将设置哪些变量等。这种描述的个例子如下所示:
 
 \begin{tcblisting}{commandshell={}}
- #.rst:
+#.rst:
 # FindMyDep
 # ----------
 #
@@ -98,7 +98,7 @@ A good practice is to start your script with a reStructuredText section describi
 #
 \end{tcblisting}
 
-Usually, you'll also want to describe the variables your script will set:
+通常，还需要描述脚本将设置的变量:
 
 \begin{tcblisting}{commandshell={}}
 # Result variables
@@ -112,24 +112,24 @@ Usually, you'll also want to describe the variables your script will set:
 # the found version of MyDep
 \end{tcblisting}
 
-If MyDep has any dependencies itself, now is the time to find them:
+如果MyDep本身有依赖项，是时候找到它们了:
 
 \begin{lstlisting}[style=styleCMake]
 find_package(Boost REQUIRED)
 \end{lstlisting}
 
-Now we can start our search for the library. A common way to do so is to use pkg-config:
+现在可以开始搜索库了。一种常见的方法是使用\texttt{pkg-config}:
 
 \begin{lstlisting}[style=styleCMake]
 find_package(PkgConfig)
 pkg_check_modules(PC_MyDep QUIET MyDep)
 \end{lstlisting}
 
-If pkg-config has information on our dependency, it will set some variables we can use to find it. A good idea might be to have a variable that the user of our script can set to point us to the location of the library. As per CMake conventions, it should be named MyDep\_ROOT\_DIR.
+若\texttt{pkg-config}有关于依赖的信息，就会设置一些变量，可以用这种方式来找到依赖。一个好主意可能是让用户设置一个变量来指向库的位置。按照CMake约定，应该命名为\texttt{MyDep\_ROOT\_DIR}。
 
-To provide CMake with this variable, the user can either invoke CMake with -DMyDep\_ROOT\_DIR=some/path, modify the variable in CMakeCache.txt in their build directory, or use the ccmake or cmake-gui programs.
+为CMake提供这个变量，用户可以使用\texttt{-DMyDep\_ROOT\_DIR=some/path}调用CMake，在他们的构建目录中修改CMakeCache.txt中的变量，或使用ccmake或cmake-gui。
 
-Now, we can actually search for the headers and libraries of our dependency using the aforementioned paths:
+现在，可以使用前面提到的路径来搜索依赖的头文件和库文件:
 
 \begin{lstlisting}[style=styleCMake]
 find_path(MyDep_INCLUDE_DIR
@@ -144,13 +144,13 @@ find_library(MyDep_LIBRARY
 )
 \end{lstlisting}
 
-Then, we need to also set the found version, as we promised in the header of our script. To use the one found from pkg-config, we could write the following:
+然后，还需要设置找到的版本，就像在脚本头部中承诺的那样。要使用从pkg-config中找到的，可以这样写:
 
 \begin{lstlisting}[style=styleCMake]
 set(MyDep_VERSION ${PC_MyDep_VERSION})
 \end{lstlisting}
 
-Alternatively, we can just manually extract the version either from the contents of the header file, from components of the library path, or using any other means. Once this is done, let's leverage CMake's built-in scripts to decide whether the library was successfully found while handling all the possible parameters to the find\_package invocation:
+或者，可以从头文件的内容、库路径的组件或使用其他方法提取版本。当这些做完后，可以使用CMake的内置脚本来决定是否成功找到库，同时处理\texttt{find\_package}所有可能的参数:
 
 \begin{lstlisting}[style=styleCMake]
 include(FindPackageHandleStandardArgs)
@@ -163,7 +163,7 @@ find_package_handle_standard_args(MyDep
 	)
 \end{lstlisting}
 
-As we decided to provide a target and not just a bunch of variables, now it's time to define it:
+当决定提供一个目标而不仅仅是一堆变量时，现在是时候定义它了:
 
 \begin{lstlisting}[style=styleCMake]
 if(MyDep_FOUND AND NOT TARGET MyDep::MyDep)
@@ -177,7 +177,7 @@ if(MyDep_FOUND AND NOT TARGET MyDep::MyDep)
 endif()
 \end{lstlisting}
 
-Finally, let's hide our internally used variables with users who don't want to deal with them:
+最后，将内部使用的变量进行隐藏，不将其暴露给不想处理它们的用户:
 
 \begin{lstlisting}[style=styleCMake]
 mark_as_advanced(
@@ -186,32 +186,32 @@ mark_as_advanced(
 )
 \end{lstlisting}
 
-Now, we have a complete find module that we can use in the following way:
+现在，有了一个完整的find模块，可以按以下方式使用:
 
 \begin{lstlisting}[style=styleCMake]
 find_package(MyDep REQUIRED)
 target_link_libraries(MyTarget PRIVATE MyDep::MyDep)
 \end{lstlisting}
 
-This is how you can write the find module yourself.
+这就是自己编写find模块的方式。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}Don't write Find\*.cmake modules for your own packages. Those are meant for packages that don't support CMake. Instead, write a Config\*.cmake module (as described later in this chapter).
+\hspace*{0.7cm}不要为拥有的包创建Find\*.cmake模块。这些是为不支持CMake的包准备的。不过，可以创建一个Config\*.cmake模块(本章后面内容)。
 \end{tcolorbox}
 
-Let's now show how to use a proper package manager instead of doing the heavy lifting yourself.
+现在，来展示如何使用合适的包管理器，而不是手动进行下载依赖。
 
 \subsubsubsection{7.4.4\hspace{0.2cm}使用Conan包管理器}
 
-Conan is an open source, decentralized package manager for native packages. It supports multiple platforms and compilers. It can also integrate with multiple build systems.
+Conan是一个开源的、分散的原生包管理器。它支持多种平台和编译器，还可以与多个构建系统集成。
 
-If a package has not already been built for your environment, Conan will handle building it on your machine instead of downloading the already-built version. Once built, you can upload it to either the public repositories, your own conan\_server instance, or an Artifactory server.
+如果有包还没有为环境所构建，Conan将在机器上构建它，而不是下载已经构建的版本。在构建完成时，可以将它上传到公共存储库、私有的\texttt{conan\_server}实例或Artifactory服务器。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{准备使用Conan}
 
-If this is the first time you're running Conan, it will create a default profile based on your environment. You might want to modify some of its settings either by creating a new profile or by updating the default one. Assuming we're using Linux and want to compile everything using GCC 9.x, we could run the following:
+如果第一次运行Conan，它将根据环境创建一个默认配置文件。可以通过创建一个新的配置文件或更新默认配置文件来修改它的一些设置。假设正在使用Linux，并且希望使用GCC 9.x编译所有东西。则可以使用如下代码:
 
 \begin{tcblisting}{commandshell={}}
 conan profile new hosacpp
@@ -222,15 +222,15 @@ conan profile update settings.arch=x86_64 hosacpp
 conan profile update settings.os=Linux hosacpp
 \end{tcblisting}
 
-If our dependencies come from other repositories than the default ones, we can add those using conan remote add <repo> <repo\_url>. You might want to use this to configure your company's one, for instance.
+如果依赖来自于其他存储库而不是默认存储库，可以使用\texttt{conan remote add <repo> <repo\_url>}添加它们。例如，可以使用它来配置公司的一个库。
 
-Now that we've set Conan up, let's show how to grab our dependencies using Conan and integrate all of this into our CMake scripts.
+现在已经设置了Conan，接下来展示如何使用Conan抓取依赖，并将所有依赖集成到CMake脚本中。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{指定Conan的依赖}
 
-Our project relies on the C++ REST SDK. To tell this to Conan, we need to create a file called conanfile.txt. In our case, it will contain the following:
+项目依赖于C++ REST SDK。为了告诉Conan这一点，需要创建一个名为conanfile.txt的文件。在例子中，它将包含以下内容:
 
 \begin{tcblisting}{commandshell={}}
 [requires]
@@ -240,71 +240,71 @@ cpprestsdk/2.10.18
 CMakeDeps
 \end{tcblisting}
 
-You can specify as many dependencies as you want here. Each of them can have either a fixed version, a range of the fixed versions, or a tag such as latest. After the @ sign, you can find the company that owns the package and the channel that allows you to select a specific variant of the package (usually stable and testing).
+可以在这里指定任意数量的依赖项。它们中的每一个都可以有一个固定版本、固定版本的范围或一个标签，比如latest。在@符号之后，可以找到拥有包的公司和可以选择包的特定版本(通常是稳定和测试)的通道。
 
-The generators section is where you specify what build systems you want to use. For CMake projects, you should use CMakeDeps. You can also generate lots of others, including ones for generating compiler arguments, CMake toolchain files, Python virtual environments, and many more.
+生成器部分是指定想要使用的构建系统的地方。对于CMake项目，应该使用CMakeDeps。还可以生成许多其他的工具，包括用于生成编译器参数、CMake工具链文件、Python虚拟环境等的工具。
 
-In our case, we don't specify any additional options, but you could easily add this section and configure variables for your packages and for their dependencies. For instance, to compile our dependency as a static library, we could write the following:
+在例子中，没有指定其他的选项，但可以很容易地进行添加，并为包及其依赖项配置变量。例如，要将依赖项编译为静态库，可以这样写:
 
 \begin{tcblisting}{commandshell={}}
 [options]
 cpprestsdk:shared=False
 \end{tcblisting}
 
-Once we have conanfile.txt in place, let's tell Conan to use it.
+完成了conanfile.txt后，就可以让Conan使用它了。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{安装Conan的依赖}
 
-To use our Conan packages in CMake code, we must first install them. In Conan, this means downloading the sources and building them or downloading prebuilt binaries, as well as creating configuration files that we'll use in CMake. To make Conan handle this for us after we have created our build directory, we should cd into it and simply run the following:
+要在CMake代码中使用Conan包，必须先安装。Conan中，这意味着下载源代码并构建它们或下载预构建的二进制文件，以及创建将在CMake中使用的配置文件。要让Conan在创建构建目录后处理这个，应该跳转到其目录下，并运行以下命令:
 
 \begin{tcblisting}{commandshell={}}
 conan install path/to/directory/containing/conanfile.txt --build=missing -s
 build_type=Release -pr=hosacpp
 \end{tcblisting}
 
-By default, Conan wants to download all the dependencies as prebuilt binaries. If the server doesn't have them prebuilt, Conan will build them instead of bailing out as we passed the -\,-build=missing flag. We tell it to grab the release versions built using the same compiler and environment as we have in our profile. You can install packages for more than one build type by simply invoking another commands with build\_type set to other CMake build types. This can help you quickly switch between them if needed. If you want to use the default profile (the one Conan can detect for you automatically), just don't pass the -pr flag.
+默认情况下，Conan希望将所有依赖项下载为预构建的二进制文件。如果服务器没有预先构建，Conan将进行构建，而不是在传递\texttt{-\,-build=missing}时退出。这会告诉Conan获取使用与概要文件中相同的编译器和环境构建的发布版本。通过简单地调用\texttt{build\_type}设置为其他CMake构建类型的另一个命令，这里可以为多个构建类型安装包。如果需要的话，这还可以在富哦个版本间快速的切换。如果使用默认配置文件(Conan可以自动检测的配置文件)，就不要使用\texttt{-pr}。
 
-If the CMake generator we plan to use was not specified in conanfile.txt, we can append it to the preceding command. For instance, to use the compiler\_args generator, we should append -\,-generator compiler\_args. Later you could use what it produced by passing @conanbuildinfo.args to your compiler invocation.
+如果计划使用的CMake生成器没有在conanfile.txt中指定，可以将它添加到前面的命令中。例如，要使用\texttt{compiler\_args}生成器，应该添加\texttt{-\,-generator compiler\_args}。之后，可以使用它传递\texttt{@conanbuildinfo.args}生成的内容到编译器端。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{使用CMake的Conan目标}
 
-Once Conan finishes downloading, building, and configuring our dependencies, we need to tell CMake to use them. 
+当Conan完成下载、构建和配置依赖项，则需要告诉CMake对它们进行使用。
 
-If you're using Conan with the CMakeDeps generator, be sure to specify a CMAKE\_BUILD\_TYPE value. In other cases, CMake will be unable to use the packages configured by Conan. An example invocation (from the same directory you ran Conan) could be as follows:
+如果使用Conan与CMakeDeps生成器，一定要为\texttt{CMAKE\_BUILD\_TYPE}指定一个值。其他情况下，CMake将无法使用由Conan配置的包。调用(来自运行Conan的同一个目录)方法可以如下所示:
 
 \begin{tcblisting}{commandshell={}}
 cmake path/to/directory/containing/CMakeLists.txt -
 DCMAKE_BUILD_TYPE=Release
 \end{tcblisting}
 
-This way, we would build our project in release mode; we must use one of the types we installed using Conan. To find our dependencies, we can just use CMake's find\_package:
+这样，就可以在发布模式中构建项目，从而必须使用Conan安装的一个类型。要找到依赖项，可以使用CMake的\texttt{find\_package}:
 
 \begin{lstlisting}[style=styleCMake]
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
 find_package(cpprestsdk CONFIG REQUIRED)
 \end{lstlisting}
 
-First, we add the root build directory to the path CMake will try to find package config files in. Then, we find the package config files generated by Conan.
+首先，将根构建目录添加到CMake试图找到包配置文件的路径。然后，找到Conan生成的包配置文件。
 
-To pass Conan-defined targets as our targets' dependencies, it's best to use the namespaced target name:
+要将Conan定义的目标作为目标的依赖项，最好使用有命名空间的目标名:
 
 \begin{lstlisting}[style=styleCMake]
 target_link_libraries(libcustomer PUBLIC cpprestsdk::cpprest)
 \end{lstlisting}
 
-This way, we'll get an error during CMake's configuration when the package is not found. Without the alias, we'd get an error when trying to link.
+在CMake的配置过程中，当没有找到包时，会得到一个错误。如果没有别名，将在尝试链接时得到一个错误。
 
-Now that we have compiled and linked our targets just the way we wanted, it's time to put them to the test.
+现在已经按照想要的方式编译并链接了目标，是时候对它们进行测试了。
 
 \subsubsubsection{7.4.5\hspace{0.2cm}添加测试}
 
-CMake has its own test driver program named CTest. It's easy to add new test suites to it from your CMakeLists either on your own or using the many integrations provided by testing frameworks. Later in the book, we'll discuss testing in depth, but let's first show how to quickly and cleanly add unit tests based on the GoogleTest, or GTest, testing framework.
+CMake有自己的测试驱动程序CTest。从CMakeLists添加新的测试套件很容易，可以使用自己写的，也可以使用测试框架提供的。本书的后面部分，将深入讨论测试，这里先展示如何基于GoogleTest或GTest测试框架快速且干净地添加单元测试。
 
-Usually, to define your tests in CMake, you'll want to write the following:
+通常，要在CMake中已写好的测试，需要添加以下内容:
 
 \begin{lstlisting}[style=styleCMake]
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -315,13 +315,13 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 \end{lstlisting}
 
-The preceding snippet will first check whether we are the main project that's being built or not. Usually, you just want to run tests for your project and omit even building the tests for any third-party components you use. This is why the project name is checked.
+前面的代码段将首先检查是否正在构建的主要项目。通常，只想为项目运行测试，甚至省略对使用的第三方组件构建测试。这就是检查项目名称的原因。
 
-If we are to run our tests, we include the CTest module. This loads the whole testing infrastructure CTest offers, defines its additional targets, and calls a CMake function called enable\_testing, which will, among other things, enable the BUILD\_TESTING flag. This flag is cached, so you can disable all testing when building your project by simply passing a -DBUILD\_TESTING=OFF argument to CMake when generating the build system.
+如果要运行测试，则需要包含CTest模块。这将加载CTest提供的整个测试基础设施，定义它的附加目标，并调用一个名为\texttt{enable\_testing}的CMake函数，它将在其他事情中启用\texttt{BUILD\_TESTING}标志。这个标志可以缓存，所以可以在构建项目时禁用所有的测试，只要在生成构建系统时传递\texttt{-DBUILD\_TESTING=OFF}即可。
 
-All such cached variables are actually stored in a text file named CMakeCache.txt in your build directory. Feel free to modify the variables there to change what CMake does; it won't overwrite the settings there until you remove the file. You can do so using ccmake, cmakegui, or just by hand.
+所有这些缓存变量都存储在构建目录中名为CMakeCache.txt的文本文件中。随意修改变量，改变CMake所做的。其不会覆盖文本中的设置，除非删除文件。可以使用ccmake、cmake-gui或手工完成。
 
-If BUILD\_TESTING is true, we simply process the CMakeLists.txt file in our test directory. It could look like so:
+如果\texttt{BUILD\_TESTING}为true，只需处理测试目录中的CMakeLists.txt文件即可。它可以是这样的:
 
 \begin{lstlisting}[style=styleCMake]
 include(FetchGTest)
@@ -330,9 +330,9 @@ include(GoogleTest)
 add_subdirectory(customer)
 \end{lstlisting}
 
-The first include calls the script for providing us GTest that we described previously. After fetching GTest, our current CMakeLists.txt loads some helper function defined in the GoogleTest CMake module by invoking include(GoogleTest). This will enable us to integrate our tests into CTest more easily. Finally, let's  tell CMake to dive into a directory that contains some tests by calling  add\_subdirectory(customer).
+第一个包含调用前面描述的GTest的脚本。在获取GTest后，当前的CMakeLists.txt通过\texttt{include(GoogleTest)}，加载GoogleTest模块中定义的一些帮助函数。这能够更容易地将测试集成到CTest中。最后，通过\texttt{add\_subdirectory(customer)}来告诉CMake包含一些测试目录。
 
-The test/customer/CMakeLists.txt file will simply add an executable with tests that is compiled with our predefined set of flags and links to the tested module and GTest. Then, we call the CTest helper function that discovers the defined tests. All of this is just four lines of CMake code:
+\texttt{test/customer/CMakeLists.txt}文件将添加一个带有测试的可执行文件，该可执行文件是用预定义的标志集和测试模块和GTest的链接编译的。然后，调用CTest助手函数来发现定义的测试。所有这些只是四行CMake代码:
 
 \begin{lstlisting}[style=styleCMake]
 add_executable(unittests unit.cpp)
@@ -341,22 +341,22 @@ target_link_libraries(unittests PRIVATE domifair::libcustomer gtest_main)
 gtest_discover_tests(unittests)
 \end{lstlisting}
 
-Voilà!
+瞧!
 
-You can now build and execute your tests by simply going to the build directory and calling the following:
+现在，可以通过进入构建目录并使用以下命令来构建和执行测试:
 
 \begin{tcblisting}{commandshell={}}
 cmake --build . --target unittests
 ctest # or cmake --build . --target test
 \end{tcblisting}
 
-You can pass a -j flag for CTest. It works just like with Make or Ninja invocations –parallelizes the test execution. If you want to have a shorter command for building, just run your build system, that is, by invoking make.
+可以为CTest传递\texttt{-j}标志。其工作原理就像Make或Ninja一样——并行执行测试。如果希望使用更短的构建命令，只需运行构建系统，即直接调用make就好。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}In scripts, it's usually better to use the longer form of the command; this will make your scripts independent of the build system used.
+\hspace*{0.7cm}脚本中，最好使用较长的命令形式。这将使脚本独立于所使用的构建系统。
 \end{tcolorbox}
 
-Once your tests have passed, we can now think about providing them to a wider audience.
+当测试通过后，就可以考虑将它们提供给更广泛的受众了。
 
 
 
