@@ -72,20 +72,20 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/CustomerConfig.cmake.in
 	CustomerConfig.cmake @ONLY)
 \end{lstlisting}
 
-Our CustomerConfig.cmake.in file will begin by dealing with our dependencies:
+CustomerConfig.cmake.in文件将从处理依赖关系开始:
 
 \begin{lstlisting}[style=styleCMake]
 include(CMakeFindDependencyMacro)
 find_dependency(cpprestsdk 2.10.18 REQUIRED)
 \end{lstlisting}
 
-The find\_dependency macro is a wrapper for find\_package that is meant to be used in config files. Although we relied on Conan to provide us with the C++ REST SDK 2.10.18 as defined in conanfile.txt, here we need to specify the dependency once more. Our package can be used on another machine, so we require that our dependency is installed there too. If you want to use Conan on the target machine, you can install the C++ REST SDK as follows:
+\texttt{find\_dependency}宏是用于配置文件中的\texttt{find\_package}的包装器。虽然使用在conanfile.txt中定义C++ REST SDK 2.10.18的方式让Conan提供了相应的依赖，但这里需要再次指定这些依赖。生成的包可以在另一台机器上使用，因此也需要在那里安装依赖。如果想在目标机上使用Conan，可以按照如下步骤安装C++ REST SDK:
 
 \begin{tcblisting}{commandshell={}}
 conan install cpprestsdk/2.10.18
 \end{tcblisting}
 
-After dealing with the dependencies, our config file template will include the targets file that we created earlier:
+处理了依赖关系后，的配置文件模板将包括之前创建的目标文件:
 
 \begin{lstlisting}[style=styleCMake]
 if(NOT TARGET domifair::@PROJECT_NAME@)
@@ -93,9 +93,9 @@ if(NOT TARGET domifair::@PROJECT_NAME@)
 endif()
 \end{lstlisting}
 
-When configure\_file executes, it will replace all those @VARIABLES@ with the contents of their matching \$\{VARIABLES\} defined in our project. This way, based on our CustomerConfig.cmake.in file template, CMake will create a CustomerConfig.cmake file.
+当\texttt{configure\_file}执行时，将用项目中定义的与\texttt{\$\{VARIABLES\}}匹配的内容替换所有的\texttt{@VARIABLES@}。这样，基于CustomerConfig.cmake.in文件模板，将创建一个CustomerConfig.cmake文件。
 
-When finding a dependency using find\_package, you'll often want to specify a version of the package to find. To support that in our package, we must create a CustomerConfigVersion.cmake file. CMake offers us a helper function that will create this file for us. Let's use it as follows:
+当使用\texttt{find\_package}查找依赖项时，通常需要指定要查找的包的版本。为了在包中支持版本信息，必须创建一个CustomerConfigVersion.cmake文件。CMake提供了一个帮助函数，可以创建这个文件。可以这样使用:
 
 \begin{lstlisting}[style=styleCMake]
 include(CMakePackageConfigHelpers)
@@ -105,11 +105,11 @@ VERSION ${PACKAGE_VERSION}
 COMPATIBILITY AnyNewerVersion)
 \end{lstlisting}
 
-The PACKAGE\_VERSION variable will get populated according to the VERSION argument we passed when calling project at the top of our top-level CMakeLists.txt file.
+\texttt{PACKAGE\_VERSION}将根据在顶层CMakeLists.txt文件顶部调用\texttt{project}时，传递的\texttt{VERSION}参数来对其进行填充。
 
-AnyNewerVersion COMPATIBILITY means our package will be accepted by any package search if it is newer or the same as the requested version. Other options include SameMajorVersion, SameMinorVersion, and ExactVersion.
+若是新的或相同的请求版本，\texttt{AnyNewerVersion COMPATIBILITY}表示包接受搜索。其他选项包括\texttt{SameMajorVersion}，\texttt{SameMinorVersion}和\texttt{ExactVersion}。
 
-Once we have created our config and config version files, let's tell CMake that they should be installed along with the binaries and our target file:
+在创建了配置文件和配置版本文件后，就可以告诉CMake它们应该与二进制文件和目标文件一起进行安装:
 
 \begin{lstlisting}[style=styleCMake]
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CustomerConfig.cmake
@@ -117,7 +117,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CustomerConfig.cmake
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Customer)
 \end{lstlisting}
 
-One last thing we should install is the license for our project. We'll leverage CMake's command for installing files to put them in our documentation directory:
+最后一件事，这里应该为项目安装许可证。可以利用CMake的命令来安装文件，把它们放在文档目录中:
 
 \begin{lstlisting}[style=styleCMake]
 install(
@@ -125,17 +125,17 @@ install(
 	DESTINATION ${CMAKE_INSTALL_DOCDIR})
 \end{lstlisting}
 
-That's all you need to know to successfully create an install target in the root of your OS. You may ask how to install the package into another directory, such as just for the current user. To do so, you would need to set the CMAKE\_INSTALL\_PREFIX variable, for example, when generating the build system.
+要成功地在操作系统的根目录中创建安装目标，只需要知道这些。这里可能想了解如何将包安装到另一个目录，例如仅为当前用户安装。为此，需要在生成构建系统时，设置\texttt{CMAKE\_INSTALL\_PREFIX}。
 
-Note that if we don't install into the root of our Unix tree, we'll have to provide the dependent project with a path to the installation directory, such as by setting CMAKE\_PREFIX\_PATH.
+注意，若不想安装到Unix树的根目录中，将需要为依赖项目提供一个安装目录的路径，可以通过\texttt{CMAKE\_PREFIX\_PATH}设置。
 
-Let's now look at yet another way you could reuse what you just built.
+现在来了解一下重用构建内容的另一种方法。
 
 \subsubsubsection{7.5.2\hspace{0.2cm}导出}
 
-Exporting is a technique to add information about a package that you built locally to CMake's package registry. This is useful when you want your targets to be visible right from their build directories, even without installation. A common use for exporting is when you have several projects checked out on your development machine and you build them locally.
+导出是一种将关于本地构建包的信息添加到CMake包注册表的技术。当目标在构建目录中直接可见时，即使没有安装这也很有用的。导出的一个常见的场景是在在本地进行构建，但在开发机器上使用它们。
 
-It's quite easy to add support for this mechanism from your CMakeLists.txt files. In our case, it can be done in this way:
+从CMakeLists.txt文件中添加对这种机制的支持非常容易，可以这样做:
 
 \begin{lstlisting}[style=styleCMake]
 export(
@@ -147,24 +147,24 @@ set(CMAKE_EXPORT_PACKAGE_REGISTRY ON)
 export(PACKAGE domifair)
 \end{lstlisting}
 
-This way, CMake will create a targets file similar to the one from the Installing section, defining our library and executable targets in the namespace we provided. From CMake 3.15, the package registry is disabled by default, so we need to enable it by setting the appropriate preceding variable. Then, we can put the information about our targets right into the registry by exporting our package.
+这样，CMake将创建类似于安装部分的目标文件，在提供的命名空间中定义库和可执行目标。自CMake 3.15起，包注册表默认禁用，所以需要通过设置适当的前置变量来启用。然后，可以通过导出包将关于目标的信息直接放入注册表中。
 
-Note that we now have a targets file without a matching config file. This means that if our targets depend on any external libraries, they must be found before our package is found. In our case, the calls must be ordered in the following way:
+注意，现在有了一个目标文件，但没有匹配的配置文件。这意味着，若目标依赖于外部库，那么必须在找到包之前找到它们。在我们的例子中，调用必须按以下方式排序:
 
 \begin{lstlisting}[style=styleCMake]
 find_package(cpprestsdk 2.10.18)
 find_package(domifair)
 \end{lstlisting}
 
-First, we find the C++ REST SDK, and only afterward do we look for our package that depends on it. That's all you need to know to start exporting your targets. Much easier than installing them, isn't it?
+首先，找到C++ REST SDK，然后寻找依赖于它的包。这就是开始输出目标文件所需要知道的全部信息。这比安装它们容易多了，不是吗？
 
-Let's now move on to a third way of exposing your targets to the external world.
+现在，来了解第三种将目标暴露在外部的方法。
 
 \subsubsubsection{7.5.3\hspace{0.2cm}CPack}
 
-In this section, we'll describe how to use CPack, the packaging tool that comes with CMake. CPack allows you to easily create packages in various formats, ranging from ZIP and TGZ archives through to DEB and RPM packages, and even installation wizards such as NSIS or a few OS X-specific ones. Once you have your installation logic in place, it's not hard to integrate the tool. Let's show how to use CPack to package our project.
+本节中，将描述如何使用CMake自带的打包工具CPack。CPack可以轻松地创建各种格式的包，从ZIP和TGZ压缩包到DEB和RPM包，甚至包括NSIS或一些OS X-specific的安装向导。当安装逻辑就位，集成该工具就不难了。现在就来展示如何使用CPack来打包项目。
 
-First, we need to specify variables that CPack will use when creating the packages:
+首先，指定CPack在创建包时使用的变量:
 
 \begin{lstlisting}[style=styleCMake]
 set(CPACK_PACKAGE_VENDOR "Authors")
@@ -173,22 +173,22 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
 	"Library and app for the Customer microservice")
 \end{lstlisting}
 
-We need to give some information by hand, but some variables can be filled based on our project version specified when we defined our project. There are many more CPack variables and you can read about all of them in the CPack link in the Further reading section at the end of the chapter. Some of them are common for all package generators, while some are specific to a few of them. For instance, if you plan to use the installers, you could set the following two:
+需要手工提供一些信息，但是可以根据定义项目时指定的项目版本填充一些变量。还有更多的CPack变量，可以在本章末尾的扩展阅读部分的CPack链接中进行了解。其中一些是所有包生成器通用的，而一些是特定于相应生成器的。例如，若计划使用安装程序，可以设置以下两个变量:
 
 \begin{lstlisting}[style=styleCMake]
 set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
 \end{lstlisting}
 
-Once you've set all the interesting variables, it's time to choose the generators for CPack to use. Let's start with putting some basic ones in CPACK\_GENERATOR, a variable CPack relies on:
+设置好所有的变量后，就可以选择CPack使用的生成器了。先在\texttt{CPACK\_GENERATOR}中放入一些基本的代码，CPACK依赖于一个变量:
 
 \begin{lstlisting}[style=styleCMake]
 list(APPEND CPACK_GENERATOR TGZ ZIP)
 \end{lstlisting}
 
-This will cause CPack to generate those two types of archives based on the installation steps we defined earlier in the chapter.
+这将使CPack根据本章前面定义的安装步骤，生成两种类型的压缩文件。
 
-You can select different package generators based on many things, for example, the tools available on the machine you're running on. An example would be to create Windows installers when building on Windows and a DEB or RPM package if building on Linux with the appropriate tools installed. For instance, if you're running Linux, you could check whether dpkg is installed and if so, create DEB packages:
+可以根据许多东西选择不同的包生成器，比如正在运行的机器上可用的工具。在Windows上构建时创建Windows安装程序，在Linux上构建时安装了适当的工具，则创建DEB或RPM包。如果是在Linux上运行，可以检查dpkg是否安装，如果安装了，则创建DEB包:
 
 \begin{lstlisting}[style=styleCMake]
 if(UNIX)
@@ -204,40 +204,41 @@ if(UNIX)
 	endif()
 \end{lstlisting}
 
-We used the CPACK\_DEBIAN\_PACKAGE\_DEPENDS variable to make the DEB package require the C++ REST SDK to be installed first.
+使用\texttt{CPACK\_DEBIAN\_PACKAGE\_DEPENDS}变量使DEB包要求首先安装C++ REST SDK。
 
-For RPM packages, you could manually check for rpmbuild:
+对于RPM包，可以手动检查rpmbuild:
 
 \begin{lstlisting}[style=styleCMake]
 	find_program(RPMBUILD_PROGRAM rpmbuild)
 	if(RPMBUILD_PROGRAM)
 		list(APPEND CPACK_GENERATOR RPM)
-		set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES} cpprest
-		>= 2.10.2-6")
+		set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES} 
+		cpprest >= 2.10.2-6")
 	else()
-		message(STATUS "rpmbuild not found - won't be able to create RPM packages")
+		message(STATUS "rpmbuild not found -
+		 won't be able to create RPM packages")
 	endif()
 endif()
 \end{lstlisting}
 
-Nifty, right?
+很优雅，对吧？
 
-These generators offer a plethora of other useful variables, so feel free to look at CMake's documentation if you need anything more than those basic needs described here.
+这些生成器提供了很多有用的变量，所以如果需要比这里描述的这些基本需求更多的东西，可以查阅CMake文档。
 
-One last thing when it comes variables – you can also use them to avoid accidentally packaging undesired files. This can be done by using the following:
+最后，当涉及到变量时——还可以使用它们来避免打包不需要的文件。可以通过以下方式实现:
 
 \begin{lstlisting}[style=styleCMake]
 set(CPACK_SOURCE_IGNORE_FILES /.git /dist /.*build.* /\\\\.DS_Store)
 \end{lstlisting}
 
-Once we have all that in place, we can include CPack itself from our CMake lists:
+当所有的工具都准备好，就可以在CMakeLists中包括CPack了:
 
 \begin{lstlisting}[style=styleCMake]
 include(CPack)
 \end{lstlisting}
 
-Remember to always do this as the last step, as CMake won't propagate any variables you used later to CPack. 
+记住，在最后一步总是这样做，因为CMake不会传播后续使用的变量到CPack中。
 
-To run it, directly invoke either just cpack or the longer form that will also check whether anything needs rebuilding first: cmake -\,-build . -\,-target package. You can easily override the generators if you just need to rebuild one type of package using the -G flag, for example, -G DEB to build just the DEB package, -G WIX -C Release to pack a release MSI executable, or -G DragNDrop to obtain a DMG installer.
+可以直接调用cpack或更长的形式运行，其会检查是否需要重新构建:\texttt{cmake -\,-build . -\,-target package}。如果只需要使用\texttt{-G}标志重新构建一种类型的包，则可以覆盖生成器。例如，\texttt{-G DEB}只构建DEB包，\texttt{-G WIX -C Release}打包一个发行版MSI可执行文件，或\texttt{-G DragNDrop}可以得到一个DMG安装程序。
 
-Let's now discuss a more barbaric way of building packages.
+接下来，让我们讨论一种更野蛮的方法(进行包的构建)。
