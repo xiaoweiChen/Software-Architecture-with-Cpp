@@ -1,50 +1,50 @@
 
-With changes tested and approved, now it's time to deploy them to one of the operating environments.
+修改经过测试和批准后，现在是时候将它们部署到操作环境了。
 
-There are many tools to help with deployment. We decided to provide examples with Ansible as this doesn't require any setup on the target machines besides a functional Python installation (which the majority of UNIX systems already have anyway). Why Ansible? It is very popular in the configuration management space and it's backed up by a trustworthy open source company (Red Hat).
+有许多工具可以帮助进行部署。这里提供Ansible的例子，因为它不需要在目标机器上进行任何设置，除了需要安装Python(这是大多数UNIX系统已经拥有的)。为什么是Ansible？它在配置管理领域非常受欢迎，并且得到了值得信赖的开源公司(Red Hat)的支持。
 
-\subsubsubsection{9.5.1\hspace{0.2cm}Using Ansible}
+\subsubsubsection{9.5.1\hspace{0.2cm}使用Ansible}
 
-Why not use something that's already available, such as Bourne shell script or PowerShell? For simple deployments, shell scripts may be a better approach. But as our deployment process becomes more complex, it is much harder to handle every possible initial state using the shell's conditional statements.
+为什么不使用一些已经可用的东西，如Bourne shell脚本或PowerShell？对于简单的部署，shell脚本可能是更好的方法。但随着部署过程变得更加复杂，使用shell的条件语句处理每个可能的初始状态变得更加困难。
 
-Dealing with differences between initial states is actually something Ansible is especially good at. Unlike traditional shell scripts, which use the imperative form (move this file, edit that file, run a particular command), Ansible playbooks, as they are called, use the declarative form (make sure the file is available in this path, make sure the file contains specified lines, make sure the program is running, make sure the program completes successfully).
+处理初始状态之间的差异实际上是Ansible擅长的。与传统的shell脚本不同，它们使用命令式形式(移动这个文件，编辑那个文件，运行一个特定的命令)，Ansible playbooks仅使用声明形式(确保文件在这个路径中可用，确保文件包含指定的行，确保程序正在运行，确保程序成功完成)。
 
-This declarative approach also helps to achieve idempotence. Idempotence is a feature of a function that means applying the function several times over will have exactly the same results as a single application. If the first run of an Ansible playbook introduces some changes to the configuration, each subsequent run will already start in the desired state. This prevents Ansible from performing any additional changes.
+这种声明式方法还有助于实现幂等性。幂等性是函数的一个特征，意味着多次应用该函数将得到与单个应用完全相同的结果。如果Ansible playbook的第一次运行对配置进行了一些更改，那么后续的每次运行都将以所需的状态启动。这将阻止Ansible执行任何更改。
 
-In other words, when you invoke Ansible, it will first assess the current state of all the machines you wish to configure:
+换句话说，当调用Ansible时，它会首先评估配置中所有机器的当前状态:
 
 \begin{itemize}
 \item 
-If any of them requires any changes, Ansible will only run the tasks required to achieve the desired state.
+如果其中任何一个需要更改，Ansible只会运行所需的任务，以达到所需的状态。
 
 \item 
-If there's no need to modify a particular thing, Ansible won't touch it. Only when the desired and actual states differ will you see Ansible taking action to converge the actual state toward the desired one described by the contents of the playbook.
+如果没有必要修改某一特定内容，Ansible是不会去碰它的。只有当期望状态和实际状态不同时，才会看到Ansible采取行动，将实际状态收敛到playbook内容所描述的期望状态。
 \end{itemize}
 
-\subsubsubsection{9.5.2\hspace{0.2cm}How Ansible fits with the CI/CD pipeline}
+\subsubsubsection{9.5.2\hspace{0.2cm}Ansible如何适应CI/CD流水}
 
-Ansible's idempotence makes it a great target to use in CI/CD pipelines. After all, there's no risk in running the same Ansible playbook multiple times even if nothing changes between the two runs. If you use Ansible for your deployment code, creating a CD is just a matter of preparing appropriate acceptance tests (such as smoke tests or end-to-end tests).
+Ansible的幂等性使它成为CI/CD流水中使用的一个目标。毕竟，多次使用相同的Ansible策略没有风险，即使两次运行之间没有任何变化。如果使用Ansible来编写部署代码，那么创建CD就是为了准备合适的验收测试(比如冒烟测试或端到端测试)。
 
-The declarative approach may require changing the way you think about deployments, but the gains are well worth it. Besides running playbooks, you can also use Ansible to perform one-off commands on remote machines, but we won't cover this use case as it doesn't really help with deployments.
+声明式方法可能需要改变对部署的看法，但它有它的好处。除了运行playbook，还可以使用Ansible在远程机器上执行一次性命令，但这里不会讨论这个用例，因为它对部署没有实质性帮助。
 
-Everything you can do with a shell you can do with Ansible's shell module. That's because, in the playbooks, you write tasks specifying which modules they use and their respective parameters. One such module is the aforementioned shell module, which simply executes the provided parameters in a shell on a remote machine. But what makes Ansible not only convenient but also cross-platform (at least when different UNIX distributions are concerned) is the availability of modules to manipulate common concepts such as user administration, package management, and similar instances.
+任何能用shell做的事情，都可以用Ansible的shell模块完成。因为在playbook中，可以编写任务，指定使用哪些模块以及它们各自的参数。前面提到的shell模块就是这样一个模块，它只是在远程机器上的shell中执行提供的参数。但是使Ansible不仅方便而且跨平台(至少在不同的UNIX发行版中是这样)的原因是它提供了一些模块来操作常见的概念，比如用户管理、包管理和类似的实例。
 
-\subsubsubsection{9.5.3\hspace{0.2cm}Using components to create deployment code}
+\subsubsubsection{9.5.3\hspace{0.2cm}使用组件创建代码部署}
 
-In addition to the regular modules provided in the standard library, there are also thirdparty components to allow for code reuse. You can test such components individually, which also makes your deployment code more robust. Such components are called roles. They contain a set of tasks to make a machine fit to take on a specific role, such as webserver, db, or docker. While some roles prepare the machine to provide particular services, other roles may be more abstract, such as the popular ansible-hardening role. This has been created by the OpenStack team and it makes it much harder to break into a machine secured by using this role.
+除了标准库中提供的常规模块外，还有第三方组件允许代码重用。可以单独测试这些组件，这也使部署的代码更加健壮。这样的组件称为角色，它们包含一组任务，使机器适合承担特定的角色，如Web服务器、数据库或Docker。虽然有些角色让机器准备提供特定服务，但其他角色可能更抽象，例如流行的ansible-hardening角色。这是由OpenStack团队创建的，过使用这个角色保护会让入侵机器变得更加困难。
 
-When you start to understand the language Ansible uses, all the playbooks cease to be just the scripts. In turn, they will become the documentation of the deployment process. You can either use them verbatim by running Ansible, or you can read the described tasks and perform all the operations manually, for example, on an offline machine.
+当开始理解Ansible使用的语言时，所有的playbook都不再只是脚本。反过来，它们将成为部署过程的文档。可以通过运行Ansible逐字使用它们，或者可以在离线的机器上阅读描述的任务并手动执行所有操作。
 
-There is one risk related to using Ansible for deployment in your team. Once you start using it, you have to make sure that everyone on the team is able to use it and modify the relevant tasks. DevOps is a practice the whole team has to follow; it cannot be implemented only partially. When the application's code changes considerably, requiring appropriate changes on the deployment side, the person responsible for changes in the application should also supply the changes in the deployment code. Of course, this is something that  your tests can verify, so the gating mechanism can reject the changes that are incomplete. 
+团队中使用Ansible进行部署有一个风险。开始使用它，就必须确保团队中的每个人都能够使用它并修改相关的任务。DevOps是整个团队必须遵循的实践，它不能只是部分地实现。当应用程序的代码发生重大更改时，需要在部署端进行适当的修改，负责应用程序更改的人员还应该在部署代码中提供修改。当然，这是测试可以验证的，因此门控机制可以拒绝不完整的修改。 
 
-One noteworthy aspect of Ansible is that it can run both in a push and pull model:
+Ansible值得注意的方面是，可以同时运行push和pull模型:
 
 \begin{itemize}
 \item 
-The push model is when you run Ansible on your own machine or in the CI system. Ansible then connects to the target machine, for example, over an SSH connection, and performs the necessary steps on the target machine.
+push模型是在自己的机器或CI系统中运行Ansible的时候。Ansible连接到目标计算机(例如，通过SSH连接)，并在目标计算机上执行必要的步骤。
 
 \item 
-In the pull model, the whole process is initiated by the target machine. Ansible's component, ansible-pull, runs directly on the target machine and checks the code repository to establish whether there's been any update to the particular branch. After refreshing the local playbook, Ansible performs all the steps as usual. This time, both the controlling component and the actual execution happen on the same machine. Most of the time, you will want to run ansiblepull periodically, for example, from within a cron job.
+pull模型中，整个过程由目标机发起。Ansible的组件ansible-pull直接运行在目标机器上，检查代码库以确定特定分支是否有任何更新。在刷新本地playbook后，Ansible照常执行所有步骤。这一次，控制组件和实际执行都发生在同一台机器上。大多数时候，可以周期性地运行ansiblepull，例如从一个cron(定时执行)作业中。
 \end{itemize}
 
 

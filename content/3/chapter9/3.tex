@@ -1,39 +1,39 @@
 
-Code reviews can be used both with CI systems and without them. Their main purpose is to double-check each change introduced to the code to make sure that it is correct, that it fits the application's architecture, and that it follows the project's guidelines and best practices.
+代码审查既可以用于CI系统，也可以不用于CI系统。他们的主要目的是再次检查代码中引入的每一个更改，以确保它是正确的，符合应用程序的体系结构，并遵循项目的指导方针和最佳实践。
 
-When used without CI systems, it is often the reviewer's task to test the change manually and verify it is working as expected. CI reduces this burden, letting software developers focus on the logical structure of the code.
+在没有CI系统的情况下使用时，通常是评审人员的任务来手动测试更改，并验证是否按预期工作。CI减少了这种负担，使软件开发人员可以专注于代码的逻辑结构。
 
-\subsubsubsection{9.3.1\hspace{0.2cm}Automated gating mechanisms}
+\subsubsubsection{9.3.1\hspace{0.2cm}自动控制机制}
 
-Automated tests are only one example of a gating mechanism. When their quality is high enough, they can guarantee the code works according to design. But there's still a difference between code that works correctly and good code. As you've learned from this book so far, code can be considered good if it fulfills several values. Being functionally correct is just one of them.
+自动化测试只是门控机制的一个例子。当质量足够高时，可以保证代码按照设计工作。但是，正确运行的代码和良好的代码之间仍然存在差异。目前为止，已经从本书中了解到，如果代码满足几个条件，就可以认为是好的，功能正确只是其中之一。
 
-There are other tools that can help achieve the desired standard of your code base. Some of them have been covered in previous chapters, so we won't go into the details. Keep in mind that using linters, code formatters, and static analysis in your CI/CD pipeline is a great practice. While static analysis can act as a gating mechanism, you can apply linting and formatting to each commit that enters the central repository to make it consistent with the rest of the code base. You will find more on linters and formatters in the appendix.
+其他工具可以实现所需的代码库标准。其中一些已经在前面的章节中介绍过，所以这里就不详细讨论了。记住，在CI/CD流水中使用检查器、代码格式化器和静态分析是一个很好的实践。虽然静态分析可以作为一种门控机制，但可以对进入中央存储库的每个提交应用检测和格式化，使其与其他代码库保持一致。可以在附录中找到更多关于静态代码分析器和格式化工具的信息。
 
-Ideally, this mechanism will only have to check whether the code has already been formatted, as the formatting step should be done by developers before pushing the code to the repository. When using Git as a version control system, the mechanism of Git Hooks can prevent committing code without running the necessary tools on it.
+理想情况下，这种机制只需要检查代码是否已经格式化，因为格式化步骤应该由开发人员在将代码放入存储库之前完成。当使用Git作为版本控制系统时，Git hook的机制可以防止在没有运行必要工具的情况下提交代码。
 
-But automated analysis can only get you so far. You can check that the code is functionally complete, that it is free of known bugs and vulnerabilities, and that it fits within the coding standard. This is where manual inspection comes in.
+但自动化分析只能帮到这里。接下来，需要检查代码在功能上是否完整，是否没有已知的错误和漏洞，是否符合编码标准，这就需要人工检查了。
 
-\subsubsubsection{9.3.2\hspace{0.2cm}Code review – the manual gating mechanism}
+\subsubsubsection{9.3.2\hspace{0.2cm}代码审查——手动控制机制}
 
-Manual inspection of a code change is often known as a code review. The aim of the code review is to identify problems, both with the implementation of specific subsystems and adherence to the overall architecture of the application. Automated performance tests may or may not discover potential problems with a given function. Human eyes, on the other hand, can usually spot a sub-optimal solution to the problem. Whether it is the wrong data structure or an algorithm with unnecessarily high computational complexity, a good architect should be able to pinpoint the problem.
+代码修改的手动检查通常称为代码审查。代码检查的目的是识别问题，包括特定子系统的实现和应用程序的整体架构。自动化性能测试可能会发现，也可能不会发现给定功能的潜在问题。另一方面，人眼通常可以发现问题的次优解决方案。无论是错误的数据结构，还是计算复杂度过高的算法，优秀的架构师都应该能够查明问题所在。
 
-But it isn't just the architect's role to perform code reviews. Peer reviews, that is, code reviews performed by peers of the author, also have their place in the development process. Such reviews are valuable not just because they allow colleagues to find bugs in each other's code. The more important aspect is the fact that many teammates are suddenly aware of what everybody else is doing. This way, when there is an absence in the team (whether because of a long meeting, vacation, or job rotation), another team member can substitute for the missing one. Even if they're not an expert on the topic, every other member at least knows where the interesting code is located and everyone should be able to remember the last changes to the code. This means both the time when they happened and the scope and content of those changes.
+但是，执行代码检查的不仅仅是架构师的角色。同行评审，即由作者的同行执行的代码评审，在开发过程中也有自己的位置。这样的审查之所以有价值，不仅仅是因为允许同事们在彼此的代码中发现错误。更重要的方面是，许多队友可以了解到其他人在做什么。这样，当团队中出现缺勤时(无论是因为长时间的会议、假期，还是工作轮换)，另一个团队成员可以代替缺勤的那个人。即使他们不是这个方向的专家，每个其他成员至少知道相关的代码位于哪里，每个人都应该能够记住对代码的最后更改。这既指它们发生的时间，也指这些变化的范围和内容。
 
-With more people aware of how the insides of your application appear, it is also more probable that they can figure out a correlation between recent changes in one component and a freshly discovered bug. Even though every person on your team probably has different experience, they can pool their resources when everyone knows the code quite thoroughly.
+随着越来越多的人意识到应用程序内部是如何显示的，他们也更有可能找出一个组件中最近的更改与新发现的bug之间的关联。尽管团队中的每个人可能都有不同的经验，但当每个人都非常了解代码时，就可以共享资源。
 
-So code reviews can check whether the change fits within the desired architecture and whether its implementation is correct. We call such a code review an architectural review, or an expert's review.
+因此，代码审查可以检查更改是否符合所需的体系结构，以及实现是否正确。可以将这样的代码评审称为架构评审，或者专家评审。
 
-Another type of code review, the peer review, not only helps uncover bugs, but also raises awareness within the team about what other members are working on. If necessary, you can also perform a different kind of expert review when dealing with changes that integrate with external services.
+另一种类型的代码审查，即同行审查，不仅有助于发现错误，而且还提高了团队中其他成员正在做什么的意识。如果有必要，在处理与外部服务集成的更改时，还可以执行不同类型的专家审查。
 
-As each interface is a source of potential problems, changes close to the interface level should be treated as especially dangerous. We advise you to supplement the usual peer review with an expert coming from the other side of the interface. For example, if you are writing a producer's code, ask a consumer for a review. This way, you ensure you won't miss some vital use case that you may consider very improbable, but that the other side uses constantly.
+由于每个接口都可能成为问题来源，接近接口级别的更改应该视为特别危险。这里建议在通常的同行评议中加入来自另一方的专家。例如，如果正在编写生产者的代码，请使用者进行审查。通过这种方式，可以确保不会错过一些重要的用例，这些用例在某个方面可能认为不太可能出现，但另一方面可能经常使用。
 
-\subsubsubsection{9.3.3\hspace{0.2cm}Different approaches to a code review}
+\subsubsubsection{9.3.3\hspace{0.2cm}代码评审的不同方法}
 
-You will most often conduct code reviews asynchronously. This means that the communication between the author of the change under review and the reviewers does not happen in real time. Instead, each of the actors posts their comments and suggestions at any given time. Once there are no more comments, the author reworks the original change and once again puts it under review. This can take as many rounds as necessary until everyone agrees that no further corrections are necessary.
+代码审查通常会异步进行，这意味着审查变更的作者和审查者之间的交流不是实时发生的。相反，每个参与者在任何时间可以发布他们的评论和建议。当没有更多的评论，作者需要重新修改，并再次将修改置于审查中。这个过程可能需要很多轮，直到每个人对这次修正没有任何意见。
 
-When a change is particularly controversial and an asynchronous code review takes too much time, it is beneficial to conduct a code review synchronously. This means a meeting (in-person or remotely) to resolve any opposing views on the way forward. This will happen in particular when a change contradicts one of the initial decisions due to the new knowledge acquired while implementing the change.
+当一个修改特别有争议，并且异步代码审查花费了太多时间时，同步地进行代码审查是有益的。这意味着一场会议(面对面或远程)，以解决前进道路上的各种意见。当由于在实施变更时获得的新知识而使变更与最初的决定相矛盾时，这种情况就会发生。
 
-There are some dedicated tools aimed solely at code reviews. More often, you will want to use a tool that is built into your repository server, which includes services such as the following:
+有一些专门的工具只针对代码检查。更常见的是，希望使用内置在存储库服务器中的工具，包括如下服务:
 
 \begin{itemize}
 \item 
@@ -49,13 +49,13 @@ GitLab
 Gerrit
 \end{itemize}
 
-All of the preceding offer both Git hosting and code review. Some of them go even further, providing a whole CI/CD pipeline, issue management, wiki, and much more.
+上述所有服务都提供Git托管和代码审查。有些甚至更进一步，提供完整的CI/CD管道、问题管理、wiki等等。
 
-When you use the combined package of code hosting and code review, the default workflow is to push the changes as a separate branch and then ask the project's owner to merge the changes in a process known as a pull request (or a merge request). Despite the fancy name, the pull request or merge request informs the project owner that you have code that you wish to merge with the main branch. This means that the reviewers should review your changes to make sure everything is in order.
+当使用代码托管和代码审查的组合包时，默认的工作流程是将更改作为一个单独的分支推送，然后要求项目所有者在一个称为拉请求(或合并请求)的过程中合并更改。尽管名称很花哨，但pull请求或merge请求会告诉项目所有者你有代码想要与主分支合并。这意味着审查人员应该检查更改，以确保一切正常。
 
-\subsubsubsection{9.3.4\hspace{0.2cm}Using pull requests (merge requests) for a code review}
+\subsubsubsection{9.3.4\hspace{0.2cm}使用拉请求(合并请求)进行代码评审}
 
-Creating pull requests or merge requests with systems such as GitLab is very easy. First of all, when we push a new branch to the central repository from the command line, we can observe the following message:
+像GitLab这样的系统创建拉请求或合并请求非常容易。首先，从命令行将一个新分支推送到中央存储库时，可以观察到以下消息:
 
 \begin{tcblisting}{commandshell={}}
 remote:
@@ -63,22 +63,22 @@ remote: To create a merge request for fix-ci-cd, visit:
 remote:
 https://gitlab.com/hosacpp/continuous-integration/merge_requests/new?merge_
 request%5Bsource_branch%5D=fix-ci-cd
-remote:	
+remote:
 \end{tcblisting}
 
-If you previously had CI enabled (by adding the .gitlab-ci.yml file), you'll also see that the newly pushed branch has been subjected to the CI process. This occurs even before you open a merge request, and it means you can postpone tagging your colleagues until you get information from CI that every automated check has passed.
+如果以前启用了CI(通过添加.gitlab-ci.yml文件)，还会看到新推送的分支已经置于CI进程中。这甚至发生在创建合并请求之前，从而这意味着可以推迟发送给您的同事，直到从CI获得每个自动检查都已通过的信息。
 
-The two main ways to open a merge request are as follows:
+打开合并请求的两种主要方式如下:
 
 \begin{itemize}
 \item 
-By following the link mentioned in the push message
+通过链接中提到的推送信息
 
 \item 
-By navigating to merge requests in the GitLab UI and selecting the Create merge request button or the New merge request button
+通过在GitLab UI中导航到合并请求，并选择创建合并请求按钮或新建合并请求按钮
 \end{itemize}
 
-When you submit the merge request, having completed all the relevant fields, you will see that the status of the CI pipeline is also visible. If the pipeline fails, merging the change wouldn't be possible.
+当提交合并请求时，并完成了所有相关字段，将看到CI流水的状态也是可见的。若流水失败，就不可能进行合并。
 
 
 

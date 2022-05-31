@@ -1,33 +1,30 @@
 
+CI主要关注集成部分，这意味着构建不同子系统的代码并确保它们协同工作。虽然测试并不是实现此目的的严格要求，但运行CI而不使用它们似乎是一种浪费。没有自动化测试的CI更容易在代码中引入bug，同时给人一种错误的安全感。
 
-CI mainly focuses on the integration part. It means building the code of different subsystems and making sure it works together. While tests are not strictly required to achieve this purpose, running CI without them seems like a waste. CI without automated tests makes it easier to introduce subtle bugs to code while giving a false sense of security.
+这就是CI经常与持续测试密切相关的原因，将在下一节中讨论这个问题。
 
-That's one of the reasons why CI often goes hand in hand with continuous testing, which we'll cover in this next section.
+\subsubsubsection{9.4.1\hspace{0.2cm}行为驱动开发}
 
+目前为止，已经成功地建立了一个流水，可以称之为持续构建。对代码所做的每一个更改最终都会编译，但不再进一步测试。现在是时候介绍持续测试的实践了。在一个低级别上的测试，也将作为一个控制机制来自动拒绝所有不满足需求的修改。
 
-\subsubsubsection{9.4.1\hspace{0.2cm}Behavior-driven development}
+如何检查给定的更改是否满足需求？最好通过基于这些需求编写测试来实现。做到这一点的方法是遵循行为驱动开发(BDD)。BDD的概念是鼓励敏捷项目中不同参与者之间进行更深层次的协作。
 
-
-So far, we have managed to set up a pipeline that we can call continuous building. Each change we make to the code ends up being compiled, but we don't test it any further. Now it's time to introduce the practice of continuous testing. Testing on a low level will also act as a gating mechanism to automatically reject all the changes that do not satisfy requirements.
-
-How can you check whether a given change satisfies requirements? This is best achieved by writing tests based on these requirements. One of the ways to do this is by following Behavior-Driven Development (BDD). The concept of BDD is to encourage deeper collaboration between the different actors in an Agile project.
-
-Unlike the traditional approach, where tests are written either by developers or the QA team, with BDD, the tests are created collaboratively by the following individuals:
+与传统的由开发人员或QA团队编写测试的方法不同，使用BDD，测试是由以下人员协作创建的:
 
 \begin{itemize}
 \item 
-Developers
+开发人员
 
 \item 
-QA engineers
+QA工程师
 
 \item 
-Business representatives.
+业务代表
 \end{itemize}
 
-The most common way to specify tests for BDD is to use the Cucumber framework, which uses plain English phrases to describe the desired behavior of any part of the system. These sentences follow a specific pattern that can then be turned into working code, integrating with the testing framework of choice.
+为BDD指定测试的最常见方法是使用Cucumber框架，该框架使用简单的英语短语来描述系统的期望行为。这些句子遵循特定的模式，然后可以转换为工作代码，与所选的测试框架集成。
 
-There is official support for C++ in the Cucumber framework and it's based on CMake, Boost, GTest, and GMock. After specifying the desired behavior in the cucumber format (which uses a domain-specific language known as Gherkin), we also need to provide the so-called step definitions. Step definitions are the actual code corresponding to the actions described in the cucumber specification. For example, consider the following behavior expressed in Gherkin:
+Cucumber框架中有对C++的官方支持，基于CMake、Boost、GTest和GMock。在以cucumber格式(它使用一种称为Gherkin的领域特定语言)指定所需的行为之后，还需要提供所谓的步骤定义。步骤定义是与cucumber规范中描述的操作相对应的实际代码。例如，考虑在Gherkin中的以下行为:
 
 \begin{tcblisting}{commandshell={}}
 # language: en
@@ -41,7 +38,7 @@ Scenario: Regular numbers
   Then the result should be 5
 \end{tcblisting}
 
-We can save it as a sum.feature file. In order to generate a valid C++ code with tests, we would use the appropriate step definitions:
+可以把它保存为sum.feature文件。为了通过测试生成有效的C++代码，这里将使用适当的步骤对其进行定义:
 
 \begin{lstlisting}[style=styleCXX]
 #include <gtest/gtest.h>
@@ -76,18 +73,17 @@ THEN("^the result should be (.*)$", (const int expected)) {
 }
 \end{lstlisting}
 
-When building an application from scratch, it's a good idea to follow the BDD pattern. This book aims to show the best practices you can use in such a greenfield project. But it doesn't mean you can't try our examples in an existing project. CI and CD can be added at any given time during the life cycle of the project. Since it's always a good idea to run your tests as often as possible, using a CI system just for the purpose of continuous testing is almost always a good idea.
+从零开始构建应用程序时，最好遵循BDD模式。本书旨在展示在这样一个新项目中使用的最佳实践。但这并不意味着不能在现有的项目中尝试这里的示例。CI和CD可以在项目生命周期的任何给定时间添加。因为频繁地运行测试总是一个好主意，所以仅为了持续测试的目的而使用CI系统总是一个好主意。
 
-If you don't have behavior tests, you shouldn't need to worry. You can add them later and, for the moment, just focus on those tests you already have. Whether they are unit tests or end-to-end tests, anything that helps you assess the state of your application is a good candidate for the gating mechanism.
+如果没有行为测试，也不需要担心。可以稍后再添加它们，目前只关注已经拥有的那些测试。无论是单元测试还是端到端测试，能够帮助评估应用程序状态的内容都可以作为门控机制的候选。
 
+\subsubsubsection{9.4.2\hspace{0.2cm}为CI编写测试}
 
-\subsubsubsection{9.4.2\hspace{0.2cm}Writing tests for CI}
+对于CI，最好关注单元测试和集成测试。他们在尽可能低的层次上工作，这意味着通常能够快速执行，并且拥有最小的需求。理想情况下，所有单元测试都应该是自包含的(没有像工作数据库那样的外部依赖)，并且能够并行运行。这样，当问题出现在单元测试能够捕捉到的级别时，错误代码将在几秒钟内标记出来。
 
-For CI, it's best to focus on unit tests and integration tests. They work on the lowest possible level, which means they're usually quick to execute and have the smallest requirements. Ideally, all unit tests should be self-contained (no external dependencies like a working database) and able to run in parallel. This way, when the problem appears on the level where unit tests are able to catch it, the offending code would be flagged in a matter of seconds.
+有些人说，单元测试只在解释语言或具有动态类型的语言中有意义。其论点是，C++已经通过类型系统和编译器检查错误代码的方式内置了测试。虽然类型检查确实可以捕获一些需要在动态类型语言中进行单独测试的bug，但这不能成为不编写单元测试的借口。毕竟，单元测试的目的不是验证代码是否可以毫无问题地执行。编写单元测试以确保代码不仅能够执行，而且能够满足所有的业务需求。
 
-There are some people who say that unit tests only make sense in interpreted languages or languages with dynamic typing. The argument goes that C++ already has testing built-in by means of the type system and the compiler checking for erroneous code. While it's true that type checking can catch some bugs that would require separate tests in dynamically typed languages, this shouldn't be used as an excuse not to write unit tests. After all, the purpose of unit tests isn't to verify that the code can execute without any problems. We write unit tests to make sure our code not only executes, but also fulfills all the business requirements we have.
-
-As an extreme example, take a look at the following two functions. Both of them are syntactically correct and they use proper typing. However, just by looking at them, you can probably guess which one is correct and which isn't. Unit tests help to catch this kind of misbehavior:
+作为一个极端的例子，看一下下面两个函数。它们在语法上都是正确的，并且使用了正确的输入。然而，仅仅通过观察，可能就能猜出哪个是正确的，哪个是错误的。单元测试有助于捕捉这种错误行为:
 
 \begin{lstlisting}[style=styleCXX]
 int sum (int a, int b) {
@@ -95,7 +91,7 @@ int sum (int a, int b) {
 }
 \end{lstlisting}
 
-The preceding function returns a sum of the two arguments provided. The following one returns just the value of the first argument:
+前面的函数返回提供的两个参数的和。下面的代码只返回第一个参数的值:
 
 \begin{lstlisting}[style=styleCXX]
 int sum (int a, int b) {
@@ -103,11 +99,11 @@ int sum (int a, int b) {
 }
 \end{lstlisting}
 
-Even though the types match and the compiler won't complain, this code wouldn't perform its task. To distinguish useful code from erroneous code, we use tests and assertions.
+即使类型匹配，编译器也不会报错，这段代码也不会执行它的任务。为了区分有用的代码和错误的代码，这里需要使用测试和断言。
 
-\subsubsubsection{9.4.3\hspace{0.2cm}Continuous testing}
+\subsubsubsection{9.4.3\hspace{0.2cm}持续测试}
 
-Having already established a simple CI pipeline, it is very easy to extend it with testing. Since we are already using CMake and CTest for the building and testing process, all we need to do is add another step to our pipeline that will execute the tests. This step may look like this:
+已经建立了一个简单的CI流水，很容易通过测试对其进行扩展。因为已经在使用CMake和CTest来构建和测试过程，所以需要做的就是在流水中添加另一个步骤来执行测试。这一步看起来可能是像这样:
 
 \begin{tcblisting}{commandshell={}}
 # Run the unit tests with ctest
@@ -118,7 +114,7 @@ test:
     - ctest .
 \end{tcblisting}
 
-An entire pipeline will therefore appear as follows:
+因此，整个流水将显示如下:
 
 \begin{tcblisting}{commandshell={}}
 cache:
@@ -134,7 +130,8 @@ stages:
   - prerequisites
   - build
   - test # We add another stage that tuns the tests
-
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
 before_script:
   - export CONAN_USER_HOME="$CI_PROJECT_DIR"
 
@@ -170,7 +167,7 @@ test:
     - ctest .
 \end{tcblisting}
 
-This way, each commit will not only be subjected to the build process, but also to testing. If one of the steps fails, we will be notified which one was the source of the failure and we could see in the dashboard which steps were successful.
+通过这种方式，每个提交不仅要进行构建，还要经受测试。如果其中一个步骤失败，开发者都将收到通知，并且可以在指示板中看到哪些步骤是成功的，哪些是失败的。
 
 
 

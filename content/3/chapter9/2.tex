@@ -1,61 +1,61 @@
-CI is the process of shortening the integration cycles. Whereas in traditional software, many different features could have been developed separately and only integrated prior to release, in projects developed with CI, integration can occur several times a day. Usually, each change a developer makes is tested and integrated at the same time as it is committed to the central repository.
+CI是可以缩短集成周期的过程。传统软件中，许多不同的特性可以单独开发，并且只在发布之前集成，而在使用CI开发的项目中，集成可能一天发生几次。通常，开发人员所做的每个更改在提交到中央存储库的同时都要进行测试和集成。
 
-Since testing occurs just after development, the feedback loop is much quicker. This lets developers fix bugs more easily (as they usually still remember what was changed). In contrast to the traditional approach of testing just prior to release, CI saves a lot of work and improves the quality of software.
+因为测试发生在开发之后，所以反馈循环会更快。这让开发人员更容易地修复bug(通常仍然记得修改了什么)。与传统的在发布之前进行测试的方法相比，CI节省了大量的工作，并提高了软件的质量。
 
-\subsubsubsection{9.2.1\hspace{0.2cm}Release early, release often}
+\subsubsubsection{9.2.1\hspace{0.2cm}尽早发布，经常发布}
 
-Have you ever heard the saying "release early, release often"? This is a software development philosophy that emphasizes the importance of short release cycles. Short release cycles, in turn, provide a much shorter feedback loop between planning, development, and validation. When something breaks, it should break as early as possible so that the costs of fixing the problem are relatively small.
+听说过“早发布，多发布”这句话吗？这是一种强调短发布周期重要性的软件开发哲学。反过来，短的发布周期在计划、开发和验证之间提供了更短的反馈循环。当某物损坏时，应该尽早发现，这样修复问题的成本就相对较小。
 
-This philosophy was popularized by Eric S. Raymond (also known as ESR) in his 1997 essay entitled The Cathedral and the Bazaar. There's also a book with the same title that contains this and other essays by the author. Considering ESR's activity within open source movements, the "release early, release often" mantra became synonymous with how open source projects operated.
+这种哲学是由Eric S. Raymond(也被称为ESR)在他1997年的文章《大教堂和集市》中提出的。还有一本同名的书包含了作者的这篇文章和其他文章。考虑到ESR在开源运动中的活动，“尽早发布，经常发布”的口号成为了开源项目如何运作的代名词。
 
-Some years later, the same principle moved beyond just open source projects. With the rising interest in Agile methodologies, such as Scrum, the "release early, release often" mantra became synonymous with development sprints that end with a product increment. This increment is, of course, a software release, but usually, there are many other releases that happened during the sprint. 
+几年后，同样的原则已经超越了开源项目。随着人们对敏捷方法(如Scrum)的兴趣日益浓厚，“尽早发布，经常发布”的口头语变成了以产品增量结束的开发冲刺的同义词。当然，这个增量是一个软件版本，但通常在冲刺期间还会有许多其他版本。
 
-How can you achieve such short release cycles? One answer is to rely on automation as much as possible. Ideally, every commit to the code repository should end as a release. Whether this release ends up facing the customers is another matter. What's important is that every code change can result in a usable product.
+如何实现如此短的发布周期？答案是尽可能地自动化。理想情况下，每次提交到代码存储库都应该以发布作为结束，这个版本最终是否面向客户则是另一回事。重要的是，每一次代码更改都可以产生一个可用的产品。
 
-Of course, building and releasing every single commit to the public would be a tedious job for any developer. Even when everything is scripted, this can add unnecessary overhead to the usual chores. This is why you would want to set up a CI system to automate the releases for you and your development team.
+当然，构建并对外发布每一个提交对任何开发人员来说都是一项乏味的工作。即使一切都是脚本化的，这也会给日常工作增加不必要的开销。这就是为什么要建立一个CI系统，为您和您的开发团队进行自动化发布。
 
-\subsubsubsection{9.2.2\hspace{0.2cm}Merits of CI}
+\subsubsubsection{9.2.2\hspace{0.2cm}CI的优点}
 
-CI is the concept of integrating the work of several developers, at least daily. As already discussed, sometimes it can mean several times a day. Every commit that enters the repository is integrated and validated separately. The build system checks whether the code can be built without errors. The packaging system may create a package that is ready to be saved as an artifact or even deployed later on when CD is used. Finally, the automated tests check that no known regression occurred in relation to the change. Let's now see its merits in detail:
-
-\begin{itemize}
-\item 
-CI allows for the rapid solving of problems. If one of the developers forgot a semicolon at the end of the line, the compiler on the CI system will catch that error right away before this incorrect code reaches other developers, thereby impeding their work. Of course, developers should always build the changes and test them before committing the code, but minor typos can go unnoticed on the developer's machine and enter the shared repository anyway.
-
-\item 
-Another benefit of using CI is that it prevents the common "works on my machine" excuse. If a developer forgets to commit a necessary file, the CI system will fail to build the changes, yet again preventing them from spreading further and causing mischief to the whole team. The special configuration of one developer's environment also stops being an issue. If a change builds on two machines, the developer's computer and the CI system, we are safe to assume that it should build on other machines as well.
-\end{itemize}
-
-\subsubsubsection{9.2.3\hspace{0.2cm}Gating mechanism}
-
-If we want CI to bring value beyond simply building packages for us, we need a gating mechanism. This gating mechanism will allow us to discern good code changes from bad ones, thus keeping our application safe from modifications that would render it useless. For this to happen, we need a comprehensive suite of tests. Such a suite allows us to automatically recognize when a change is problematic, and we're able to do it quickly.
-
-For individual components, unit tests play the role of a gating mechanism. A CI system can discard any changes that do not pass unit tests or any changes that do not reach a certain code coverage threshold. At the time of building individual components, a CI system may also use integration tests to further ensure that the changes are stable, not only by themselves but also are acting properly together.
-
-\subsubsubsection{9.2.4\hspace{0.2cm}Implementing the pipeline with GitLab}
-
-Throughout this chapter, we will use popular open source tools to build a full CI/CD pipeline consisting of gating mechanisms, automated deployment, and also showing the concepts of infrastructure automation.
-
-The first such tool is GitLab. You may have heard about it as a Git hosting solution, but in reality, it's much more than that. GitLab comes in several distributions, namely, the following:
+CI会集成多个开发人员的工作，至少每天是这样。正如已经讨论过的，有时它意味着一天几次。每个进入存储库的提交都是集成的，并分别验证。生成系统检查是否可以在不出错的情况下生成代码。打包系统可以创建一个包，这个包可以作为工件保存，甚至可以在以后使用CD时部署。最后，可以用自动化测试检查与变更相关的已知回归是否发生。下面来详细了解一下它的优点:
 
 \begin{itemize}
 \item 
-An open source solution that you can host on your own premises
+CI可以快速解决问题。如果某个开发人员忘记了行尾的分号，那么CI系统上的编译器将在其他开发人员收到错误代码之前立即捕获该错误，从而阻塞他们的工作。当然，开发人员应该总是构建更改并在提交代码之前进行测试，但在开发人员的机器上，轻微的键入错误可能会忽略，并进入共享的代码库。
 
 \item 
-Self-hosted paid versions that offer additional features over the open source community edition
-
-\item 
-And finally, a Software-as-as-Service (SaaS) managed offer hosted under \url{https://gitlab.com}
+使用CI的另一个好处是可以避免常见的“在我的机器上工作”的借口。如果开发人员忘记提交必要的文件，CI系统将无法构建更改，从而再次防止它们进一步传播并对整个团队造成损害。开发人员环境的特殊配置也不再是问题。如果一个更改构建在两台机器上，开发人员的计算机和CI系统，那么可以放心地假设也可以在其他机器上构建。
 \end{itemize}
 
-For the requirements of this book, each of the distributions has all the necessary features. We will, therefore, focus on the SaaS version, as this requires the least amount of preparation.
+\subsubsubsection{9.2.3\hspace{0.2cm}闸门机制}
 
-Although \url{https://gitlab.com} is mainly targeted at open source projects, you can also create private projects and repositories if you don't feel like sharing your work with the entire world. This allows us to create a new private project in GitLab and populate it with the code we have already demonstrated in Chapter 7, Building and Packaging.
+如果想让CI带来价值，而不仅仅是简单地构建包，则需要一个限制机制。这种门控机制可以区分好和坏的代码更改，从而使应用程序免受可能使其无用的修改的影响。为此，需要一套全面的测试。这样的套件允许在变更有问题时自动识别，并且能够快速地进行识别。
 
-A lot of modern CI/CD tools could work instead of GitLab CI/CD. Examples include GitHub Actions, Travis CI, CircleCI, and Jenkins. We've chosen GitLab as it can be used both in SaaS form and on-premises, so should accommodate a lot of different use cases.
+对于单个组件，单元测试扮演着一个门控机制的角色。CI系统可以丢弃任何没有通过单元测试的更改，或者没有达到特定代码覆盖率阈值的更改。在构建单个组件时，CI系统还可以使用集成测试来进一步确保更改是稳定的，不仅是更改本身，而且是在一起时可以正确地运行。
 
-We will then use our previous build system to create a simple CI pipeline in GitLab. These pipelines are described in the YAML file as a series of steps and metadata. An example pipeline building all the requirements, as well as the sample project from Chapter 7, Building and Packaging, would look like the following:
+\subsubsubsection{9.2.4\hspace{0.2cm}用GitLab实现流水}
+
+本章中，将使用流行的开源工具来构建一个完整的CI/CD流水，包括门控机制、自动化部署，并展示基础设施自动化的概念。
+
+第一个这样的工具是GitLab。可能听说过它是一个Git托管解决方案，但实际上，它的作用远不止于此。GitLab有以下几种发行版:
+
+\begin{itemize}
+\item 
+开源的解决方案，可以自行托管
+
+\item 
+自托管的付费版本提供了比开源社区版更多的特性
+
+\item 
+最后是软件即服务(SaaS)管理的产品\url{https://gitlab.com}
+\end{itemize}
+
+对于本书的要求，每个发行版都有所有必要的特性。因此，将重点关注SaaS版本，这不需要太多的准备工作。
+
+\url{https://gitlab.com}主要针对开源项目，如果不想与全世界分享自己的工作，也可以创建私人项目和存储库。可以在GitLab中创建一个新的私有项目，并使用在第7章中演示过的代码填充它。
+
+很多现代的CI/CD工具都可以代替GitLab的CI/CD。包括GitHub Actions，Travis CI，CircleCI和Jenkins。这里选择了GitLab，因为它既可以以SaaS的形式使用，也可以在本地使用，因此应该可以适应不同的用例。
+
+然后，使用之前的构建系统，在GitLab中创建一个简单的CI管道。这些管道在YAML文件中描述为一系列步骤和元数据。构建所有需求的管道示例，以及第7章中的示例项目，如下所示:
 
 \begin{tcblisting}{commandshell={}}
 # We want to cache the conan data and CMake build directory
@@ -69,17 +69,18 @@ cache:
 default:
   image: conanio/gcc10
 
-
 stages:
   - prerequisites
   - build
 
 before_script:
   - export CONAN_USER_HOME="$CI_PROJECT_DIR"
-  
+
 # Configure conan
 prerequisites:
   stage: prerequisites
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
   script:
   - pip install conan==1.34.1
   - conan profile new default || true
@@ -104,7 +105,7 @@ build:
   - cmake --build .
 \end{tcblisting}
 
-Saving the preceding file as .gitlab-ci.yml in the root directory of your Git repository will automatically enable CI in GitLab and run the pipeline with each subsequent commit.
+将前面的文件保存为.gitlab-ci.yml。Git库根目录下的会自动在GitLab中启用CI，并在每次提交时运行流水。
 
 
 

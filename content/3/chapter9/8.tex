@@ -1,55 +1,55 @@
 
-If you are sufficiently confident with your CI/CD pipeline, you may go one step further. Instead of deploying artifacts of the application, you can deploy artifacts of the system. What's the difference? We will come to know about this in the following sections.
+如果对自己的CI/CD流水有足够的信心，则可以进行更进一步的了解。可以部署系统的构件，而不是部署应用程序的构件。有什么区别呢？在接下来的章节中来了解这一点。
 
-\subsubsubsection{9.8.1\hspace{0.2cm}What is immutable infrastructure?}
+\subsubsubsection{9.8.1\hspace{0.2cm}什么是不可变的基础设施？}
 
-Previously, we focused on how to make your application's code deployable on the target infrastructure. The CI system created software packages (such as containers) and those packages were then deployed by the CD process. Each time the pipeline ran, the infrastructure stayed the same, but the software differed.
+之前，重点讨论了如何使应用程序的代码在目标基础设施上的可部署性。CI系统创建软件包(如容器)，然后由CD进程部署这些软件包。每次流水运行时，基础设施保持不变，但软件不同。
 
-The point is, if you are using cloud computing, you can treat infrastructure just like any other artifact. Instead of deploying a container, you can deploy an entire Virtual Machine (VM), for example, as an AWS EC2 instance. You can build such a VM image upfront as yet another element of your CI process. This way, versioned VM images, as well as the code required to deploy them, become your artifacts, and not the containers themselves.
+关键是，如果正在使用云计算，可以像对待任何其他工件一样对待基础设施。不需要部署容器，可以部署整个虚拟机(VM)，例如AWS EC2实例。可以预先构建这样一个VM映像，作为CI过程的另一个元素。这样，版本化的VM映像以及部署所需的代码将成为工件，而不是容器本身。
 
-There are two tools, both authored by HashiCorp, that deal with precisely this scenario. Packer helps to create VM images in a repeatable way, storing all the instructions as code, usually in the form of a JSON file. Terraform is an Infrastructure as Code tool, which means it's used to provision all the necessary infrastructure resources. We will use the output from Packer as input for Terraform. This way, Terraform will create an entire system consisting of the following:
-
-\begin{itemize}
-\item 
-Instance groups
-
-\item 
-Load balancers
-
-\item 
-VPCs
-
-\item 
-Other cloud elements while using the VMs containing our own code
-\end{itemize}
-
-The title of this section may confuse you. Why is it called immutable infrastructure while we are clearly advocating to change the entire infrastructure after every commit? The concept of immutability may be clearer to you if you've studied functional languages.
-
-A mutable object is one whose state we can alter. In infrastructure, this is pretty easy to understand: you can log in to the VM and download a more recent version of the code. The state is no longer the same as it was prior to your intervention.
-
-An immutable object is one whose state we cannot alter. It means we have no means of logging in to the machines and changing things. Once we deploy a VM from an image, it stays like that until we destroy it. This may sound terribly cumbersome, but in fact, it solves a few problems of software maintenance.
-
-\subsubsubsection{9.8.2\hspace{0.2cm}The benefits of immutable infrastructure}
-
-First of all, immutable infrastructure makes the concept of configuration drift obsolete. There is no configuration management so there can also be no drift. The upgrade is much safer as well because we cannot end up in a half-baked state. That is the state that's neither the previous version nor the next version, but something in between. The deployment process provides binary information: either the machine is created and operational or it isn't. There's no other way.
-
-For immutable infrastructure to work without affecting uptime, you also need the following:
+有两个工具(都是由HashiCorp编写的)可以精确地处理这种场景。Packer帮助以一种可重复的方式创建VM镜像，将所有指令存储为代码，通常以JSON文件的形式。Terrform是一个基础设施作为代码的工具，用来提供所有必要的基础设施资源。这里将使用Packer的输出作为Terraform的输入。通过这种方式，Terraform将创建一个包含以下内容的完整系统:
 
 \begin{itemize}
 \item 
-Load balancing
+实例组
 
 \item 
-Some degree of redundancy
+负载平衡器
+
+\item 
+VPC
+
+\item 
+使用包含代码的VM时，使用的其他云元素
 \end{itemize}
 
-After all, the upgrade process consists of taking down an entire instance. You cannot rely on this machine's address or anything that's particular to that one machine. Instead, you need to have at least a second one that will handle the workload while you replace the other one with the more recent version. When you finish upgrading the one machine, you can repeat the same process with another one. This way, you will have two upgraded instances without losing the service. Such a strategy is known as the rolling upgrade.
+这一节的标题可能会让你感到困惑。为什么它被称为不可变的基础设施，而内容中却主张在每次提交后都要改变整个基础设施？如果了解过函数式语言，可能会更清楚不变性的概念。
 
-As you can realize from the process, immutable infrastructure works best when dealing with stateless services. When your service has some form of persistence, things become tougher to implement properly. In that case, you usually have to split the persistence level into a separate object, for example, an NFS volume containing all of the application data. Such volumes can be shared across all the machines in an instance group and each new machine that comes up can access the common state left by the previous running applications.
+可变对象是我们可以改变其状态的对象。在基础架构中，这很容易理解:可以登录到VM并下载最新版本的代码。现在的状态已经和介入之前不一样了。
 
-\subsubsubsection{9.8.3\hspace{0.2cm}Building instance images with Packer}
+不可变对象是指无法改变其状态的对象。这意味着无法登录到机器上并更改内容。当从映像部署VM，它就会一直保持原样，直到销毁。这听起来可能非常麻烦，但实际上，解决了软件维护的问题。
 
-Considering our example application is already stateless, we can proceed with building an immutable infrastructure on top of it. Since the artifacts Packer generates are VM images, we have to decide on the format and the builder we would like to use. Let's focus our example on Amazon Web Services, while keeping in mind that a similar approach will also work with other supported providers. A simple Packer template may look like this:
+\subsubsubsection{9.8.2\hspace{0.2cm}不可变的基础设施的优势}
+
+首先，不可变的基础设施使配置漂移的概念过时。没有配置管理，所以也不会有漂移。升级也更安全，因为我们不能以半生不熟的状态结束。这种状态既不是上一个版本也不是下一个版本，而是介于两者之间。部署过程提供二进制信息:机器是否已创建并运行。别无他法。
+
+为了让不可变基础设施在不影响正常运行时间的情况下工作，还需要以下几点:
+
+\begin{itemize}
+\item 
+负载平衡
+
+\item 
+一定程度的冗余
+\end{itemize}
+
+毕竟，升级过程包括关闭整个实例。不能依赖这台机器的地址或任何特定于这台机器的东西。相反，需要至少有第二个来处理工作负载，同时用最新的版本替换另一个。当完成对一台机器的升级后，可以对另一台机器重复相同的过程。这样，将拥有两个升级的实例，而不会丢失服务。这种策略称为滚动升级。
+
+可以从流程中认识到，在处理无状态服务时，不可变基础结构的工作效果最好。当服务具有某种形式太久时，就很难正确地实现。这种情况下，必须将持久性级别拆分为一个单独的对象，例如包含所有应用程序数据的NFS卷。这样的卷可以在实例组中的所有计算机之间共享，出现的每台新计算机都可以访问前面运行的应用程序留下的公共状态。
+
+\subsubsubsection{9.8.3\hspace{0.2cm}使用Packer构建实例镜像}
+
+考虑到示例应用程序已经是无状态的，可以继续在其上构建不可变的基础设施。由于Packer生成的工件是VM映像，必须决定想要使用的格式和构建器。这里将示例的重点放在Amazon Web Services上，同时要记住，类似的方法也可以用于其他受支持的提供商。简单的Packer模板可能是这样的:
 
 \begin{tcblisting}{commandshell={}}
 {
@@ -77,9 +77,9 @@ Considering our example application is already stateless, we can proceed with bu
 }
 \end{tcblisting}
 
-The preceding code will build an image for Amazon Web Services using the EBS builder. The image will reside in eu-central-1 region and will be based on ami-5900cc36, which is a Debian Jessie image. We want the builder to be a t2.micro instance (that's a VM size in AWS). To prepare our image, we run the two apt-get commands.
+前面的代码将使用EBS构建器为Amazon Web服务构建一个映像。该映像将驻留在eu-central-1区域，并将基于ami-5900cc36，这是一个Debian Jessie映像。这里想让构建器是t2.micro实例(在AWS中相当于一个虚拟机大小)。为了准备映像，需要运行两个apt-get命令。
 
-We can also reuse the previously defined Ansible code and, instead of using Packer to provision our application, we can substitute Ansible as the provisioner. Our code will appear as follows:
+也可以重用之前定义的Ansible代码，而不是使用Packer来提供我们的应用程序，可以将Ansible替换为提供程序。代码如下所示:
 
 \begin{tcblisting}{commandshell={}}
 {
@@ -111,13 +111,13 @@ We can also reuse the previously defined Ansible code and, instead of using Pack
 }
 \end{tcblisting}
 
-The changes are in the provisioners block and also a new block, post-processors, is added. This time, instead of shell commands, we are using a different provisioner that runs Ansible for us. The post-processor is here to produce the results of the build in a machinereadable format. Once Packer finishes building the desired artifact, it returns its ID and also saves it in manifest.json. For AWS, this would mean an AMI ID that we can then feed to Terraform.
+更改在供应程序块中，还添加了一个新的块，即后处理器。这一次，使用的不是shell命令，而是一个不同的供应程序，它来运行Ansible。后处理器在这里以机器可读的格式产生构建结果。当Packer完成构建所需的工件，就会返回它的ID并将其保存在manifest.json中。对于AWS来说，这就是一个AMI ID，可以提供给Terraform。
 
-\subsubsubsection{9.8.4\hspace{0.2cm}Orchestrating the infrastructure with Terraform}
+\subsubsubsection{9.8.4\hspace{0.2cm}使用Terraform编排基础设施}
 
-Creating an image with Packer is the first step. After that, we would like to deploy the image to use it. We can build an AWS EC2 instance based on the image from our Packer template using Terraform.
+使用Packer创建图像是第一步。之后，希望部署镜像来使用它。可以使用Terraform基于Packer模板中的镜像构建AWS EC2实例。
 
-Example Terraform code would look like the following:
+Terraform代码示例如下所示:
 
 \begin{tcblisting}{commandshell={}}
 # Configure the AWS provider
@@ -130,7 +130,9 @@ provider "aws" {
 # newly created machine
 variable "public_key_path" {
   description = <<DESCRIPTION
-Path to the SSH public key to be used for authentication. Ensure this keypair is added to your local SSH agent so provisioners can connect.
+Path to the SSH public key to be used for authentication. 
+Ensure this keypair is added to your local SSH agent so 
+provisioners can connect.
 Example: ~/.ssh/terraform.pub
 DESCRIPTION
 
@@ -150,7 +152,8 @@ variable "packer_ami" {
 variable "env" {
   default = "development"
 }
-
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
 variable "region" {
 }
 
@@ -161,7 +164,8 @@ resource "aws_key_pair" "deployer" {
   public_key = file(var.public_key_path)
 }
 
-# Create a VM instance from the custom base image that uses the previously created key
+# Create a VM instance from the custom base image that uses the previously 
+# created key
 # The VM size is t2.xlarge, it uses a persistent storage volume of 60GiB,
 # and is tagged for easier filtering
 resource "aws_instance" "project" {
@@ -184,7 +188,7 @@ resource "aws_instance" "project" {
 }
 \end{tcblisting}
 
-This creates a key pair and an EC2 instance using this key pair. The EC2 instance is based on AMI provided as a variable. When calling Terraform, we will set this variable to point to the image generated by Packer.
+这将创建一个密钥对和一个使用该密钥对的EC2实例。EC2实例基于作为变量提供的AMI。在调用Terraform时，将该变量设置为指向Packer生成的镜像。
 
 
 

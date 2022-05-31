@@ -1,6 +1,6 @@
 
 
-In its simplest form, deployment with Ansible may consist of copying a single binary to the target machine and then running that binary. We can achieve this with the following Ansible code:
+最简单的形式中，使用Ansible的部署可能包括复制一个二进制文件到目标机器上，然后运行这个二进制文件。可以通过下面的Ansible代码实现:
 
 \begin{tcblisting}{commandshell={}}
 tasks:
@@ -17,5 +17,5 @@ tasks:
 2>&1 &
 \end{tcblisting}
 
-Every single task starts with a hyphen. For each of the tasks, you need to specify the module it uses (such as the copy module or the shell module), along with its parameters (if applicable). A task may also have a name parameter, which makes it easier to reference the task individually.
+每个任务都以连字符开头。对于每个任务，需要指定它使用的模块(例如copy模块或shell模块)，以及它的参数(如果适用)。任务也可以有一个name参数，这使得单独引用任务更加容易。
 

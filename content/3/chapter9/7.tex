@@ -1,17 +1,17 @@
 
-We have reached the point when we can safely build a CD pipeline using the tools we learned about in this chapter. We already know how CI operates and how it helps to reject changes that are unsuitable for release. The section on test automation presented different ways of making the rejection process more robust. Having smoke tests or end-to-end tests allows us to go beyond CI and to check whether the whole deployed service satisfies requirements. And with deployment code, we can not only automate the process of deployment, but also prepare a rollback when our tests begin to fail.
+已经到了可以使用本章所学的工具安全地构建CD流水的时候了，已经知道CI如何运作，以及它如何帮助拒绝不适合发布的修改。关于测试自动化的部分展示了拒绝过程中更加健壮的不同方法。通过冒烟测试或端到端测试，可以超越CI，检查整个部署的服务是否满足需求。使用部署代码，不仅可以自动化部署过程，还可以在测试开始失败时准备回滚。
 
-\subsubsubsection{9.7.1\hspace{0.2cm}Continuous deployment and continuous delivery}
+\subsubsubsection{9.7.1\hspace{0.2cm}持续部署和持续交付}
 
-By a funny coincidence, the abbreviation CD can mean two different things. The concepts of continuous delivery and Continuous deployment are pretty similar, but they have some subtle differences. Throughout the book, we are focusing on the concept of continuous deployment. This is the automated process that originates when a person pushes a change into the central repository and finishes with the change successfully deployed to the production environment with all the tests passing. We can therefore say that this is an endto-end process as the developer's work travels all the way to the customer without manual intervention (following the code review, of course). You may have heard the term GitOps to relate to such an approach. As all operations are automated, pushing to a specified branch in Git triggers the deployment scripts.
+一个巧合是，缩写CD可以表示两种不同的意思。持续交付和持续部署的概念非常相似，但它们有一些细微的区别。本书中，我们关注的是持续部署的概念。这是一种自动化流程，产生于开发者将修改推入中央存储库，并在所有测试都通过的情况下成功地将更改部署到生产环境。因此，可以说这是一个端到端的过程，因为开发人员的工作在没有人工干预的情况下一路传递给客户(当然，要遵循代码审查)。可能听说过与这种方法相关的术语GitOps。由于所有操作都是自动化的，因此推送到Git中指定的分支会触发部署脚本。
 
-Continuous delivery doesn't go that far. Like CD, it features a pipeline able to release the final product and test it, but the final product is never automatically delivered to the customers. It can be delivered to the QA first or to the business for internal use. Ideally, the delivered artifact is ready to be deployed in the production environment as son as the internal clients accept it.
+持续交付不会走那么远。与CD一样，特点是能够发布最终产品并对其进行测试，但最终产品不会自动交付给客户。可以首先交付给QA，也可以交付给企业内部使用。理想情况下，只要内部客户端接受，交付的工件就可以部署到生产环境中。
 
-\subsubsubsection{9.7.2\hspace{0.2cm}Building an example CD pipeline}
+\subsubsubsection{9.7.2\hspace{0.2cm}构建一个CD流水示例}
 
-Let's put all of these skills together once again using the GitLab CI as an example to build our pipeline. Following the testing step, we will add two more steps, one that creates the package and another one that uses Ansible to deploy this package.
+再次以GitLab CI为例，将所有这些技能放在一起来构建流水。在测试步骤之后，将增加两个步骤，一个创建包，另一个使用Ansible部署这个包。
 
-All we need for the packaging step is the following:
+所需要的包装步骤如下:
 
 \begin{tcblisting}{commandshell={}}
 # Package the application and publish the artifact
@@ -27,9 +27,9 @@ package:
       - build/Customer*.deb
 \end{tcblisting}
 
-When we add the package step containing artifacts definitions, we'll be able to download them from the dashboard.
+当添加包含工件定义的包步骤时，能够从仪表板下载它们。
 
-With this, we can invoke Ansible as part of the deployment step:
+这样，就可以在部署步骤中调用Ansible了:
 
 \begin{tcblisting}{commandshell={}}
 # Deploy using Ansible
@@ -40,7 +40,7 @@ deploy:
     - ansible-playbook -i localhost, ansible.yml
 \end{tcblisting}
 
-The final pipeline would then look like the following:
+最后的流水看起来如下所示:
 
 \begin{tcblisting}{commandshell={}}
 cache:
@@ -69,6 +69,8 @@ prerequisites:
     - conan profile new default || true
     - conan profile update settings.compiler=gcc default
     - conan profile update settings.compiler.libcxx=libstdc++11 default
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
     - conan profile update settings.compiler.version=10 default
     - conan profile update settings.arch=x86_64 default
     - conan profile update settings.build_type=Release default
@@ -112,4 +114,4 @@ deploy:
     - ansible-playbook -i localhost, ansible.yml
 \end{tcblisting}
 
-To see the whole example, go to the repository from the Technical requirements section for the original sources.
+要查看整个示例，请从技术需求部分转到源码的存储库。
