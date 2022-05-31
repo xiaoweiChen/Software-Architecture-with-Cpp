@@ -1,13 +1,13 @@
 
-As for the frameworks, the current de facto standard is Google's GTest. Together with its counterpart GMock, they form a small suite of tools that allow you to follow the best practices of testing in C++.
+至于框架，目前的标准是谷歌的GTest。它们与对应的GMock组成了一个小型工具套件，可以遵循C++测试的最佳实践。
 
-Other popular alternatives to GTest/GMock duo are Catch2, CppUnit, and Doctest. CppUnit has been available for a long time, but its lack of recent releases means we don't recommend it for fresh projects. Both Catch2 and Doctest support the modern C++ standards – in particular, C++14, C++17, and C++20.
+GTest/GMock组合的其他替代是Catch2、CppUnit和Doctest。CppUnit已经存在很长一段时间了，但缺少更新，所以不推荐使用。Catch2和Doctest都支持现代C++标准——特别是C++14、C++17和C++20。
 
-To compare these testing frameworks, we will use the same codebase that we want to test. Using it as a basis, we will then implement tests in each of the frameworks.
+为了比较这些测试框架，将使用想要测试的代码库。以它为基础，在每个框架中实现测试。
 
-\subsubsubsection{8.3.1\hspace{0.2cm}GTest examples}
+\subsubsubsection{8.3.1\hspace{0.2cm}GTest}
 
-Here is an example test for our customer library written in GTest:
+下面是用GTest编写的一个测试示例:
 
 \begin{lstlisting}[style=styleCXX]
 #include "customer/customer.h"
@@ -23,11 +23,11 @@ given_name_when_prepare_responses_then_greets_friendly) {
 }
 \end{lstlisting}
 
-Most of the tasks that are commonly done during testing have been abstracted. We're mostly focused on providing the action we want to test (prepare\_response) and the desired behavior (both ASSERT\_EQ lines).
+测试期间大部分任务已经抽象，这里主要关注于提供测试的动作(\texttt{prepare\_response})和所需的行为(有\texttt{ASSERT\_EQ}的行)。
 
-\subsubsubsection{8.3.2\hspace{0.2cm}Catch2 examples}
+\subsubsubsection{8.3.2\hspace{0.2cm}Catch2}
 
-Here is an example test for our customer library written in Catch2:
+下面是用Catch2编写的一个测试示例:
 
 \begin{lstlisting}[style=styleCXX]
 #include "customer/customer.h"
@@ -45,13 +45,13 @@ TEST_CASE("Basic responses",
 }
 \end{lstlisting}
 
-It looks pretty similar to the previous one. Some keywords differ (TEST and TEST\_CASE) and there's a slightly different way to check the results (REQUIRE(a == b) instead of ASSERT\_EQ(a,b)). Both are pretty compact and readable anyway.
+看起来和前一个例子很像。有些关键字不同(\texttt{TEST}和\texttt{TEST\_CASE})，检查结果的方式也不同(使用\texttt{REQUIRE(a == b)}而不是\texttt{ASSERT\_EQ(a, b)})。
 
-\subsubsubsection{8.3.3\hspace{0.2cm}CppUnit examples}
+\subsubsubsection{8.3.3\hspace{0.2cm}CppUnit}
 
-Here is an example test for our customer library written in CppUnit. We will split it into several snippets.
+下面是用CppUnit编写的测试示例，我们将把它分成几个片段。
 
-The following code block prepares us to use the constructs from the CppUnit library:
+下面的代码为使用CppUnit库中的构造做了准备工作:
 
 \begin{lstlisting}[style=styleCXX]
 #include <cppunit/BriefTestProgressListener.h>
@@ -72,7 +72,7 @@ using namespace CppUnit;
 using namespace std;
 \end{lstlisting}
 
-Next, we must define the test class and implement the method that will execute our test case. After that, we must register the class so that we can use it in our test runner:
+接下来，必须定义测试类并实现执行测试用例的方法。之后，必须注册这个类，以便在测试运行器中使用它:
 
 \begin{lstlisting}[style=styleCXX]
 class TestBasicResponses : public CppUnit::TestFixture {
@@ -95,7 +95,7 @@ void TestBasicResponses::testBob() {
 CPPUNIT_TEST_SUITE_REGISTRATION(TestBasicResponses);
 \end{lstlisting}
 
-Finally, we must provide the behavior of our test runner:
+最后，必须提供测试运行器的行为:
 
 \begin{lstlisting}[style=styleCXX]
 int main() {
@@ -122,11 +122,11 @@ int main() {
 }
 \end{lstlisting}
 
-Compared to the previous two examples, there's a lot of boilerplate in here. The test itself, however, looks pretty similar to the previous example.
+与前面的两个示例相比，这里有很多样板文件，而测试看起来与前面的示例非常相似。
 
-\subsubsubsection{8.3.4\hspace{0.2cm}Doctest examples}
+\subsubsubsection{8.3.4\hspace{0.2cm}Doctest}
 
-Here is an example test for our customer library written in Doctest:
+下面是用Doctest编写的一个测试示例:
 
 \begin{lstlisting}[style=styleCXX]
 #include "customer/customer.h"
@@ -142,17 +142,17 @@ TEST_CASE("Basic responses") {
 }
 \end{lstlisting}
 
-Once again, it's quite clean and easy to understand. The main selling point of Doctest is that it's the fastest both at compile-time and at runtime compared to the other similarly-featured alternatives.
+代码很清晰，也很容易理解。Doctest的主要卖点是，与其他具有类似特性的替代产品相比，在编译时和运行时都最快。
 
-\subsubsubsection{8.3.5\hspace{0.2cm}Testing compile-time code}
+\subsubsubsection{8.3.5\hspace{0.2cm}编译时测试}
 
-Template metaprogramming allows us to write C++ code that is executed during compiletime as opposed to the usual execution time. The constexpr keyword, which was added in C++11, allows us to use even more compile-time code, and consteval keyword from C++20 aims to give us greater control over the way the code is evaluated.
+模板元编程允许编写在编译时执行的C++代码。在C++11中添加的\texttt{constexpr}关键字允许开发者使用更多的编译时代码，而C++20中的\texttt{consteval}关键字旨在对代码的计算方式有更大的控制权。
 
-One of the problems with compile-time programming is that there is no easy way to test it. While unit testing frameworks for execution time code are abundant (as we just saw), there are not that many resources regarding compile-time programming. Part of this may stem from the fact that compile-time programming is still considered complicated and only aimed at experts.
+编译时编程的问题是没有简单的方法来进行测试。虽然用于执行时代码的单元测试框架非常丰富(正如刚才看到的)，但关于编译时编程的资源并不多。部分原因可能是编译时编程仍然很复杂，而且只针对专家。
 
-Just because something isn't easy doesn't mean it is impossible, though. Just like execution time tests rely on assertions being checked during runtime, you can check your compiletime code for correct behavior using static\_assert, which was introduced alongside constexpr in C++11.
+尽管如此，不容易并不意味着不可能。就像执行时间测试依赖于在运行时检查断言一样，可以使用\texttt{static\_assert}检查编译时代码的行为，\texttt{static\_assert}在C++11中与\texttt{constexpr}一起引入。
 
-The following is a simple example of using static\_assert:
+下面是使用\texttt{static\_assert}的简单示例:
 
 \begin{lstlisting}[style=styleCXX]
 #include <string_view>
@@ -166,7 +166,7 @@ constexpr int generate_lucky_number(std::string_view name) {
 static_assert(generate_lucky_number("Bob") == 808);
 \end{lstlisting}
 
-Since we can compute each value tested here during compile time, we can effectively use the compiler as our testing framework.
+因为可以在编译时计算这里测试的每个值，所以可以使用编译器作为测试框架。
 
 
 
