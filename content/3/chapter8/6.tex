@@ -1,42 +1,42 @@
 
-In the next chapter, we will focus on continuous integration and continuous deployment (CI/CD). For a CI/CD pipeline to work properly, you need to have a set of tests that catch the bugs before they enter production. It is up to you and your team to make sure all the business requirements are properly expressed as tests.
+下一章中，将关注持续集成和持续部署(CI/CD)。要使CI/CD管道正常工作，需要进行一组测试，以便在bug进入生产环境之前捕获它们。您和您的团队需要确保所有业务需求都正确地在测试进行表达。
 
-Tests are useful on several levels. With behavior-driven development, which we mentioned in the previous section, business requirements form a basis for automated tests. But the system you are building doesn't consist solely of business requirements. You want to make sure all the third-party integrations are working as expected. You want to make sure all your subcomponents (such as microservices) can actually interface with each other. Finally, you want to make sure that the functions and classes you are building are free of any bugs you could have imagined.
+测试在几个层次上都很有用。对于行为驱动开发，在上一节中提到过，业务需求构成了自动化测试的基础。但在构建的系统并不仅仅由业务需求组成，希望能够确保所有第三方集成都按预期工作，并且希望所有子组件(如微服务)实际上可以相互接口。最后，希望正在构建的函数和类没有任何错误。
 
-Each test that you can automate is a candidate for a CI/CD pipeline. Each of them also has its place somewhere in this pipeline. For example, end-to-end tests make the most sense after the deployment as acceptance tests. On the other hand, unit tests make the most sense when they're executed directly after compilation. After all, our aim is to break the circuit as soon as we find any possible divergence from the specification.
+可以自动化的每个测试都是CI/CD管道的候选，它们中的每一个都在这个管道的某个地方有自己的位置。例如，端到端测试在作为验收测试部署之后最有意义。另一方面，单元测试在编译后直接执行时最有意义。毕竟，目标是发现任何可能与规格不符的地方，就立即中断。
 
-You don't have to run all the tests that you have automated each time you run a CI/CD pipeline. It's better if the runtime of each pipeline is relatively short. Ideally, it should finish within a couple of minutes from the commit. How can we make sure everything is properly tested, then, if we want to keep the runtime minimal?
+每次运行CI/CD管道时，不必运行已经自动化的所有测试。如果每个管道的运行时间相对较短就更好了。理想情况下，应该在提交后几分钟内完成。那么，如果想保持最小的运行时，如何确保一切都得到了适当的测试？
 
-One answer is to prepare different suites of tests for different purposes. For example, you can have minimal tests for commits to a feature branch. With many commits coming to feature branches every day, this means they will only be tested briefly and that the answer will be available fast. Merging feature branches to the shared development branch then requires a slightly larger set of test cases. This way, we make sure we haven't broken anything that other team members will be using. Finally, a more extensive set of cases will be run for merges to production branches. After all, we want the production branches to be tested thoroughly, even if the testing takes quite a long time.
+一种方法是为不同的目的准备不同的测试套件。例如，提交到特性分支的测试可以很少。由于每天都有很多人提交特性分支，这意味着它们只会简单地测试，而且结果会很快得到。将特性分支合并到共享开发分支需要大一些的测试用例集。这样，我们就可以确保没有破坏其他团队成员的任何东西。最后，将运行一组更广泛的案例，用于合并到生产分支。毕竟，即使测试需要相当长的时间，也希望对生产分支进行彻底的测试。
 
-Another answer is to use the trimmed-down set of test cases for CI/CD purposes and have an additional continuous testing process. This process runs regularly and performs indepth checks on the current state of a particular environment. The tests can go as far as security tests and performance tests and may thus assess the eligibility of the environment to be promoted.
+另一种是为CI/CD目的使用精简的测试用例集，并有一个额外的连续测试过程。此过程定期运行，并对特定环境的当前状态执行深入检查。这些测试可以包括安全性测试和性能测试，因此可以评估待提升环境的合格性。
 
-Promotion occurs when we select an environment and acknowledge that this environment has all the qualities to become a more mature environment. For example, that development environment can become the next staging environment, or that staging environment can become the next production environment. If this promotion happens automatically, it is also a good practice to provide automatic rollback in case the subtle differences (such as in terms of domain name or traffic) make the freshly promoted environment no longer pass the tests.
+当选择一个环境，并承认这个环境具备成为一个更成熟环境的所有特质时，就会出现晋升。例如，那个开发环境可以成为下一个阶段环境，或者那个阶段环境可以成为下一个生产环境。如果这种升级是自动发生的，那么提供自动回滚也是一个好做法，以防细微的差异(比如，域名或流量方面的差异)使新升级的环境不再通过测试。
 
-This also presents another important practice: to always run tests on the production environment. Such tests have to be the least intrusive, of course, but they should tell you that your system is performing correctly at any given time.
+这也提出了另一个重要的实践:始终在生产环境上运行测试。当然，这样的测试必须最小化干扰，但是它们应该告知，系统在给定的时间内都在正确地执行。
 
-\subsubsubsection{8.6.1\hspace{0.2cm}Testing the infrastructure}
+\subsubsubsection{8.6.1\hspace{0.2cm}测试的基础设施}
 
-If you want to incorporate the concepts of configuration management, Infrastructure as Code, or immutable deployments into the software architecture of your application, you should also consider testing the infrastructure itself. There are several tools you can use to do this, including Serverspec, Testinfra, Goss, and Terratest, which are among some of the more popular ones.
+如果想将配置管理、基础设施作为代码或不可变部署的概念合并到应用程序的软件架构中，还应该考虑测试基础设施本身。可以使用工具来实现这一点，包括Serverspec、Testinfra、Goss和Terratest，这些都是比较主流的工具。
 
-These tools slightly differ in scope, as stated here:
+这些工具的适用范围略有不同，如下所述:
 
 \begin{itemize}
 \item 
-Serverspec and Testinfra focus more on testing the actual state of the servers that are configured via configuration management, such as Salt, Ansible, Puppet, and Chef. They're written in Ruby and Python, respectively, and they plug into the languages' testing engines. This means RSPec for Serverspec and Pytest for Testinfra.
+Serverspec和Testinfra更专注于测试通过配置管理(如Salt、Ansible、Puppet和Chef)配置的服务器的实际状态。它们分别用Ruby和Python编写，插入到语言的测试引擎中。这意味着用于Serverspec的RSPec和用于Testinfra的Pytest。
 
 \item 
-Goss is a bit different both in terms of scope and form. Besides testing the servers, you can also use Goss to test the containers you use in your project with the dgoss wrapper. As for its form, it doesn't use the imperative code you would see in Serverspec or Testinfra. Rather, similar to Ansible or Salt, it uses a YAML file to describe the desired state we want to check for. If you're already using a declarative approach to configuration management (such as the aforementioned Ansible or Salt), Goss may be more intuitive and thus a much better fit for testing.
+Goss在范围和形式上都有点不同。除了测试服务器之外，还可以使用Goss来使用dgoss包装器测试项目中使用的容器。至于形式，没有使用在Serverspec或Testinfra中看到的命令式代码。相反，与Ansible或Salt类似，它使用一个YAML文件来描述想要检查的状态。如果已经在使用声明式方法进行配置管理(例如，前面提到的Ansible或Salt)，那么Goss可能更直观，因此更适合测试。
 
 \item 
-Finally, Terratest is a tool that allows you to test the output of Infrastructure as Code tools such as Packer and Terraform (hence the name). Just like Serverspec and Testinfra use their language testing engines to write tests for servers, Terratest leverages Go's testing package to write the appropriate test cases.
+最后，Terratest是一个工具，允许测试基础设施的输出作为代码工具，如Packer和Terraform(因此得名)。就像Serverspec和Testinfra使用语言测试引擎为服务器编写测试一样，Terratest利用Go的测试包来编写适当的测试用例。
 \end{itemize}
 
-Let's see how can we use each of these tools to validate that the deployment went on according to plan (at least from the infrastructure's point of view).
+接下来，来了解一下如何使用这些工具来验证部署是否按照计划进行(至少从基础结构的角度来看)。
 
-\subsubsubsection{8.6.2\hspace{0.2cm}Testing with Serverspec}
+\subsubsubsection{8.6.2\hspace{0.2cm}Serverspec的测试}
 
-The following is an example of a test for Serverspec that checks the availability of Git in a specific version and the Let's Encrypt configuration file:
+下面是一个测试Serverspec的例子，检查Git在特定版本中的可用性和加密配置文件:
 
 \begin{tcblisting}{commandshell={}}
 # We want to have git 1:2.1.4 installed if we're running Debian
@@ -46,6 +46,8 @@ end
 # We want the file /etc/letsencrypt/config/example.com.conf to:
 describe file('/etc/letsencrypt/config/example.com.conf') do
   it { should be_file } # be a regular file
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
   it { should be_owned_by 'letsencrypt' } # owned by the letsencrypt user
   it { should be_mode 600 } # access mode 0600
   it { should contain('example.com') } # contain the text example.com
@@ -53,11 +55,11 @@ describe file('/etc/letsencrypt/config/example.com.conf') do
 end
 \end{tcblisting}
 
-The Ruby DSL syntax should be readable even by those who do not use Ruby daily. You may need to get used to writing the code.
+Ruby DSL语法应该是可读的，即使对那些不日常使用Ruby的人也是如此。这里，可能需要习惯编写代码。
 
-\subsubsubsection{8.6.3\hspace{0.2cm}Testing with Testinfra}
+\subsubsubsection{8.6.3\hspace{0.2cm}Testinfra的测试}
 
-The following is an example of a test for Testinfra that checks the availability of Git in a specific version and the Let's Encrypt configuration file:
+下面是Testinfra的一个测试示例，检查Git在特定版本中的可用性和加密配置文件:
 
 \begin{lstlisting}[style=stylePython]
 # We want Git installed on our host
@@ -76,11 +78,11 @@ def test_letsencrypt_file(host):
 	assert le.contains("example.com") # contain the text example.com in the contents
 \end{lstlisting}
 
-Testinfra uses plain Python syntax. It should be readable, but just like Serverspec, you may need some training to confidently write tests in it.
+Testinfra使用纯Python语法。可读性不错，但就像Serverspec一样，可能需要一段时间的了解，才能自信地在其中编写测试。
 
-\subsubsubsection{8.6.4\hspace{0.2cm}Testing with Goss}
+\subsubsubsection{8.6.4\hspace{0.2cm}Goss的测试}
 
-The following is an example of a YAML file for Goss that checks the availability of Git in a specific version and the Let's Encrypt configuration file:
+下面是Goss的YAML文件的一个例子，检查Git在特定版本的可用性和加密配置文件:
 
 \begin{tcblisting}{commandshell={}}
 # We want Git installed on our host
@@ -89,6 +91,8 @@ package:
     installed: true # we test if the package is installed
   versions:
   - 1:2.1.4 # and if it matches version 1:2.1.4 (using Debian versioning)
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
 file:
   # We want the file /etc/letsencrypt/config/example.com.conf to:
   /etc/letsencrypt/config/example.com.conf:
@@ -100,7 +104,7 @@ file:
   - "example.com" # contain the text example.com in the contents
 \end{tcblisting}
 
-YAML's syntax will probably require the least preparation both to read it and write it. However, if your project already uses Ruby or Python, you may want to stick to Serverspec or Testinfra when it comes to writing more complicated tests.
+读和写YAML的语法可能需要最少的准备。但是，如果项目已经使用了Ruby或Python，那么在编写更复杂的测试时，可以坚持使用Serverspec或Testinfra。
 
 
 

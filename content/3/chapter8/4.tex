@@ -1,45 +1,45 @@
 
-As long as you are testing functions that do not interact too much with the outside world, things are pretty easy. The problems start when the units you are testing interface with third-party components such as databases, HTTP connections, and specific files.
+只要测试的函数不与外部有太多交互，事情就会很简单很多。当正在测试的单元与第三方组件(如数据库、HTTP连接和特定文件)连接时，问题就出现了。
 
-On one hand, you want to see how your code behaves due to various circumstances. On the other hand, you don't want to wait for the database to boot, and you definitely don't want to have several databases containing different versions of data so that you can check all the necessary conditions.
+一方面，希望查看代码在各种环境下的行为。另一方面，不希望等待数据库启动，而且肯定不希望多个数据库包含不同版本的数据，以便检查所有必要条件。
 
-How can we deal with such cases? The idea is not to execute the actual code that triggers all those side effects but instead use test doubles. Test doubles are constructions in code that mimic the actual API, except they don't perform actions of the mimicked functions or objects.
+要如何处理这种情况呢？我们不想执行触发所有这些副作用的实际代码，而是使用测试替身。测试替身是代码中模拟实际API的结构，只是它们不执行模拟函数或对象的操作。
 
-The most common test doubles are mocks, fakes, and stubs. Many people tend to mistake one for another as they are similar, though not the same.
+最常见的测试替身是mock、fake和stub。因为它们虽然不相同，但很相似，许多人会把认错。
 
-\subsubsubsection{8.4.1\hspace{0.2cm}Different test doubles}
+\subsubsubsection{8.4.1\hspace{0.2cm}不同的测试替身}
 
-Mocks are test doubles that register all the received calls but do nothing more than that. They do not return any value and they do not change state in any way. They are useful when we have a third-party framework that is supposed to call our code. By using mocks, we can observe all the calls and are thus able to verify that the framework behaves as expected.
+mock是一种测试替身，它注册所有接收到的调用，但仅此而已。它们不返回任何值，也不会以任何方式改变状态。当有第三方框架来调用代码时，这就很有用。通过使用模拟，可以观察所有调用，从而能够验证框架的行为是否符合预期。
 
-Stubs are a bit more complicated when it comes to their implementation. They return values, but those values are predefined. It may seem surprising that the StubRandom.randomInteger() method always returns the same value (for example, 3), but it may be a sufficient stub implementation when we are testing the type of the returned value or the fact that it does return a value at all. The exact value may not be that important.
+stub的实现稍微复杂一些。它们返回值，但是这些值已经定义。\texttt{StubRandom.randomInteger()}方法总是返回相同的值(例如，3)，这似乎令人惊讶，但当测试返回值的类型或返回值时，它可能是不错的stub实现。具体值是什么可能就不那么重要了。
 
-Finally, fakes are objects that have a working implementation and behave mostly like the actual production implementation. The main difference is that fakes may take various shortcuts, such as avoiding calling the production database or filesystem.
+最后，fake是具有工作实现的对象，其行为与实际的生产实现基本相同。主要的区别是，fake数据库可能采取各种快捷方式，避免调用生产数据库或文件系统。
 
-When implementing the Command Query Separation (CQS) design pattern, you will  usually want to double queries with stubs and commands with mocks.
+实现命令查询分离(Command Query Separation, CQS)设计模式时，可以使用stub进行双重查询，使用mock进行命令查询。
 
-\subsubsubsection{8.4.3\hspace{0.2cm}Other uses for test doubles}
+\subsubsubsection{8.4.3\hspace{0.2cm}测试替身的其他用法}
 
-Fakes can also be used, to a limited extent, outside of testing. In-memory processing data without resorting to database access can also be great for prototyping or when you're hitting performance bottlenecks.
+在检测之外，fake也可以在有限的范围内使用。在内存中处理数据而不需要数据库访问，这对于创建原型或遇到性能瓶颈时也很有用。
 
-\subsubsubsection{8.4.3\hspace{0.2cm}Writing test doubles}
+\subsubsubsection{8.4.3\hspace{0.2cm}制作测试替身}
 
-To write test doubles, we typically use an external library, just as we do with unit tests. Some of the most popular solutions are as follows:
+为了制作测试替身，通常使用外部库，就像使用单元测试一样。以下是一些主流的解决方案:
 
 \begin{itemize}
 \item 
-GoogleMock (also known as gMock), which is now a part of the GoogleTest library: \url{https://github.com/google/googletest}.
+GoogleMock(也被称为gMock)，现在是GoogleTest库的一部分: \url{https://github.com/google/googletest}。
 
 \item 
-Trompeloeil, which focuses on C++14, integrates well with many testing libraries, such as Catch2, doctest, and GTest: \url{https://github.com/rollbear/trompeloeil}.
+Trompeloeil专注于C++14，很好地集成了许多测试库，如Catch2、doctest和GTest: \url{https://github.com/rollbear/trompeloeil}。
 \end{itemize}
 
-The code in the following sections will show you how to use both GoogleMock and Trompeloeil.
+下面的代码将向展示如何使用GoogleMock和Trompeloeil。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{GoogleMock example}
+\textbf{GoogleMock}
 
-Since GoogleMock is part of GoogleTest, we will present them together:
+由于GoogleMock是GoogleTest的一部分，这里将它们一起呈现:
 
 \begin{lstlisting}[style=styleCXX]
 #include "merchants/reviews.h"
@@ -124,13 +124,13 @@ TEST_F(history_with_one_rated_merchant,
 }
 \end{lstlisting}
 
-GTest is the most popular C++ testing framework at the time of writing this book. Its integration with GMock means that GMock is probably already available for you in your project. This combination is intuitive to use and fully-featured, so there's no reason to look for alternatives if you're already invested in GTest.
+GTest是本书编写时最流行的C++测试框架。它与GMock的集成，意味着GMock在项目中可能已经可用。这种组合使用起来很直观，而且功能齐全，所以如果已经使用了GTest，就没有理由选择其他框架。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Trompeloeil example}
+\textbf{Trompeloeil}
 
-To contrast this example with the previous one, this time, we are using Trompeloeil for test doubles and Catch2 as a testing framework:
+为了将这个示例与前一个示例进行对比，这次使用Trompeloeil进行测试，并使用Catch2作为测试框架:
 
 \begin{lstlisting}[style=styleCXX]
 #include "merchants/reviews.h"
@@ -200,7 +200,7 @@ SCENARIO("merchant history keeps store up to date", "[mobile app]") {
 }
 \end{lstlisting}
 
-One of the great features of Catch2 is that it makes it easy to write behavior-driven development-style tests, such as the one shown here. If you prefer this style, then Catch2 with Trompeloeil would be a good choice as they integrate very well.
+Catch2的一个重要特性是，它可以很容易地编写行为驱动开发风格的测试，比如上面这个测试。如果比较喜欢这种风格，那么带有Trompeloeil的Catch2将是一个很好的选择。
 
 
 

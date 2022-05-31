@@ -1,19 +1,19 @@
 
-It's not enough to distinguish between different types of tests and learn a particular testing framework (or several). When you start testing your actual code, you will soon notice that not all classes can be tested easily. Sometimes, you may feel the need to access private attributes or methods. Resist this urge if you want to maintain the principles of good architecture! Instead, consider either testing the business requirements that are available through the type's public API or refactoring the type so that there's another unit of code you can test.
+区分不同类型的测试和了解特定的测试框架(或几种)是不够的。开始测试实际的代码时，很快就会注意到，并不是所有的类都可以轻松地测试。有时，可能会觉得需要访问私有属性或方法。如果想保持良好的架构原则，请抵制这种冲动!相反，可以考虑测试通过类型的公共API可用的业务需求，或者重构类型，以便有另一个代码单元可以测试。
 
-\subsubsubsection{8.5.1\hspace{0.2cm}When tests and class design clash}
+\subsubsubsection{8.5.1\hspace{0.2cm}当测试和类设计冲突时}
 
-The problem you may be facing is not that the testing frameworks are inadequate. Usually, what you encounter is inappropriately designed classes. Even though your classes may behave correctly and may look correct unless they allow for testing, they are not designed correctly.
+可能面临的问题不是测试框架不充分，而是遇到的是设计不当的类。即使类的行为和外观可能是正确的，除非它们允许测试，否则其设计是不正确的。
 
-However, this is good news. It means that you can repair the problem before it's inconvenient to do so. The class design will probably haunt you later on when you start building a class hierarchy based on it. Fixing the design during test implementation will simply reduce the possible technological debt.
+然而，这是个好消息。说明可以在不方便这样做之前修复问题。类设计可能会在稍后，基于它构建类层次结构时再次困扰开发者。在测试执行过程中修改设计可以减少可能的技术债。
 
-\subsubsubsection{8.5.3\hspace{0.2cm}Defensive programming}
+\subsubsubsection{8.5.3\hspace{0.2cm}防御性编程}
 
-Unlike its name may suggest, defensive programming is not a security feature. Its name comes from defending your classes and functions from being used contrary to their original intention. It's not directly related to testing, but it's a great design pattern to use since it improves your code's quality, making your project future-proof.
+顾名思义，防御性编程并不是一种安全特性。它的名字来自于保护类和函数的使用不违背它们的初衷。它与测试没有直接关系，但它是一种很好的设计模式，因为它提高了代码的质量，使项目具有前瞻性。
 
-Defensive programming starts with static typing. If you create a function that handles a custom-defined type as a parameter, you must make sure nobody will call it with some accidental value. A user will have to consciously check what the function expects and prepare the input accordingly.
+防御性编程从静态类型开始。如果创建一个函数来处理自定义类型作为参数，必须确保没有人会用一些意外的值来使用它。用户必须有意识地检查函数的期望并准备相应的输入。
 
-In C++, we can also leverage type-safety features when we're writing template code. When we're creating a container for our customers' reviews, we could accept a list of any type and copy from it. To get nicer errors and well-crafted checks, we could write the following:
+在C++中，可以在编写模板代码时利用类型安全特性。当为客户的评论创建一个容器时，可以接受任何类型的列表，并从中复制。为了得到更好的错误和精心设计的检查，可以这样做:
 
 \begin{lstlisting}[style=styleCXX]
 class CustomerReviewStore : public i_customer_review_store {
@@ -32,7 +32,7 @@ private:
 };
 \end{lstlisting}
 
-The explicit keyword protects us from unwanted implicit casts. By specifying that our input parameter satisfies the range concept, we ensure that we're only going to compile with a valid container. Thanks to using concepts, we can get clearer error messages from our defense against invalid use. Using static\_assert in our code is also a great defensive measure as it allows us to provide a nice error message if needed. Our is\_range\_of\_reviews check could be implemented as follows:
+\texttt{explicit}关键字保护不需要隐式类型转换。通过指定输入参数满足范围概念，可以确保只使用有效的容器进行编译。由于使用了概念，可以从对无效使用的防御中获得更清晰的错误消息。在代码中使用\texttt{static\_assert}也是一个很好的防御措施，因为它允许在需要的时候提供错误消息。\texttt{is\_range\_of\_reviews}的检查可以这样实现:
 
 \begin{lstlisting}[style=styleCXX]
 template <typename T>
@@ -40,9 +40,9 @@ template <typename T>
 		std::is_same_v<std::ranges::range_value_t<T>, review>;
 \end{lstlisting}
 
-This way, we ensure that the range we got actually contains reviews of the type we desire.
+通过这种方式，可以确保获得的范围包含合适类型的评论。
 
-Static typing will not prevent invalid runtime values from being passed to the function. That's why the next form of defensive programming is checking preconditions. This way, your code will fail as soon as the first sign of a problem arises, which is always better than returning an invalid value that propagates to other parts of the system. Until we have contracts in C++, we can use the GSL library we mentioned in earlier chapters to check the pre- and post-conditions of our code:
+静态类型不会在运行时阻止无效的值传递给函数。这就是为什么防御型编程的下一种形式是检查的前提条件。这样，若有出现问题的迹象，代码就会失败，这比返回一个传播到系统其他部分的无效值要好得多。在C++中有契约之前，可以使用前面章节提到的GSL库来检查代码的前置和后置条件:
 
 \begin{lstlisting}[style=styleCXX]
 void post_review(review review) final {
@@ -54,15 +54,15 @@ void post_review(review review) final {
 }
 \end{lstlisting}
 
-Here, by using the Expects macro, we're checking that our incoming review actually has the IDs of the merchant and reviewer set. Aside from the cases where it doesn't, we are also defending ourselves against cases where adding a review to our storage failed when we use the Ensures post-condition macro.
+这里，通过使用Expects宏，检查传入的评论是否确实具有商家和评论人的ID集。除了不会发生的情况外，还可以防止在使用“确保后置条件宏”时，向存储添加复查失败的情况。
 
-When it comes to runtime checks, one of the first things that comes to mind is checking whether one or more attributes is not a nullptr. The best way to guard yourself against this problem is to distinguish nullable resources (those that can take nullptr as value) from non-nullable ones. There's a great tool you can use for this, and is available in the standard library from C++17: std::optional. If you can, use it in all the APIs that you design.
+当谈到运行时检查时，首先想到的事情是检查一个或多个属性是否不是\texttt{nullptr}。避免这个问题的最好方法是区分可空资源(那些可以接受空指针的资源)和非空资源。在C++17的标准库中，std::optional是一个很棒的工具。如果可以，请在设计API时使用它。
 
-\subsubsubsection{8.5.3\hspace{0.2cm}The boring refrain – write your tests first}
+\subsubsubsection{8.5.3\hspace{0.2cm}无聊的重复——先写测试}
 
-This has been said many times, yet many people tend to "forget" this rule. When you actually write your tests, the first thing you must do is reduce the risk of creating classes that are hard to test. You start with API usage and need to bend the implementation to best serve the API. This way, you usually end up with APIs that are both more pleasant to use and easier to test. When you're implementing test-driven development (TDD) or writing tests before code, you'll also end up implementing dependency injection, which means your classes can be more loosely coupled.
+这句话已经重复过很多次了，但是很多人会“忘记”。当实际编写测试时，必须做的第一件事是减少创建难以测试的类的风险。从API使用开始，需要调整实现以最佳地服务于API。这样，就会得到更易于使用和测试的API。当在实现测试驱动开发(TDD)或在编写代码之前编写测试时，还可以将最终实现的依赖进行注入，这意味着可以创建更松散地耦合类。
 
-Doing this the other way around (writing your classes first and only then adding unit tests to them) may mean that you up with code that is easier to write but harder to test. And when testing gets harder, you may feel the temptation to skip it.
+用另一种方法(先编写类，然后再向类添加单元测试)可能意味着您编写的代码更容易编写，但更难以测试。当测试变得困难时，就会有跳过它的冲动。
 
 
 
