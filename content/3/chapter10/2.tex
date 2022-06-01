@@ -1,81 +1,81 @@
 
-In this chapter, we provide information on how to check your code, your dependencies, and your environment for potential threats. Keep in mind, though, that following every step outlined within this chapter won't necessarily protect you against all possible problems. Our aim is to show you some possible dangers and the ways to deal with them. Given this, you should always be conscious of the security of your system and make audits a routine event.
+本章中，提供了如何检查代码、依赖和环境的潜在威胁的信息。但请记住，遵循本章中列出的每一步并不一定能避免所有问题。我们的目的是展示一些可能的危险，以及应对的方法。因此，应该时刻注意系统的安全性，并将审计作为常规事件。
 
-Before the internet became ubiquitous, software authors weren't too concerned about the security of their designs. After all, if the user presented malformed data, the user could crash their own computer at most. In order to use software vulnerabilities to access protected data, the attacker had to obtain physical access to the machines holding the data.
+在互联网普及之前，软件作者并不太关心设计的安全性。毕竟，如果用户提供了错误的数据，最多只会让自己的机器崩溃。为了利用软件漏洞访问受保护的数据，攻击者必须获得对保存数据机器的物理访问权。
 
-Even in software that was designed to be used within networks, security was often an afterthought. Take the Hypertext Transfer Protocol (HTTP) as an example. Even though it allows the password protection of some assets, all of the data is transferred in plain text. This means everyone on the same network can eavesdrop on the data being transferred.
+即使在设计用于网络内部的软件中，安全问题也常常事后才考虑。以HTTP协议为例，尽管它允许对某些资产进行密码保护，但所有数据都以明文传输，这意味着在同一网络上的每个人都可以窃听正在传输的数据。
 
-Today, we should embrace security right from the first stages of design and keep it in mind at every stage of software development, operations, and maintenance. Most of the software we produce every day is meant to, in one way or another, connect with other existing systems.
+现在，我们应该从设计的第一阶段就拥抱安全性，并在软件开发、操作和维护的每一个阶段都要牢记安全性。我们每天生产的大多数软件都是为了以某种方式与其他现有系统连接。
 
-By omitting security measures, we open up not only ourselves but also our partners to potential attacks, data leaks, and, eventually, lawsuits. Keep in mind that failure to protect personal data can result in a fine of several million US dollars.
+由于忽略了安全措施，不仅让自己，也让合作伙伴面临潜在的攻击、数据泄露，并最终导致对簿公堂。请记住，未能保护个人数据可能会导致数百万美元的罚款。
 
-\subsubsubsection{10.1.1\hspace{0.2cm}Security-conscious design}
+\subsubsubsection{10.1.1\hspace{0.2cm}安全设计}
 
-How can we design an architecture for security? The best way to do this is to think like a potential attacker. There are many ways in which you can break a box open but usually, you will look for the cracks where different elements connect. (In the case of a box, this may be between the lid and the bottom of the box.)
+何设计安全架构？最好的方法是像攻击者一样思考。有很多方法可以打破一个盒子，但会从不同角度寻找元素之间的缝隙。(对于盒子来说，这可能是在盖子和盒子底部之间。)
 
-In software architecture, connections between elements are called interfaces. Since their main role is to interact with the external world, they are the most vulnerable part of the entire system. Making sure your interfaces are protected, intuitive, and robust will solve the most obvious ways in which your software can be broken.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Making interfaces easy to use and hard to misuse}
-
-To design interfaces in a way that would be both easy to use and hard to misuse, consider the following exercise. Imagine you are a customer of your interface. You want to implement an e-commerce store that uses your payment gateway, or maybe you want to implement a VR application that connects with the Customer API of the example system we've used throughout this book.
-
-As a general rule regarding interface design, avoid the following traits:
-
-\begin{itemize}
-\item 
-Too many parameters passed to the function/method
-
-\item 
-Ambiguous names of parameters
-
-\item 
-Using output parameters
-
-\item 
-Parameters depending on other parameters
-\end{itemize}
-
-Why are these traits considered problematic?
-
-\begin{itemize}
-\item 
-The first one makes it hard to memorize not only the meaning but also the order of the parameters. This can lead to errors in usage, which, in turn, may lead to crashes and security issues.
-
-\item 
-The second trait has similar consequences to the first one. By making it less intuitive to use your interface, you make it easier for the user to make mistakes.
-
-\item 
-The third trait is a variant of the second one but with an added twist. Not only does the user have to remember which parameters are input and which are output, but it is also necessary for the user to remember how the output should be treated. Who manages the creation and deletion of the resources? How is this achieved? What is the memory management model behind it?
-
-With modern C++, it's easier than ever to return a value that contains all of the necessary data. With pairs, tuples, and vectors, there is no excuse to use the output parameters. Besides all of this, returning the value helps embrace the practice of not modifying the state of an object. This, in turn, reduces concurrency-related problems.
-
-\item 
-Finally, the last trait introduces unnecessary cognitive load, which, as in the previous examples, can result in mistakes and eventually failures. Such code is also harder to test and maintain as each change introduced has to take into account all the possible combinations already available. Failure to properly handle any combination is a potential threat to the system.
-\end{itemize}
-
-The preceding rules apply to the external part of the interfaces. You should also apply similar measures to the internal part by validating the inputs, making sure the values are correct and sensible and preventing unwanted use of the services the interface provides.
+软件体系结构中，元素之间的连接称为接口。因为他们的主要任务是与外部互动，所以他们是整个系统中最脆弱的部分。确保接口是受保护的、直观的和健壮的，这将解决软件容易破坏的问题。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Enabling automatic resource management}
+\textbf{使界面易于使用，不易误用}
 
-System instability may also result from memory leaks, data races, and deadlocks. All of these symptoms are manifestations of poor resource management. Even though resource management is a hard topic, there is a mechanism that can help you reduce the number of problems. One such mechanism is automatic resource management.
+要以一种既易于使用，又不易误用的方式设计接口，请考虑以下练习。假设有一个界面的客户，想实现一个使用支付网关的电子商务商店，或者想实现一个VR应用程序，连接到本书示例系统的Customer API。
 
-In this context, a resource is something you gain access to via the operating system and you have to make sure you use it correctly. This may mean using dynamically allocated memory, open files, sockets, processes, or threads. All of these require specific actions to be taken when you acquire them and when you release them. Some of them also require specific actions during their lifetime. Failure to release such resources at the right time leads to leaks. Since the resources are usually finite, in the long run, leaks will turn to unexpected behavior when no new resources can be created. 
+作为界面设计的一般规则，应避免以下设计:
 
-Resource management is so important in C++ because, unlike many other high-level languages, there is no garbage collection in C++ and the software developers are responsible for the life cycle of the resources. Understanding this life cycle helps create secure and stable systems.
+\begin{itemize}
+\item 
+传递给函数/方法的参数太多
 
-The most common idiom of resource management is Resource Acquisition Is Initialization (RAII). Although it originated in C++, it has also been used in other languages, such as Vala and Rust. This idiom uses the object's constructor and destructor to allocate and free up resources, respectively. This way, we can guarantee that the resource in use will be properly freed when the object that holds it goes out of scope.
+\item 
+参数名称不明确
 
-Some examples of using this idiom in the standard library are the std::unique\_ptr and std::shared\_ptr smart pointer types. Other examples include mutexes – std::lock\_guard, std::unique\_lock, and std:shared\_lock – or files – std::ifstream and std::ofstream.
+\item 
+使用输出参数
 
-The Guidelines Support Library (GSL), which we'll discuss at length shortly, also implements a particularly useful guideline for automated resource management. By using the gsl::finally() function in our code, we create a gsl::final\_action() object with some code attached to it. This code will be executed when the object's destructor is called. This means the code will be executed both upon a successful return from the function as well as when the stack unwinding happens during an exception.
+\item 
+参数依赖于其他参数
+\end{itemize}
 
-This approach shouldn't be used too often as it is generally a better idea to design your classes with RAII in mind. But if you're interfacing with a third-party module and you want to ensure the safety of your wrapper, finally() can help you get there.
+为什么这些是有问题的呢？
 
-As an example, consider that we have a payment operator that allows only a single concurrent login per account. If we don't want to block the user from making future payments, we should always log out as soon as we finish processing the transaction. This is not a problem when we are on a happy path and everything goes according to our design. But in the event of an exception, we also want to be safe and release the resource. Here's how we could do it using gsl::finally():
+\begin{itemize}
+\item 
+第一个，不仅很难记住，而且很难记住参数的顺序。这可能会导致使用上的错误，而错误又可能导致崩溃和安全问题。
+
+\item 
+第二个，与第一个有着相似的结果。通过减少使用界面的直觉性，用户更容易犯错误。
+
+\item 
+第三个，是第二个的变体。用户不仅记住哪些参数是输入的，哪些是输出的，而且还需要记住应该如何处理输出。谁管理资源的创建和删除？这是如何实现的？它背后的内存管理模型是什么？
+
+现代C++中，返回包含所有必要数据的值，比以往要容易。对于pair、tuple和vector，没有理由使用输出参数。除此之外，返回值还有助于接受不修改对象状态的做法，这反过来可以减少与并发相关的问题。
+
+\item 
+最后，最后一个引入了不必要的认知负荷，就像前面的例子一样，这会导致错误和最终的失败。这样的代码也更难测试和维护，因为引入的每个更改都必须考虑到所有可能的组合。不能正确处理的组合，都是对系统的威胁。
+\end{itemize}
+
+上述规则适用于对外接口分，还应该有对内部接口应用类似的方式。方法是验证输入，确保值是正确和合理的，并防止不必要地使用接口提供的服务。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{启用资源自动管理}
+
+内存泄漏、数据竞争和死锁也可能导致系统不稳定，这些症状都是资源管理不善的表现。尽管资源管理是一个令人头痛的话题，但有一种机制可以减少这些问题的数量。其中一种机制是自动资源管理。
+
+这种情况下，资源可以通过操作系统访问，必须确保正确地使用它。这意味着使用动态分配的内存、打开文件、套接字、进程或线程，所有这些都需要在获取和释放时采取特定的行动，其中一些还需要在其生命周期中进行特定的操作。如果不能在正确的时间释放这些资源，就会导致泄漏。由于资源是有限的，从长远来看，当无法创建新资源时，泄漏将成为意外行为。 
+
+资源管理在C++中是为什么如此重要？因为与许多其他高级语言不同，C++中没有垃圾收集机制，软件开发人员负责资源的生命周期。了解这个生命周期有助于创建安全和稳定的系统。
+
+资源管理最常见的习惯用法是资源获取即初始化(RAII)。它起源于C++，也用于其他语言，如Vala和Rust。这种习惯用法使用对象的构造函数和析构函数分别分配和释放资源。通过这种方式，可以保证当保存资源的对象超出作用域时，使用的资源将释放。
+
+标准库中这种用法的一些例子是\texttt{std::unique\_ptr}和\texttt{std::shared\_ptr}智能指针类型。其他的例子包括互斥对象——\texttt{std::lock\_guard}，\texttt{std::unique\_lock}和\texttt{std:shared\_lock}，或者文件——\texttt{std::ifstream}和\texttt{std::ofstream}。
+
+稍后将详细讨论的指南支持库(GSL)，其也实现了一个用于自动化资源管理的指南。通过在代码中使用\texttt{gsl::finally()}，创建了一个\texttt{gsl::final\_action()}对象，并添加了一些在调用对象的析构函数时执行的代码。这意味着该代码将在函数成功返回时，以及在异常期间堆栈展开时执行。
+
+这种方法不应该经常使用，因为在设计类时考虑到RAII通常是一个更好的主意。但是，如果您正在与第三方模块进行接口，并且希望确保包装器的安全性，finally()可以帮助您实现这一点。
+
+假设有一个支付运营商，只允许每个帐户同时登录一次。如果不想阻止用户进行未来的支付，应该在完成交易处理后立即注销。当一切都按照我们的设计进行时，不会有任何不愉快。但在发生异常的情况下，也希望安全并释放资源。下面是使用\texttt{gsl::finally()}实现的方法:
 
 \begin{lstlisting}[style=styleCXX]
 TransactionStatus processTransaction(AccountName account, ServiceToken
@@ -90,17 +90,17 @@ Amount amount)
 }
 \end{lstlisting}
 
-Regardless of what happens during the call to payment::process(), we can at least guarantee that we log the user out as soon as we go out of processTransaction()'s scope.
+不管在调用\texttt{payment::process()}期间发生了什么，至少可以保证，当超出了\texttt{processTransaction()}的作用域，用户就会注销。
 
-In short, using RAII makes you think more about the resource management during the class design phase while you have full control of the code and think less about when you (or other parties) use the interface when your intentions may no longer be as clear.
+简而言之，使用RAII会让类设计阶段更多地考虑资源管理，同时可以完全控制代码。而当意图不清晰时，可能会较少地考虑何时使用接口。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Drawbacks of concurrency and how to deal with it}
+\textbf{并发性的缺点}
 
-While concurrency improves performance and resource utilization, it also makes your code much harder to design and debug. This is because, unlike in a single-threaded flow, the timing of operations cannot be determined upfront. In single-threaded code, you either write to the resource or read from it, but you always know the order of the operations and can, therefore, predict the state of the object.
+虽然并发性提高了性能和资源利用率，但它也使代码更难设计和调试。因为与单线程流不同，操作的时间不能提前确定。在单线程代码中，可以向资源写入或从资源读取，但总是知道操作的顺序，因此可以预测对象的状态。
 
-With concurrency, several threads or processes can be either reading from an object or modifying it at the same time. If the modifications aren't atomic, we can reach one of the variants of the common update problem. Consider the following code:
+使用并发性，多个线程或进程可以同时从一个对象中读取或修改。如果修改不是原子的，就会遇到问题。看下下面的代码:
 
 \begin{lstlisting}[style=styleCXX]
 TransactionStatus chargeTheAccount(AccountNumber acountNumber, Amount
@@ -116,30 +116,30 @@ amount)
 }
 \end{lstlisting}
 
-When calling the chargeTheAccount function from a non-concurrent code, everything will end up well. Our program will check the account balance and charge it if possible. The concurrent execution, however, can lead to a negative balance. This is because two threads can one after another call getAccountBalance(), which will return the same amount, such as 20. After performing that call, both threads check whether the current balance is higher than the available amount. Finally, after the check, they modify the account balance. Supposing both transactions are for the amount of 10, each thread will set the balance to be 20 – 10 = 10. After both operations, the account has a balance of 10, even though it should be 0!
+当从非并发调用\texttt{chargeTheAccount}函数时，一切都会结束。如果可能的话，程序会检查账户余额并收取费用。然而，并发执行可能导致负余额。这是因为两个线程可以一个接一个地调用\texttt{getAccountBalance()}，并返回相同的数量，比如20。执行该后，两个线程都检查当前余额是否高于可用金额。检查后，再修改帐户余额。假设两个事务的金额都是10，每个线程将设置余额为20 - 10 = 10。在两次操作后，该帐户的余额为10，但它会是0!
 
-To mitigate a similar class of problems, we can use solutions such as mutexes and critical sections, atomic operations provided by CPU, or concurrency-safe data structures.
+为了缓解类似的问题，可以使用互斥锁和临界区、CPU提供的原子操作或并发安全的数据结构等解决方案。
 
-Mutexes, critical sections, and other similar concurrency design patterns prevent more than one thread from modifying (or reading) the data. Even though they are useful when designing concurrent applications, there is a trade-off associated with them. They effectively make parts of your code single-threaded. This is because code guarded by mutexes allows only a single thread to execute it; all of the others have to wait until the mutex is released. And since we introduce waiting, we can make our code less performant even though our original aim was to make it more performant.
+互斥锁、临界区和其他类似的并发设计模式防止多个线程修改(或读取)数据。尽管设计并发应用程序时很有用，但与其相关的是一种权衡。因为互斥锁保护的代码只允许单个线程执行它，所以可以使部分代码成为单线程的。其他所有的线程都必须等待，直到释放互斥锁。由于引入了等待，会降低代码的性能，但我们使用并发最初的目标是提高性能。
 
-Atomic operations mean using a single CPU instruction to get the desired effect. The term can mean any high-level operation that transforms into a single CPU instruction. They are particularly interesting when that single instruction achieves more than would be normally possible. For example, compare-and-swap (CAS) is an instruction that compares the memory location with a given value and modifies the contents of this location to the new value only if the comparison proved successful. Since C++11, there's a <std::atomic> header available that contains several atomic data types and operations. CAS, for instance, is implemented as a compare\_and\_exchange\_* set of functions.
+原子操作意味着使用单个CPU指令来获得所需的效果，这个术语可以指任何转换为单个CPU指令的高级操作。当单个指令实现的功能超过正常情况下可能实现的功能时，就特别有趣。例如，compare-and-swap(CAS)是一条指令，它将内存位置与给定值进行比较，只有当比较成功时才将该位置的内容修改为新的值。自C++11起，有\texttt{<std::atomic>}头文件可用，其包含几个原子数据类型和操作。例如，CAS可以实现为一个\texttt{compare\_and\_exchange\_*}函数集。
 
-Finally, concurrency-safe data structures (also known as concurrent data structures) provide safe abstractions for data structures that would otherwise require some sort of synchronization. For example, the Boost.Lockfree (https://www.boost.org/doc/libs/1\_66\_0/doc/html/lockfree.html) library provides concurrent queues and stacks for use with multiple producers and multiple consumers. libcds (https://github.com/khizmax/libcds) also offers ordered lists, sets, and maps, but it hasn't been updated in a few years as of the time of writing this book.
+最后，并发安全的数据结构(也称为并发数据结构)为需要某种同步的数据结构提供了安全的抽象。例如，Boost。Lockfree(https://www.boost.org/doc/libs/1\_66\_0/doc/html/lockfree.html)库提供了用于多个生产者和多个消费者的并发队列和栈。 libcds(https://github.com/khizmax/libcds)还提供了有序list、set和map，但在本书写作时，它已经几年没有更新了。
 
-Useful rules to keep in mind when designing concurrent processing are as follows:
+在设计并发处理时要记住一些有用的规则:
 
 \begin{itemize}
 \item 
-Consider whether you need concurrency in the first place.
+考虑是否需要并发。
 
 \item 
-Pass data by value rather than by pointer or reference. This prevents modifications of the value when other threads are reading it.
+通过值传递数据，而不是通过指针或引用。这可以防止在其他线程读取该值时修改该值。
 
 \item 
-If the size of the data makes it impractical to share by value, use shared\_ptr. This way, it's easier to avoid resource leaks.
+如果数据的大小无法按值共享，请使用\texttt{shared\_ptr}。这样，可以避免资源泄漏。
 \end{itemize}
 
-\subsubsubsection{10.1.2\hspace{0.2cm}Secure coding, the guidelines, and GSL}
+\subsubsubsection{10.1.2\hspace{0.2cm}安全编码指南和GSL}
 
 The Standard C++ Foundation released a set of guidelines to document the best practices for building C++ systems. It is a Markdown document released on GitHub under https://github.com/isocpp/CppCoreGuidelines. It is an evolving document without a release schedule (unlike the C++ standard itself). The guidelines are aimed at modern C++, which basically means code bases that implement at least C++11 features.
 
@@ -151,7 +151,7 @@ To ease the use of these rules in various code bases, Microsoft released the Gui
 
 What's also interesting about the library is the fact that it uses CMake for building, Travis for continuous integration, and Catch for unit testing. It is, therefore, a good example of the topics we've covered in Chapter 7, Building and Packaging, and Chapter 8, Writing Testable Code, and Chapter 9, Continuous Integration and Continuous Deployment.
 
-\subsubsubsection{10.1.3\hspace{0.2cm}Defensive coding, validating everything}
+\subsubsubsection{10.1.3\hspace{0.2cm}防御性编码，验证一切}
 
 In a previous chapter on testability, we mentioned the method of defensive programming. Even though this method is not strictly a security feature, it happens to help with creating a robust interface. Such interfaces, in turn, increase the overall security of your system.
 
