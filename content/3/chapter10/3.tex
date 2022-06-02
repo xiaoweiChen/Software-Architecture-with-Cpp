@@ -13,7 +13,7 @@
 
 \subsubsubsection{10.2.1\hspace{0.2cm}公共缺陷检索}
 
-要检查软件中已知的安全问题，首先要查看\ur{https://cve.mitre.org/}上的常见漏洞和披露(Common vulnerability and exposed, CVE)列表。该名单由几个名为CVE编号机构(CNAs)的机构不断更新。这些机构包括供应商和项目、漏洞研究人员、国家和行业CERT,以及漏洞奖励计划。
+要检查软件中已知的安全问题，首先要查看\url{https://cve.mitre.org/}上的常见漏洞和披露(Common vulnerability and exposed, CVE)列表。该名单由几个名为CVE编号机构(CNAs)的机构不断更新。这些机构包括供应商和项目、漏洞研究人员、国家和行业CERT,以及漏洞奖励计划。
 
 该网站还提供了一个搜索引擎，可以使用几种方法来了解漏洞:
 
@@ -32,7 +32,7 @@
 
 \subsubsubsection{10.2.2\hspace{0.2cm}自动扫描}
 
-有一些工具可以帮助您检查依赖项列表。OWASP Dependency-Check(\ur{https://www.owasp.org/index.php/OWASP\_Dependency\_Check})就是这样一个工具。虽然官方支持Java和.NET，但它对Python、Ruby、Node.js和C++(当与CMake或autoconf一起使用时)有实验性的支持。除了作为一个独立的工具，它还集成了持续集成/持续部署(CI/CD)软件，如Jenkins、SonarQube和CircleCI。
+有一些工具可以帮助您检查依赖项列表。OWASP Dependency-Check(\url{https://www.owasp.org/index.php/OWASP\_Dependency\_Check})就是这样一个工具。虽然官方支持Java和.NET，但它对Python、Ruby、Node.js和C++(当与CMake或autoconf一起使用时)有实验性的支持。除了作为一个独立的工具，它还集成了持续集成/持续部署(CI/CD)软件，如Jenkins、SonarQube和CircleCI。
 
 另一个允许检查已知漏洞的依赖关系的工具是Snyk,这是一个具有多个级别支持的商业产品。它还做了比OWASP依赖检查更多的事情，因为Snyk还可以检查容器映像和许可证遵从性问题，还提供了更多与第三方解决方案的集成。
 

@@ -1,56 +1,56 @@
 
 
-To effectively improve the performance of your code, you must start by measuring how it performs. Without knowing where the actual bottlenecks are, you will end up optimizing the wrong places, losing time, and getting surprised and frustrated that your hard work gave little to no gains. In this section, we'll show how to properly measure performance using benchmarks, how to successfully profile your code, and how to gain insights into performance in distributed systems.
+为了有效地改进代码的性能，必须从测量其性能开始。如果不知道真正的瓶颈在哪里，将最终优化错误的地方，损失时间，并对努力工作几乎没有收获感到惊讶和沮丧。本节中，将展示如何正确地使用基准测试来度量性能，如何成功地分析代码，以及深入了解分布式系统中的性能。
 
-\subsubsubsection{11.2.1\hspace{0.2cm}Performing accurate and meaningful measurementsg}
+\subsubsubsection{11.2.1\hspace{0.2cm}进行准确且有意义的测量}
 
-For accurate and repeatable measurements, you might also want to put your machine into performance mode instead of the usual default power-saving one. If you require low  latency from your system, you might want to disable power saving permanently on both the machines you benchmark on and in your production environment. Many times this may mean going into BIOS and configuring your server properly. Note that this may not be possible if you use a public cloud provider. If you have root/admin permissions on your machine, the OS can often steer some of the settings too. For instance, you can force your CPU to run with its maximum frequency on a Linux system by running the following:
+为了进行精确和可重复的测量，可能还希望将机器设置为性能模式，而不是通常的默认省电模式。如果需要较低的系统延迟，可能需要在进行基准测试的机器和生产环境中永久禁用节能功能。很多时候，这可能意味着进入BIOS并正确配置服务器。注意，如果使用公共云提供商，这样的操作是不可能的。如果有root/admin权限，操作系统通常也可以控制一些设置。例如，在Linux系统上，可以通过执行以下命令强制CPU以其最高频率运行:
 
 \begin{tcblisting}{commandshell={}}
 sudo cpupower frequency-set --governor performance
 \end{tcblisting}
 
-Moreover, to obtain meaningful results, you might want to perform measurements on a system that as closely resembles your production environment as possible. Aside from configuration, aspects such as the different speeds of RAM, the number of CPU caches, and the microarchitecture of your CPUs can also skew your results and lead you to incorrect conclusions. The same goes for the hard drive setup and even the network topology and hardware used. The software you build on also plays a crucial role: from the firmware used, through the OS and kernel, all the way up the software stack to your dependencies. It's best to have a second environment that's identical to your production one and governed using the same tools and scripts.
+此外，为了获得有意义的结果，可能希望在与生产环境尽可能接近的系统上执行测量。除了配置之外，RAM的不同速度、CPU缓存的数量和CPU的微架构等方面也会影响结果，导致错误的结论。对于硬盘设置，甚至网络拓扑结构和使用的硬件也是如此。构建的软件也扮演着至关重要的角色:从使用的固件，通过操作系统和内核，一路向上的软件堆会栈到依赖。最好有第二个与生产环境相同的环境，并使用相同的工具和脚本进行治理。
 
-Now that we have a solid environment for taking measurements, let's see what we can actually measure.
+现在有了测量的环境，看看能测试到什么。
 
-\subsubsubsection{11.2.2\hspace{0.2cm}Leveraging different types of measuring tools}
+\subsubsubsection{11.2.2\hspace{0.2cm}利用不同类型的测量工具}
 
-There are several ways to measure performance, each focusing on a different scope. Let's go through them one by one.
+有几种方法可以测量性能，每种方法关注不同的范围。
 
-Benchmarks can be used to time the speed of your system in a pre-made test. Usually, they result in either a time to finish or another performance metric such as orders processed per second. There are several types of benchmarks:
+基准测试可以用于在制作的测试中计时系统的速度。通常，会测试一个完成时间或另一个性能指标(如每秒处理的订单)。有几种基准:
 
 \begin{itemize}
 \item 
-Microbenchmarks, which you can use to measure the execution of a small code fragment. We'll cover them in the next section.
+微基准测试，可以使用它来测量小代码片段的执行。将在下一节中介绍它们。
 
 \item 
-Simulations, which are synthetic tests on a larger scale with artificial data. They can be useful if you don't have access to the target data or your target hardware. For instance, when you are planning to check the performance of hardware that you're working on, but it doesn't exist yet, or when you plan to handle incoming traffic, but can only assume how the traffic will look.
+模拟是用人工数据在更大范围内进行的合成测试。如果无法访问目标数据或目标硬件，这种方式就可能很有用。例如，当计划检查正在工作的硬件的性能，但它还不存在，或者当计划处理传入的通信流，但只能假设通信流的外观。
 
 \item 
-Replays, which can be a very accurate way of measuring performance under the real-life workload. The idea is to record all the requests or workloads coming into the production system, often with timestamps. Such dumps can then later be "replayed" into the benchmarked system, respecting the time differences between them, to check how it performs. Such benchmarks can be great to see how potential changes to code or the environment can influence the latency and throughput of your system.
+回放，这是在现实工作负载下测量性能的一种非常准确的方法。其思想是记录进入生产系统的所有请求或工作负载，通常带有时间戳。然后可以在基准测试系统中“重播”这些转储，并考虑到它们之间的时间差异，检查它的执行情况。这样的基准测试可以很好地了解代码或环境的变化对系统延迟和吞吐量的影响。
 
 \item 
-Industry-standard, which is a good way to see how our product performs compared to its competitors. Examples of such benchmarks include SuperPi for CPUs, 3D Mark for graphic cards, and ResNet-50 for artificial intelligence processors.
+行业标准，这是一个很好的方式来了解我们的产品如何与其竞争对手的相比。这类基准测试包括用于CPU的SuperPi，用于显卡的3D Mark，以及用于人工智能处理器的ResNet-50。
 \end{itemize}
 
-Aside from benchmarking, another type of tool that is invaluable when it comes to measuring performance is profilers. Instead of just giving you overall performance metrics, profilers allow you to examine what your code is doing and look for bottlenecks. They're useful for catching unexpected things that slow your system down. We'll cover them in more detail later in this chapter.
+除了基准测试之外，另一种用于测量性能的工具是分析器。分析器不只提供总体性能指标，并允许检查代码正在做什么并寻找瓶颈。对于捕获使系统变慢的意外事件非常有用。将在本章后面更详细地介绍它们。
 
-The last way to grasp your system's performance is tracing. Tracing is essentially a way to log your system's behavior during execution. By monitoring how long it takes for a request to complete various steps of processing (such as being handled by different types of microservices), you can gain insight into what parts of your system need to improve their performance, or how well your system deals with different kinds of requests: either different types or those that get accepted or rejected. We'll cover tracing later in this chapter – right after profiling.
+掌握系统性能的最后一种方法是跟踪，其本质是记录执行期间系统行为的一种方法。通过监视请求完成各种处理步骤所需的时间(例如不同类型的微服务处理)，可以了解系统的哪些部分需要提高性能，或者系统处理不同类型请求的情况:要么是不同的类型，要么是接受或拒绝的类型。将在本章后面讨论跟踪——就在分析之后。
 
-Let's now say a few more words on microbenchmarks.
+现在让我们再来看看微基准测试。
 
-\subsubsubsection{11.2.3\hspace{0.2cm}Using microbenchmarks}
+\subsubsubsection{11.2.3\hspace{0.2cm}使用微基准测试}
 
-Microbenchmarks are used to measure how fast a "micro" fragment of code can perform. If you're wondering how to implement a given functionality or how fast different third-party libraries deal with the same task, then they're the perfect tool for the job. While they're not representative of a realistic environment, they're well suited to perform such small experiments.
+微基准测试用于测量“微”代码片段的执行速度。如果想知道如何实现给定的功能，或者不同的第三方库处理相同任务的速度有多快，那么它们是完成这项工作的最佳工具。虽然它们不能代表现实环境，但非常适合进行这样的小实验。
 
-Let's show how to run such experiments using one of the most commonly used frameworks to create microbenchmarks in C++: Google Benchmark.
+接下来，展示如何使用C++中最常用的创建微基准测试的框架:谷歌基准测试来执行这样的实验。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Setting up Google Benchmark}
+\textbf{设置Google基准测试}
 
-Let's start by introducing the library into our code by using Conan. Put the following in your conanfile.txt:
+通过使用Conan将这个库引入代码中，并在conanfile.txt中添加以下内容:
 
 \begin{tcblisting}{commandshell={}}
 [requires]
@@ -60,25 +60,25 @@ benchmark/1.5.2
 CMakeDeps	
 \end{tcblisting}
 
-We're going to use the CMakeDeps generator as it's the recommended CMake generator in Conan 2.0. It relies on CMake's find\_package feature to use the packages installed by our barbaric dependency manager. To install the dependencies in their release versions, run the following:
+将使用CMakeDeps生成器，因为它是Conan2.0中推荐的CMake生成器。它依赖于CMake的\texttt{find\_package}特性来使用野蛮依赖管理器安装包。要在发布版本中安装依赖关系，请执行以下命令:
 
 \begin{tcblisting}{commandshell={}}
 cd <build_directory>
 conan install <source_directory> --build=missing -s build_type=Release
 \end{tcblisting}
 
-If you're using a custom Conan profile, remember to add it here as well.
+如果使用的是自定义的Conan配置，记得在这里也添加。
 
-Using it from your CMakeLists.txt file is also pretty straightforward, as shown next:
+以CMakeLists.txt形式使用也非常简单，如下所示:
 
 \begin{lstlisting}[style=styleCMake]
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
 find_package(benchmark REQUIRED)
 \end{lstlisting}
 
-First, we add our build directory to CMAKE\_PREFIX\_PATH so that CMake can find the config and/or target files produced by Conan. Next, we just use them to find our dependency.
+首先，将构建目录添加到\texttt{CMAKE\_PREFIX\_PATH}中，这样CMake就可以找到Conan生成的配置和/或目标文件。接下来，只需使用它们来找到我们的依赖即可。
 
-As we're going to create several microbenchmarks, we could use a CMake function to help us with defining them:
+当要创建几个微基准测试时，可以使用CMake函数进行定义:
 
 \begin{lstlisting}[style=styleCMake]
 function(add_benchmark NAME SOURCE)
@@ -88,19 +88,19 @@ function(add_benchmark NAME SOURCE)
 endfunction()
 \end{lstlisting}
 
-The function will be able to create single-translation-unit microbenchmarks, each using C++20 and linked to the Google Benchmark library. Let's now use it to create our first microbenchmark executable:
+该函数将能够创建单转译单元微基准测试，每一个都使用C++20并链接到Google基准测试库。现在使用它来创建第一个微基准可执行文件:
 
 \begin{lstlisting}[style=styleCMake]
 add_benchmark(microbenchmark_1 microbenchmarking/main_1.cpp)
 \end{lstlisting}
 
-Now we're ready to put some code in our source file.
+现在准备在源文件中放入一些代码。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Writing your first microbenchmark}
+\textbf{编写第一个微基准测试}
 
-We'll try to benchmark how much faster a lookup takes when it's done using bisection in a sorted vector as compared to just going through it linearly. Let's start with code that will create the sorted vector:
+我们将测试在排序后的数组中使用二分法进行查找的速度比线性查找快多少。先从创建排序数组的代码开始:
 
 \begin{lstlisting}[style=styleCXX]
 using namespace std::ranges;
@@ -116,14 +116,14 @@ auto make_sorted_vector(std::size_t size) {
 }
 \end{lstlisting}
 
-Our vector will contain size elements with all the numbers from 0 to size - 1 in ascending order. Let's now specify the element we're looking for and the container size:
+数组将包含size个元素，所有的数字从0到size - 1按升序排列。现在指定要查找的元素和容器大小:
 
 \begin{lstlisting}[style=styleCXX]
 constexpr auto MAX_HAYSTACK_SIZE = std::size_t{10'000'000};
 constexpr auto NEEDLE = 2137;
 \end{lstlisting}
 
-As you can see, we'll benchmark how long it takes to find a needle in a haystack. The simple linear search can be implemented as follows:
+如你所见，我们会测量查找需要多长时间。简单的线性搜索可以这样实现:
 
 \begin{lstlisting}[style=styleCXX]
 void linear_search_in_sorted_vector(benchmark::State &state) {
@@ -134,27 +134,27 @@ void linear_search_in_sorted_vector(benchmark::State &state) {
 }
 \end{lstlisting}
 
-Here, we can see the first use of Google Benchmark. Each microbenchmark should accept State as an argument. This special type does the following:
+这里，可以看到谷歌基准测试的首次使用。每个微基准测试都应该接受State作为参数。这种特殊类型的功能如下:
 
 \begin{itemize}
 \item 
-Contains information about the iterations performed and the time spent on the measured computation
+包含有关执行的迭代和测试在计算上花费时间的信息
 
 \item 
-Counts the bytes processed if wanted 
+如果需要，计算处理的字节数
 
 \item 
-Can return other state information, such as the need to run further (through the KeepRunning() member function)
+返回其他状态信息，比如需要进一步运行(通过\texttt{keepprunning()}成员函数)
 
 \item 
-Can be used to pause and resume the timing of an iteration (through the PauseTiming() and ResumeTiming() member functions, respectively)
+可用于暂停和恢复迭代的计时(分别通过\texttt{PauseTiming()}和\texttt{ResumeTiming()}成员函数)
 \end{itemize}
 
-The code in our loop will be measured, making as many iterations as desired, based on the total allowed time to run this particular benchmark. The creation of our haystack is outside the loop and won't be measured. 
+测量循环中的代码，根据运行这个特定基准测试的总允许时间进行所需的多次迭代。我们的数组在循环之外创建，创建耗时不会计入测量。 
 
-Inside the loop, there's a sink helper named DoNotOptimize. Its purpose is to ensure the compiler doesn't get rid of our computations as it can prove that they are irrelevant outside of this scope. In our case, it will mark the result of std::find necessary, so the actual code to find the needle is not optimized away. Using tools such as objdump or sites such as Godbolt and QuickBench allows you to peek if the code you want to run wasn't optimized out. QuickBench has the additional advantage of running your benchmarks in the cloud and sharing their results online.
+循环内部，有一个接收器助手，名为\texttt{DoNotOptimize}，它的目的是确保编译器不会优化掉计算。例子中，将把\texttt{std::find}的结果标记为必要的，因此查找指针的实际代码没有优化掉。使用objdump等工具或Godbolt和QuickBench等网站可以查看想运行的代码是否优化掉。QuickBench还有一个优势，就是在云端运行基准测试，并在线分享测试结果。
 
-Back to our task at hand, we have a microbenchmark for the linear search, so let's now time the binary search in another microbenchmark:
+回到手头上的任务，现在有一个线性搜索的微基准，现在让我们在另一个微基准中计算二分搜索的时间:
 
 \begin{lstlisting}[style=styleCXX]
 void binary_search_in_sorted_vector(benchmark::State &state) {
@@ -165,22 +165,22 @@ void binary_search_in_sorted_vector(benchmark::State &state) {
 }
 \end{lstlisting}
 
-Our new benchmark is pretty similar. It only differs in the function used: lower\_bound will perform a binary search. Note that similar to our base example, we don't even check if the iterator returned points to a valid element in the vector, or to its end. In the case of lower\_bound, we could check if the element under the iterator is actually the one we're looking for.
+新基准非常类似，只在使用的函数上有所不同:\texttt{lower\_bound}将执行二进制搜索。注意，与基础示例类似，我们不检查迭代器返回的是\texttt{vector}中的有效元素，还是\texttt{vector}的末尾。在\texttt{lower\_bound}的情况下，可以检查迭代器指向的元素是否就是要找的元素。
 
-Now that we have the microbenchmark functions, let's create actual benchmarks out of them by adding the following:
+现在有了微基准函数，可以通过添加以下代码来创建实际的基准:
 
 \begin{lstlisting}[style=styleCXX]
 BENCHMARK(binary_search_in_sorted_vector);
 BENCHMARK(linear_search_in_sorted_vector);
 \end{lstlisting}
 
-If the default benchmark settings are okay with you, that's all you need to pass. As the last step, let's add a main() function:
+如果接受默认基准设置，那么只需通过这些设置即可。作为最后一步，添加\texttt{main()}函数:
 
 \begin{lstlisting}[style=styleCXX]
 BENCHMARK_MAIN();
 \end{lstlisting}
 
-Simple as that! Alternatively, you can link our program with benchmark\_main instead. Using Google Benchmark's main() function has the advantage of providing us with some default options. If you compile our benchmark and run it passing -\,-help as a parameter, you'll see the following:
+就这么简单!或者，也可以使用\texttt{benchmark\_main}来链接应用。使用谷歌Benchmark的\texttt{main()}函数的好处是提供了一些默认选项。如果编译基准测试，并将\texttt{-\,-help}作为参数运行它，将看到以下内容:
 
 \begin{tcblisting}{commandshell={}}
 benchmark [--benchmark_list_tests={true|false}]
@@ -197,9 +197,9 @@ benchmark [--benchmark_list_tests={true|false}]
           [--v=<verbosity>]
 \end{tcblisting}
 
-This is a nice set of features to use. For example, when designing experiments, you can use the benchmark\_format switch to get a CSV output for easier plotting on a chart.
+这是一组很好的特性。例如，在设计实验时，可以使用\texttt{benchmark\_format}开关来获得CSV输出，以便在图表上绘图。
 
-Let's now see our benchmark in action by running the compiled executable with no command-line arguments. A possible output from running ./microbenchmark\_1 is as follows:
+现在通过运行编译后的不带命令行参数的可执行文件，来看看基准测试的实际效果。运行\texttt{./microbenchmark\_1}可能的输出如下:
 
 \begin{tcblisting}{commandshell={}}
 2021-02-28T16:19:28+01:00
@@ -213,15 +213,15 @@ linear_search_in_sorted_vector 984 ns 984 ns 746667
 binary_search_in_sorted_vector 18.9 ns 18.6 ns 34461538
 \end{tcblisting}
 
-Starting with some data about the running environment (the time of benchmarking, the executable name, the server's CPUs, and the current load), we get to the results of each benchmark we defined. For each benchmark, we get the average wall time per iteration, the average CPU time per iteration, and the number of iterations that the benchmark harness ran for us. By default, the longer a single iteration, the fewer iterations it will go through. Running more iterations ensures you get more stable results.
+从一些关于运行环境的数据(基准测试的时间、可执行名称、服务器的CPU和当前负载)开始，得到定义的每个基准测试的结果。对于每个基准测试，可以得到每个迭代的平均挂钟时间、每个迭代的平均CPU时间，以及基准测试运行的迭代次数。默认情况下，单个迭代越长，所经过的迭代就越少。运行更多的迭代可以确保您获得更稳定的结果。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Passing arbitrary arguments to a microbenchmark}
+\textbf{向微基准测试传递参数}
 
-If we were to test more ways of dealing with our problem at hand, we could look for a way to reuse the benchmark code and just pass it to the function used to perform the lookup. Google Benchmark has a feature that we could use for that. The framework actually lets us pass any arguments we want to the benchmark by adding them as additional parameters to the function signature.
+如果要测试更多处理手头问题的方法，可以寻找重用基准测试代码的方法，只要将其传递给用于执行查找的函数，就可以使用谷歌基准测试的一个特性。通过将参数作为附加参数添加到函数签名中，该框架实际上可以将任何想要的参数传递给基准测试。
 
-Let's see how a unified signature for our benchmark could look with this feature:
+看看有了这个特性，基准测试的统一签名会是什么样子:
 
 \begin{lstlisting}[style=styleCXX]
 void search_in_sorted_vector(benchmark::State &state, auto finder) {
@@ -232,15 +232,14 @@ void search_in_sorted_vector(benchmark::State &state, auto finder) {
 }
 \end{lstlisting}
 
-You can notice the new finder parameter to the function, which is used in the spot where we previously called either find or lower\_bound. We can now make our two microbenchmarks using a different macro than we did last time:
-
+可以注意到函数的新finder参数，它用于之前调用\texttt{find}或\texttt{lower\_bound}的位置。现在，可以使用与上次不同的宏来进行两个微基准测试:
 
 \begin{lstlisting}[style=styleCXX]
 BENCHMARK_CAPTURE(search_in_sorted_vector, binary, lower_bound);
 BENCHMARK_CAPTURE(search_in_sorted_vector, linear, find);
 \end{lstlisting}
 
-The BENCHMARK\_CAPTURE macro accepts the function, a name suffix, and the arbitrary number of parameters. If we wanted more, we could just pass them here. Our benchmark function could be a regular function or a template – both are supported. Let's now see what we get when running the code:
+\texttt{BENCHMARK\_CAPTURE}宏接受函数、名称后缀和任意数量的参数。如果想要更多，可以把它们传到这里。基准函数可以是常规函数或模板——两者都支持。现在来看看当运行代码时得到了什么:
 
 \begin{tcblisting}{commandshell={}}
 -------------------------------------------------------------------------
@@ -250,15 +249,15 @@ search_in_sorted_vector/binary 19.0 ns 18.5 ns 28000000
 search_in_sorted_vector/linear 959 ns 952 ns 640000
 \end{tcblisting}
 
-As you can see the arguments passed to the functions are not part of the name, but the function name and our suffix are.
+传递给函数的参数不是函数名的一部分，而是函数名和后缀的一部分。
 
-Let's now see how we can further customize our benchmarks.
+现在，我们看看如何进一步定制基准测试。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Passing numeric arguments to a microbenchmark}
+\textbf{向微基准传递数值参数}
 
-A common need when designing experiments like ours is to check it on different sizes of arguments. Such needs can be addressed in Google Benchmark in a number of ways. The simplest is to just add a call to Args() on the object returned by the BENCHMARK macros. This way, we can pass a single set of values to use in a given microbenchmark. To use the passed value, we'd need to change our benchmark function as follows:
+设计像这样的实验时，一个常见的需求是在不同大小的参数上进行检验。在Google基准测试中，可以通过多种方式解决此类需求。最简单的方法是在\texttt{BENCHMARK}宏返回的对象上添加对\texttt{Args()}的调用。这样，就可以传递一组值给相应的微基准中使用。要使用传递的值，需要对基准函数进行如下修改:
 
 \begin{lstlisting}[style=styleCXX]
 void search_in_sorted_vector(benchmark::State &state, auto finder) {
@@ -270,7 +269,7 @@ void search_in_sorted_vector(benchmark::State &state, auto finder) {
 }
 \end{lstlisting}
 
-The call to state.range(0) will read the 0-th argument passed. An arbitrary number can be supported. In our case, it's used to parameterize the haystack size. What if we wanted to pass a range of value sets instead? This way, we could see how changing the size influences the performance more easily. Instead of calling Args, we could call Range on the benchmark:
+对\texttt{state.range(0)}的调用将读取传递的第0个参数，其支持任意数量参数的传递。例子中，用于参数化干数组的大小。如果想传递一个范围的值集呢？这样，就可以更容易地看到更改大小如何影响性能。可以在基准测试中调用\texttt{Range}，而非\texttt{Args}:
 
 \begin{lstlisting}[style=styleCXX]
 constexpr auto MIN_HAYSTACK_SIZE = std::size_t{1'000};
@@ -283,7 +282,7 @@ BENCHMARK_CAPTURE(search_in_sorted_vector, linear, find)
 	->Range(MIN_HAYSTACK_SIZE, MAX_HAYSTACK_SIZE);
 \end{lstlisting}
 
-We specify the range boundaries using a predefined minimum and maximum. We then tell the benchmark harness to create the ranges by multiplying by 10 instead of the default value. When we run such benchmarks, we could get the following results:
+使用预定义的最小值和最大值来指定范围边界。然后，告诉基准测试工具通过乘以10而不是默认值来创建范围。当运行这样的基准时，可以得到如下的结果:
 
 \begin{tcblisting}{commandshell={}}
 -------------------------------------------------------------------------
@@ -301,17 +300,17 @@ search_in_sorted_vector/linear/1000000 1013 ns 1004 ns 746667
 search_in_sorted_vector/linear/10000000 990 ns 1004 ns 746667
 \end{tcblisting}
 
-When analyzing those results, you might be wondering why the linear search doesn't show us linear growth. That's because we look for a constant value of the needle that can be spotted at a constant position. If the haystack contains our needle, we need the same number of operations to find it regardless of the haystack size, so the execution time stops growing (but can still be subject to small fluctuations).
+分析这些结果时，可能想知道为什么线性搜索没有显示出线性增长。那是因为我们寻找的是一个恒定值，可以在固定的位置发现。如果数组中包含了指针，那么需要相同数量的操作来找到它，而不管数组的大小，所以执行时间停止增长(但仍然可能受到小波动的影响)。
 
-Why not play with the needle position as well?
+为什么不试试尝试缓缓查找的位置呢？
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{Generating the passed arguments programmatically}
+\textit{以编程方式生成传递参数}
 
-Generating both the haystack sizes and needle positions might be the easiest when done in a simple function. Google Benchmark allows such scenarios, so let's show how they work in practice.
+在简单的函数中生成数组大小和对应值的位置可能很容易。Google基准可以进行这样的操作，所以来展示下在实践这种方式是如何工作的。
 
-Let's first rewrite our benchmark function to use two parameters passed in each iteration:
+首先重写基准函数，在每次迭代中使用两个参数:
 
 \begin{lstlisting}[style=styleCXX]
 void search_in_sorted_vector(benchmark::State &state, auto finder) {
@@ -323,7 +322,7 @@ void search_in_sorted_vector(benchmark::State &state, auto finder) {
 }
 \end{lstlisting}
 
-As you can see, state.range(0) will mark our needle position, while state.range(1) will be the haystack size. This means we need to pass two values each time. Let's create a function that generates them:
+\texttt{state.range(0)}将标记寻找值的位置，而\texttt{state.range(1)}将是数组的大小，这意味着每次需要传递两个值。让我们创建一个生成函数:
 
 \begin{lstlisting}[style=styleCXX]
 void generate_sizes(benchmark::internal::Benchmark *b) {
@@ -337,9 +336,9 @@ void generate_sizes(benchmark::internal::Benchmark *b) {
 }
 \end{lstlisting}
 
-Instead of using Range and RangeMultiplier, we write a loop to generate the haystack sizes, this time increasing them by 100 each time. When it comes to the needles, we use three positions in proportionate positions of the haystack and one that falls outside of it. We call Args on each loop iteration, passing both the generated values.
+没有使用\texttt{Range}和\texttt{rangemulplier}，而是写了一个循环来生成数组，这次每次增加100。说到查找值，在数组的相应位置使用三个位置，还有一个在外面。在每次循环迭代中调用\texttt{Args}，传递两个生成的值。
 
-Now, let's apply our generator function to the benchmarks we define:
+现在，将生成器函数应用于我们定义的基准测试:
 
 \begin{lstlisting}[style=styleCXX]
 BENCHMARK_CAPTURE(search_in_sorted_vector, binary,
@@ -348,7 +347,7 @@ BENCHMARK_CAPTURE(search_in_sorted_vector, linear,
 find)->Apply(generate_sizes);
 \end{lstlisting}
 
-Using such functions makes it easy to pass the same generator to many benchmarks. Possible results of such benchmarks are as follows:
+使用这样的函数，可以很容易地将相同的生成器传递给许多基准测试。这些基准的可能结果如下:
 
 \begin{tcblisting}{commandshell={}}
 -------------------------------------------------------------------------
@@ -365,89 +364,93 @@ search_in_sorted_vector/binary/100001/100000 29.1 ns 29.2 ns 23578947
 // et cetera
 \end{tcblisting}
 
-Now we have a pretty well-defined experiment for performing the searches. As an exercise, run the experiment on your own machine to see the complete results and try to draw some conclusions from the results.
+现在有一个非常明确的实验来执行搜索。作为练习，请在自己的机器上运行这个实验，以查看完整的结果，并尝试从结果中得出一些结论。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Choosing what to microbenchmark and optimize}
+\textbf{选择微基准测试和优化}
 
-Running such experiments can be educative and even addictive. However, keep in mind that microbenchmarks shouldn't be the only type of performance testing in your project. As Donald Knuth famously said:
+进行这样的实验可能具有意义，甚至会让人上瘾。但是，请记住，微基准测试不应该是项目中唯一的性能测试类型。Donald Knuth有句名言:
 
 \begin{center}
 We should forget about small efficiencies, say about 97\% of the time: premature optimization is the root of all evil	
+
+(不成熟的优化是罪恶之源)
 \end{center}
 
-This means that you should microbenchmark only code that matters, especially code on your hot path. Larger benchmarks, along with tracing and profiling, can be used to see where and when to optimize instead of guessing and optimizing prematurely. First, understand how your software executes.
+这意味着应该只对重要的代码进行微基准测试，特别是热路径上的代码。可以使用较大的基准测试，以及跟踪和分析来查看何时何地进行优化，而不是过早地猜测和优化。首先，了解软件是如何执行的。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}There's one more point we want to make regarding the quote above. It doesn't mean you should allow premature pessimization. Poor choice of data structures or algorithms, or even small inefficiencies that spread all your code, can sometimes influence the overall performance of your system. For instance, performing unnecessary dynamic allocations, although it might not look that bad at first, can lead to heap fragmentation over time and cause you serious trouble if your app should run for long periods of time. Overuse of node-based containers can lead to more cache misses too. Long story short, if it's not a big effort to write efficient code instead of less efficient code, go for it.
+\hspace*{0.7cm}关于上面的引用，还有一点想说明，但这并不意味着过早的悲观。糟糕的数据结构或算法选择，甚至分散的所有低效代码，有时会影响系统的整体性能。例如，执行不必要的动态分配，虽然一开始看起来没有那么糟糕，但随着时间的推移，可能会导致堆碎片，如果应用程序要运行很长一段时间，会带来严重的麻烦。过度使用基于节点的容器也会导致更多的缓存失败。长话短说，如果编写高效的代码更容易，那就去写吧。
 \end{tcolorbox}
 
-Let's now learn what to do if your project has spots that need to maintain good performance over time.
+现在，若项目有一些地方需要随着时间的推移保持良好的性能，该做些什么。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Creating performance tests using benchmarks}
+\textbf{创建基准性能测试}
 
-Similar to having unit tests for precise testing and functional tests for larger-scale testing of your code's correctness, you can use microbenchmarks and larger benchmarks to test your code's performance.
+与使用单元测试进行精确测试和使用功能测试进行大规模的代码正确性测试类似，可以使用微基准测试和大型基准测试来测试代码的性能。
 
-If you have tight constraints on the execution time for certain code paths, having a test that ensures the limit is met can be very useful. Even if you don't have such specific constraints, you might be interested in monitoring how the performance changes across code changes. If after a change your code runs slower than before by a certain threshold, the test could be marked as failed.
+如果对某些代码路径的执行时间有严格的限制，那么进行测试以确保满足限制是非常有用的。即使没有这样特定的约束，也可能对监视代码变更时性能的变化感兴趣。如果在更改之后，代码运行速度比以前慢了一个数量级，那么测试可能标记为失败。
 
-Although also a useful tool, remember that such tests are prone to the boiling frog effect: degrading the performance slowly over time can go unnoticed, so be sure to monior the execution times occasionally. When introducing performance tests to your CI, be sure to always run them in the same environment for stable results.
+尽管这也是一种有用的工具，但请记住，这样的测试很容易产生沸腾青蛙效应:随着时间的推移缓慢降低性能可能不会注意到，所以一定要偶尔监控执行时间。向CI引入性能测试时，请确保在相同的环境中运行，以获得稳定的结果。
 
-Let's now discuss the next type of tools in our performance shed.
+现在，讨论下一种性能工具。
 
-\subsubsubsection{11.2.4\hspace{0.2cm}Profiling}
+\subsubsubsection{11.2.4\hspace{0.2cm}分析}
 
-While benchmarks and tracing can give you an overview and specific numbers for a given scope, profilers can help you analyze where those numbers came from. They are an essential tool if you need to gain insight into your performance and improve it.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Choosing the type of profiler to use}
-
-There are two types of profilers available: instrumentation profilers and sampling ones. One of the better-known instrumentation profilers is Callgrind, part of the Valgrind suite. Instrumentation profilers have lots of overhead because they need to, well, instrument your code to see what functions you call and how much each of them takes. This way, the results they produce contain even the smallest functions, but the execution times can be skewed by this overhead. It also has the drawback of not always catching input/output (I/O) slowness and jitters. They slow down the execution, so while they can tell you how often you call a particular function, they won't tell you if the slowness is due to waiting on a disk read to finish.
-
-Due to the flaws of instrumentation profilers, it's usually better to use sampling profilers instead. Two worth mentioning are the open source perf for profiling on Linux systems and Intel's proprietary tool called VTune (free for open source projects). Although they can sometimes miss key events due to the nature of sampling, they should usually give you a much better view of where your code spends time.
-
-If you decide to use perf, you should know that you can either use it by invoking perf stat, which gives you a quick overview of statistics like CPU cache usage, or perf record -g and perf report -g to capture and analyze profiling results.
-
-If you want a solid overview of perf, please watch Chandler Carruth's video, which shows the tool's possibilities and how to use it, or take a look at its tutorial. Both are linked in the Further reading section.
+虽然基准测试和跟踪可以提供一个概述和给定范围的特定数字，但分析器可以分析这些数字的来源。如果需要观察自己的表现并改进它，那它们是必不可少的工具。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Preparing the profiler and processing the results}
+\textbf{选择分析器}
 
-When analyzing profiling results, you may often want to perform some preparation, cleanup, and processing. For instance, if your code mostly spends time spinning around, you might want to filter that out. Before even starting the profiler, be sure to compile or download as many debug symbols as you can, both for your code, your dependencies, even the OS libraries, and kernel. Also, it's essential you disable frame pointer optimizations. On GCC and Clang, you can do so by passing the -fno-omit-frame-pointer flag. It won't affect performance much but will give you much more data about the execution of your code. When it comes to post-processing of the results, when using perf, it's usually a good idea to create flame graphs from the results. Brendan Gregg's tool from the Further reading section is great for that. Flame graphs are a simple and effective tool to see where the execution takes too much time, as the width of each item on the graph corresponds to the resource usage. You can have flame graphs for CPU usage, as well as for resources such as memory usage, allocations, and page faults, or the time spent when the code is not executing such as staying blocked during system calls, on mutexes, I/O operations, and the like. There are also ways to perform diffs on the generated flame graphs.
+有两种类型的分析器:仪表分析器和采样分析器。其中一个较为知名的仪器分析器是Valgrind中的Callgrind。采样分析器的开销很大，因为它们需要插装代码，以查看调用了哪些函数，以及每个函数占用了多少开销。这样，生成的结果甚至包含最小的函数，但是执行时间可能会因这种开销而扭曲。它还有一个缺点是不能总是捕捉输入/输出(I/O)低速和抖动。它们会降低执行速度，因此虽然可以告知调用某个函数的频率，但不会说明，慢是因为要等待磁盘读取完成。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Analyzing the results}
+由于仪表分析器的缺陷，通常更好的方法是使用采样分析器。值得一提的是Linux系统上的开源性能分析和Intel的专有工具VTune(开源项目免费使用)。尽管由于抽样的性质，有时会错过关键事件，但通常可以更好地了解代码花费时间的地方。
 
-Keep in mind that not all performance issues will show up on such graphs and not all can be found using profilers. While with some experience you'll be able to see that you could benefit from setting affinity to your threads or changing which threads execute on specific NUMA nodes, it might not always be that obvious to see that you've forgotten to disable power-saving features or would benefit from enabling or disabling hyper-threading. Information about the hardware you're running on is useful, too. Sometimes you might see the SIMD registers of your CPU being used, but the code still doesn't run at its full speed: you might be using SSE instructions instead of AVX ones, AVX instead of AVX2, or AVX2 instead of AVX512. Knowing what specific instructions your CPU is capable of running can be golden when you analyze the profiling results.
+如果决定使用perf，应该知道可以通过\texttt{perf stat}来使用它，它可以提供像CPU缓存使用情况这样的统计信息的快速概览，或者通过调用\texttt{perf record -g}和\texttt{perf report -g}来捕获和分析分析结果。
 
-Solving performance issues also requires a bit of experience. On the other hand, sometimes experience can lead you to false assumptions. For instance, in many cases, using dynamic polymorphism will hurt your performance; there are cases where it doesn't slow down your code. Before jumping to conclusions, it might be worth profiling the code and gaining knowledge about the various ways a compiler can optimize code and the limits of those techniques. Talking specifically about virtualization, it's often beneficial to mark your classes of virtual member functions as final when you don't want other types to inherit and override them, respectively. This tends to help the compilers in lots of cases.
-
-Compilers can also optimize much better if they "see" what type the object is: if you create a type in scope and call its virtual member function, the compiler should be able to deduce which function should be called. GCC tends to devirtualize better than other compilers. For more information on this, you can refer to Arthur O'Dwyer's blog post from the Further reading section.
-
-As with other types of tools presented in this section, try not to rely only on your profiler. Improvements in profiling results are not a guarantee that your system got faster. A betterlooking profile can still not tell you the whole story. And the better performance of one component doesn't necessarily mean the whole system's performance improved. This is where our last type of tool can come in use.
-
-\subsubsubsection{11.2.5\hspace{0.2cm}Tracing}
-
-The last technique we'll discuss in this section is meant for distributed systems. When looking at the overall system, often deployed in the cloud, profiling your software on one  box won't tell you the whole story. In such a scope, your best bet would be to trace the requests and responses flowing through your system.
-
-Tracing is a way to log the execution of your code. It's often used when a request (and sometimes its response) has to flow through many parts of your system. Usually, such messages are being traced along the route, with timestamps being added at interesting points of execution.
+如果想对perf有一个全面的了解，请观看Chandler Carruth的视频，视频中展示了该工具的各种可能性以及如何使用它，或者看一看它的教程。两者在扩展阅读部分都有链接。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Correlation IDs}
+\textbf{分析器和处理结果}
 
-One common addition to timestamps is correlation IDs. Basically, they're unique identifiers that get assigned to each traced message. Their purpose is to correlate the logs produced by different components of your system (like different microservices) during the processing of the same incoming request and sometimes for the events it caused, too. Such IDs should be passed with the message everywhere it goes, for example, by appending to its HTTP header. Even when the original request is gone, you could add its correlation ID to each of the responses produced.
+分析分析结果时，可能经常想要执行一些准备、清理和处理。若代码大部分时间都在空转，那么可能需要将其过滤掉。启动分析器之前，一定要编译或保留尽可能多的调试符号，包括代码、依赖项、甚至OS库和内核的调试符号。另外，禁用帧指针优化也是必要的。在GCC和Clang上，可以通过\texttt{-fno-omit-frame-pointer}标志来实现这一点。它不会对性能造成太大的影响，但会为您提供更多关于代码执行的数据。当涉及到结果的后期处理时，使用perf时，根据结果创建火焰图通常是一个好主意。Brendan Gregg在扩展阅读部分的工具就不错。火焰图是一种简单而有效的工具，可以查看执行在哪里花费了太多的时间，因为图上每个项目的宽度对应于资源使用情况。可以有CPU使用情况的火焰图，以及内存使用情况、分配和页面故障等资源的火焰图，或者代码不执行时所花费的时间，例如在系统调用期间保持阻塞、互斥锁、I/O操作等。也有方法在生成的火焰图上执行的差异。
 
-By using correlation IDs, you can track how messages for a given request propagate through the system and how long it took for different parts of your system to process it. Often you'll want additional data to be gathered along the way, like the thread that was used to perform the computation, the type, and count of responses produced for a given request, or the names of the machines it went through.
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{分析结果}
 
-Tools like Jaeger and Zipkin (or other OpenTracing alternatives) can help you to add tracing support to your system fast.
+记住，并不是所有的性能问题都会显示在这样的图上，也不是所有的问题都可以使用分析器找到。虽然有一定经验的开发者可以看到，可以通过设置线程的亲和性或更改在特定NUMA节点上执行的线程而获益，但是忘记禁用省电特性或启用或禁用超线程可能并不总是那么明显，关于正在运行的硬件的信息也很有用。有时可能会看到正在使用CPU的SIMD寄存器，但代码仍然不能全速运行:可能使用SSE指令，而不是AVX指令，使用AVX而不是AVX2，或使用AVX2而不是AVX512。在分析分析结果时，了解CPU能够运行哪些特定指令也非常重要。
 
-Let's now tackle a different subject and say a few words about code generation.
+解决性能问题也需要一些经验。另一方面，有时经验会让你产生错误的假设。例如，在许多情况下，使用动态多态性会损害性能。某些情况下，它不会降低代码的速度。在得出结论之前，有必要对代码进行分析，了解编译器优化代码的各种方法以及这些技术的局限性。具体地说到虚拟化，当不想让其他类型分别继承和覆盖虚成员函数的类时，标记为final通常是有益的。这在很多情况下对编译器都有帮助。
+
+如果编译器可以“看到”对象的类型，就可以更好地优化:如果在作用域中创建一个类型并调用它的虚成员函数，编译器应该能够推断应该调用哪个函数。GCC倾向于比其他编译器更好地进行反虚拟化。关于这方面的更多信息，可以参考Arthur O’dwyer在扩展阅读部分的博客文章。
+
+与本节介绍的其他类型的工具一样，不要只依赖于分析器。分析结果的改进并不能保证系统变得更快。再好看的测试报告，也不能说明事情的全部。而且一个部件的性能提高，并不意味着整个系统的性能提高。
+
+接下来，是我们可以使用的最后一种工具。
+
+\subsubsubsection{11.2.5\hspace{0.2cm}跟踪}
+
+本节中我们将讨论的最后一种技术适用于分布式系统。当查看整个系统(通常部署在云中)时，在一台机器上分析软件并不能说明全部情况。在这样的范围内，最好的方法是跟踪流经系统的请求和响应。
+
+跟踪是记录代码执行情况的一种方法。当请求(有时是它的响应)必须流经系统的许多部分时，通常使用它。通常，消息是沿着路线跟踪的，在感兴趣的执行点添加时间戳。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{相关ID}
+
+对时间戳的一个常见添加是相关ID。基本上，是分配给每个跟踪消息的惟一标识符。目的是关联系统中不同组件(如不同的微服务)在处理相同的传入请求期间产生的日志，有时也关联它导致的事件。这样的ID应该随消息传递到任何地方，例如通过附加到其HTTP头。即使原始请求已经消失，也可以将其关联ID添加到生成的每个响应中。
+
+通过使用相关ID，可以跟踪给定请求的消息如何在系统中传播，以及系统的不同部分处理它所花费的时间。通常，需要在整个过程中收集额外的数据，比如用于执行计算的线程、为给定请求产生的响应的类型和数量，或者所经过的机器的名称。
+
+像Jaeger和Zipkin(或其他OpenTracing替代工具)这样的工具可以快速地向系统添加跟踪支持。
+
+下面，让我们讨论另一个话题，从而对生成代码进行讨论。
 
 
 
