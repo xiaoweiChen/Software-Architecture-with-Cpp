@@ -1,46 +1,46 @@
 
-In the early days of computers, all programs were monoliths without any external dependencies. Ever since the dawn of operating systems, any non-trivial software is rarely free from dependencies. Those dependencies can come in two forms: external dependencies and internal ones:
+在计算机的早期，所有的程序都是没有外部依赖的庞然大物。自从操作系统出现以来，重要的软件都很难摆脱依赖。这些依赖可以有两种形式:外部依赖和内部依赖:
 
 \begin{itemize}
 \item 
-External dependencies are those that should be present in the environment that we run our application. Examples can include the aforementioned operating systems, dynamically linked libraries, and other applications (such as a database).
+外部依赖项应该存在于运行应用程序的环境中。示例可以包括前面提到的操作系统、动态链接的库和其他应用程序(例如数据库)。
 
 \item 
-Internal dependencies are modules we want to reuse, so this will usually mean static libraries or header-only libraries.
+内部依赖是想要重用的模块，所以这通常意味着静态库或只包含头文件的库。
 \end{itemize}
 
-Both kinds of dependencies provide potential security risks. As each line of code increases the risk of vulnerability, the more components you have, the higher the chance your system may be susceptible to attack. In the following sections, we'll see how to check whether your software is indeed susceptible to known vulnerabilities.
+这两种依赖关系都提供了潜在的安全风险。随着每一行代码增加漏洞的风险，拥有的组件越多，系统受到攻击的可能性就越高。在下面的部分中，将看到如何检查软件是否确实容易受到已知漏洞的影响。
 
-\subsubsubsection{10.2.1\hspace{0.2cm}Common Vulnerabilities and Exposures}
+\subsubsubsection{10.2.1\hspace{0.2cm}公共缺陷检索}
 
-The first place to check for known security issues within software is the Common Vulnerabilities and Exposures (CVE) list available at https://cve.mitre.org/. The list is constantly updated by several institutions known as CVE Numbering Authorities (CNAs). These institutions include vendors and projects, vulnerability researchers, national and industry CERTs, and bug bounty programs. 
+要检查软件中已知的安全问题，首先要查看\ur{https://cve.mitre.org/}上的常见漏洞和披露(Common vulnerability and exposed, CVE)列表。该名单由几个名为CVE编号机构(CNAs)的机构不断更新。这些机构包括供应商和项目、漏洞研究人员、国家和行业CERT,以及漏洞奖励计划。
 
-The website also presents a search engine. With this, you can use several methods to learn about the vulnerabilities:
+该网站还提供了一个搜索引擎，可以使用几种方法来了解漏洞:
 
 \begin{itemize}
 \item 
-You can enter the vulnerability number. These are prefixed by CVE with examples including CVE-2014-6271, the infamous ShellShock, or CVE-2017-5715, also known as Spectre).
+可以输入漏洞编号。它们的前缀是CVE，示例包括臭名昭著的ShellShock CVE-2014-6271，或CVE-2017-5715，也被称为Spectre。
 
 \item 
-You can enter the vulnerability common name, such as the previously mentioned ShellShock or Spectre.
+可以输入漏洞的通用名称，如前面提到的ShellShock或Spectre。
 
 \item 
-You can enter the name of the software you want to audit, such as Bash or Boost.
+可以输入想要检查软件的名称，例如Bash或Boost。
 \end{itemize}
 
-For each search result, you can see the description as well as a list of references to other bug trackers and related resources. The description usually lists versions affected by the vulnerability, so you can check whether the dependency you are planning to use has been already patched.
+对于每个搜索结果，可以看到描述以及其他bug跟踪器和相关资源的引用列表。描述通常会列出受漏洞影响的版本，这样就可以检查计划使用的依赖项是否已经打了补丁。
 
-\subsubsubsection{10.2.2\hspace{0.2cm}Automated scanners}
+\subsubsubsection{10.2.2\hspace{0.2cm}自动扫描}
 
-There are tools that can help you to audit your list of dependencies. One such tool is OWASP Dependency-Check (https://www.owasp.org/index.php/OWASP\_Dependency\_Check). Although it only supports Java and .NET officially, it has experimental support for Python, Ruby, Node.js, and C++ (when used with CMake or autoconf). Besides working as a standalone tool, it has integrations for Continuous Integration/Continuous Deployment (CI/CD) software such as Jenkins, SonarQube, and CircleCI.
+有一些工具可以帮助您检查依赖项列表。OWASP Dependency-Check(\ur{https://www.owasp.org/index.php/OWASP\_Dependency\_Check})就是这样一个工具。虽然官方支持Java和.NET，但它对Python、Ruby、Node.js和C++(当与CMake或autoconf一起使用时)有实验性的支持。除了作为一个独立的工具，它还集成了持续集成/持续部署(CI/CD)软件，如Jenkins、SonarQube和CircleCI。
 
-Another tool that allows checking dependencies for known vulnerabilities is Snyk. This is a commercial product with several levels of support. It also does more than the OWASP Dependency-Check as Snyk can also audit container images and license compliance issues. It also offers more integrations with third-party solutions.
+另一个允许检查已知漏洞的依赖关系的工具是Snyk,这是一个具有多个级别支持的商业产品。它还做了比OWASP依赖检查更多的事情，因为Snyk还可以检查容器映像和许可证遵从性问题，还提供了更多与第三方解决方案的集成。
 
-\subsubsubsection{10.2.3\hspace{0.2cm}Automated dependency upgrade management}
+\subsubsubsection{10.2.3\hspace{0.2cm}自动依赖升级管理}
 
-Monitoring your dependencies for vulnerabilities is only the first step in making sure your project is secure. After that, you need to take action and update the compromised dependencies manually. As you might have expected, there are also automated solutions just for that. One of them is Dependabot, which scans your source code repository and issues a pull request whenever there's a security-related update available. At the moment of writing this book, Dependabot does not support C++ yet. It can, however, be used with other languages that your application may use. Other than that, it can scan Docker containers for vulnerabilities found in base images.
+监视依赖项是否存在漏洞只是确保项目安全的第一步。在此之后，需要采取行动，手动更新失效的依赖项。正如期望的那样，也有一些自动化的解决方案。其中一个是Dependabot，它会扫描你的源代码库，并在有安全相关更新可用的时候发出一个pull请求。在写这本书的时候，Dependabot还不支持C++。但是，可以与您的应用程序可能使用的其他语言一起使用。除此之外，它还可以扫描Docker容器在基本映像中发现的漏洞。
 
-Automated dependency management requires mature test support. Switching dependency versions without tests may lead to instabilities and bugs. One protection against problems related to dependency upgrades is using wrappers to interface with third-party code. Such wrappers may have their own suite of tests that instantly  tells us when an interface is broken during an upgrade.
+自动化的依赖项管理需要成熟的测试支持，没有测试的情况下切换依赖版本可能会导致不稳定和bug，防止依赖关系升级相关问题的一种保护措施是使用包装器与第三方代码进行接口。这样的包装器有自己的测试套件，可以立即告知们在升级期间接口何时失效。
 
 
 
