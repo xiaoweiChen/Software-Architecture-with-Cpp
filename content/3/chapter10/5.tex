@@ -1,36 +1,35 @@
 
-Even if you take the necessary precautions to ensure that your dependencies and code are free from known vulnerabilities, there still exists an area that can compromise your security strategy. All applications need an execution environment and this can mean either a container, VMs, or an operating system. Sometimes, this can also mean the underlying infrastructure as well.
+即使采取了必要的预防措施来确保依赖项和代码不受已知漏洞的影响，仍然存在一个可能危及安全策略的区域。所有应用程序都需要执行环境，这可能意味着容器、VM或操作系统。有时，这也意味着底层基础设施。
 
-It's not enough to make your application hardened to the maximum when the operating system it runs on has open access. This way, instead of targeting your application, the attacker can gain unauthorized access to the data directly from the system or infrastructure level.
+当运行应用程序的操作系统具有开放访问权限时，将应用程序加固到最大限度是不够的。这样，攻击者就可以直接从系统或基础设施级别获得对数据的未授权访问，而不是针对应用程序。
 
-This section will focus on some techniques of hardening that you can apply at this lowest level of execution.
+本节将重点介绍一些可以在最底层执行级别应用的加固技术。
 
-\subsubsubsection{10.5.1\hspace{0.2cm}Static versus dynamic linking}
+\subsubsubsection{10.5.1\hspace{0.2cm}静态和动态链接}
 
-Linking is the process that occurs after compilation when the code you've written is brought together with its various dependencies (such as the standard library). Linking can occur at build time, at load time (when the operating system executes the binary), or at runtime, as is the case with plugins and other dynamic dependencies. The last two use cases are only possible with dynamic linking.
+链接是在编译后将所编写的代码及其各种依赖项(如标准库)组合在一起时发生的过程。链接可以发生在构建时、加载时(操作系统执行二进制文件时)或运行时，就像插件和其他动态依赖项一样。最后两个用例只适用于动态链接。
 
-So, what is the difference between dynamic and static linking? With static linking, the contents of all the dependencies are copied to the resulting binary. When the program is loaded, the operating system places this single binary in the memory and executes it. Static linking is performed by programs called linkers as the last step of the build process.
+那么，动态链接和静态链接有什么区别呢？使用静态链接，所有依赖项的内容都被复制到生成的二进制文件中。当程序加载时，操作系统将这个二进制文件放入内存中并执行它。静态链接由称为链接器的程序执行，作为构建过程的最后一步。
 
-Because each executable has to contain all the dependencies, statically linked programs tend to be big. This has its upside as well; since everything needed to execute the problem is already available in a single place, the execution can be faster and it always takes the same amount of time to load the program into memory. Any changes in the dependencies require recompilation and relinking; there is no way to upgrade one dependency without changing the resulting binary.
+因为每个可执行文件都必须包含所有依赖项，所以静态链接的程序体积往往比较大。这也有它的好处，由于执行问题所需的所有东西都已经在一个地方可用，因此执行速度会更快，并且将程序加载到内存中所花费的时间总是相同的。对依赖关系的任何更改都需要重新编译和重新链接，如果不改变产生的二进制文件，就无法升级依赖项。
 
-In dynamic linking, the resulting binary contains the code you've written, but instead of the contents of the dependencies, there are only references to the actual libraries that need to be loaded separately. During load time, it is the task of the dynamic loader to find the appropriate libraries and load them to memory alongside your binary. When several applications are running simultaneously and each of them is using similar dependencies (such as a JSON parsing library or JPEG processing library), the dynamically liked binaries will result in lower memory usage. This is due to the fact that only a single copy of a given library can be loaded into memory. In contrast, with statically linked binaries, the same libraries would be loaded over and over again as part of the resulting binaries. When you need to upgrade one of your dependencies, you can do so without touching any other component of your system. The next time your application is loaded into memory, it will reference the newly upgraded component automatically.
+动态链接中，生成的二进制文件包含编写的代码，但没有依赖项的内容，只有对实际库的引用，需要单独加载。在加载期间，动态加载器的任务是找到适当的库，并将它们与二进制文件一起加载到内存中。当多个应用程序同时运行，并且每个应用程序都使用类似的依赖项(例如JSON解析库或JPEG处理库)时，动态方式可以减少的二进制文件内存的使用，这是因为只能将给定库的副本加载到内存中。相比之下，对于静态链接的二进制文件，相同的库将作为生成的二进制文件的一部分反复加载。当需要升级某个依赖项时，可以这样做，而不需要接触系统的其他组件。下一次将应用程序加载到内存中时，将自动引用新升级的组件。
 
-Static and dynamic linking also have security implications. It is easier to gain unauthorized access to dynamically linked applications. This can be achieved by substituting a compromised dynamic library in place of a regular one or by preloading certain libraries into each newly executed process.
+静态和动态链接也有安全问题。对动态链接的应用程序更容易获得未经授权的访问。这可以通过替换一个受损的动态库来代替常规的动态库，或者通过在每个新执行的进程中预加载某些库来实现。
 
-When you combine static linking with containers (explained in detail in a later chapter), you get small, secure, sandboxed execution environments. You may even go further and use such containers with microkernel-based VMs that reduce the attack surface considerably.
+当将静态链接与容器结合使用时(在后面的章节中会详细解释)，将得到一个小型、安全的沙盒执行环境。甚至可以对基于微内核的VM使用这样的容器，从而减少可攻击面。
 
-\subsubsubsection{10.5.2\hspace{0.2cm}Address space layout randomization}
+\subsubsubsection{10.5.2\hspace{0.2cm}随机地址空间分配}
 
-Address Space Layout Randomization (ASLR) is a technique used to prevent memorybased exploits. It works by replacing the standard memory layout of the program and data with a randomized one. This means an attacker cannot reliably jump to a particular function that would otherwise be present on a system without ASLR.
+随机地址空间分配(ASLR)是一种用于防止基于内存的攻击的技术，工作原理是将程序和数据的标准内存布局替换为随机的布局。这意味着攻击者无法可靠地跳转到在没有ASLR的系统上存在的特定函数。
 
-This technique can be made even more effective when combined with no-execute (NX) bit support. The NX bit marks certain pages in the memory, such as the heap and stack, as containing only data that cannot be executed. NX bit support has been implemented in most mainstream operating systems and can be used whenever hardware supports it.
-
+当与无执行(NX)位支持结合使用时，这种技术会更加有效。NX位将内存中的某些页面(如堆和堆栈)标记为只包含无法执行的数据。NX位支持已经在大多数主流操作系统中实现，只要硬件支持就可以使用。
 
 \subsubsubsection{10.5.3\hspace{0.2cm}DevSecOps}
 
-To deliver software increments on a predictable basis, it is best to embrace the DevOps philosophy. In short, DevOps means breaking the traditional model by encouraging communication between business, software development, software operations, quality assurance, and clients. DevSecOps is a form of DevOps that also emphasizes the need to design with security in mind at each step of the process.
+要在可预测的基础上交付软件增量，最好采用DevOps的理念。简而言之，DevOps意味着打破传统模式，鼓励商业、软件开发、软件运营、质量保证和客户之间的沟通。DevSecOps是DevOps的一种形式，强调在设计过程的每一步都要考虑到安全性。
 
-This means that the application you are building has observability built-in from the beginning, leverages CI/CD pipelines, and is scanned for vulnerabilities on a regular basis. DevSecOps gives developers a voice in the design of the underlying infrastructure, and it gives operations experts a voice in the design of the software packages that make up the application. Since every increment represents a working system (albeit not fully functional), security audits are performed regularly and therefore take less time than normal. This results in faster and more secure releases and allows for quicker reactions to security incidents.
+这意味着正在构建的应用程序从一开始就具有可观察性，利用CI/CD流水，并定期扫描漏洞。DevSecOps让开发人员在底层基础设施的设计上有了发言权，也让操作专家在组成应用程序的软件包设计上有了发言权。由于每一个增量都代表一个工作系统(尽管不是完全功能)，因此定期执行安全审计，因此比正常情况下花费的时间更少。这将导致更快、更安全的发布，并允许对安全事件做出更快的反应。
 
 
 

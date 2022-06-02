@@ -44,7 +44,7 @@ target_compile_options(customer PRIVATE -Werror -Wall -Wextra)
 
 这样，除非修复编译器报告的所有警告(已转换的错误)，否则编译将失败。
 
-也可以在OWASP(\url{https://www.owasp.org/index.php/C-Based\_Toolchain\_Hardening})和Red Hat (\url{https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc/})的这些文章中找到工具链的建议设置。
+也可以在OWASP(\url{https://www.owasp.org/index.php/C-Based\_Toolchain\_Hardening})和Red Hat(\url{https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc/})的这些文章中找到工具链的建议设置。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -108,64 +108,63 @@ DAST工具通常专注于Web相关的漏洞，如XSS、SQL(和其他)注入，�
 \noindent
 \textit{Valgrind和应用验证器}
 
-Valgrind is mostly known as a memory leak debugging tool. It is, in fact, an instrumentation framework that helps to build dynamic analysis tools not necessarily related to memory problems. Besides the memory error detector, the suite of tools currently consists of a thread error detector, a cache and branch prediction profiler, and a heap profiler. It's supported on various platforms on Unix-like operating systems (including Android).
+Valgrind通常称为内存泄漏调试工具。事实上，它是一个帮助构建动态分析工具的工具框架，而不一定与内存问题相关。除了内存错误检测器之外，该工具套件目前还包括一个线程错误检测器、一个缓存和分支预测分析器以及一个堆分析器。它支持类unix操作系统(包括Android)上的各种平台。
 
-Essentially, Valgrind acts as a VM, first translating the binary into a simpler form called intermediate representation. Instead of running the program on an actual processor, it gets executed under this VM so each call can be can be analyzed and validated.
+本质上Valgrind作为VM，将二进制转换为一种更简单的形式，称为中间表示。它不是在一个实际的处理器上运行程序，而是在这个VM下执行，这样就可以分析和验证每个调用。
 
-If you're developing on Windows, you can use Application Verifier (AppVerifier) instead of Valgrind. AppVerifier can help you detect stability and security issues. It can monitor running applications and user-mode drivers to look for memory issues such as leaks and heap corruption, threading and locking issues, invalid use of handles, and more.
+若在Windows上开发，可以使用应用程序验证器(AppVerifier)，而不是Valgrind。AppVerifier可以检测稳定性和安全性问题，可以监视正在运行的应用程序和用户模式驱动程序，以查找内存问题，如泄漏和堆损坏、线程和锁问题、无效句柄等。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textit{消杀工具}
 
-Sanitizers are dynamic testing tools that are based on compile-time instrumentation of code. They can help with the overall stability and security of the system, as well as avoiding undefined behavior. At https://github.com/google/sanitizers, you can find implementations for LLVM (which Clang is based on) and GCC. They address problems with memory access, memory leaks, data races and deadlocks, uninitialized memory use,
-and undefined behavior.
+消杀程序是基于代码编译时插装的动态测试工具，可以提高系统的整体稳定性和安全性，以及避免未定义行为。在\url{https://github.com/google/sanitizers}，可以找到LLVM(Clang是基于LLVM)和GCC的实现。它们解决了内存访问、内存泄漏、数据竞争和死锁、未初始化的内存使用和未定义行为。
 
-AddressSanitizer (ASan) protects your code against issues related to memory addressing, such as global-buffer-overflow, use-after-free, or stack-use-after-return. Even though it's one of the fastest solutions of its kind, it still slows down the process about two times. It's best to use it when running tests and doing development but turn it off in production builds. You can turn it on for your builds by adding the -fsanitize=address flag to Clang.
+AddressSanitizer(ASan)保护代码免受与内存寻址相关的问题，例如全局缓冲区溢出、释放后使用或返回后堆栈使用。尽管这是同类中最快的解决方案之一，但仍然会将这个过程减慢两倍左右。最好在运行测试和进行开发时使用，但在生产版本中关闭。其可以通过\texttt{-fsanitize=address}标志开启。
 
-AddressSanitizerLeakSanitizer (LSan) integrates with ASan to find memory leaks. It is enabled by default on x86\_64 Linux and x86\_64 macOS. It requires setting an environment variable, ASAN\_OPTIONS=detect\_leaks=1. LSan performs leak detection at the end of the process. LSan can also be used as a standalone library without AddressSanitizer, but this mode is much less tested.
+AddressSanitizerLeakSanitizer(LSan)集成了ASan来查找内存泄漏，默认在x86\_64 Linux和x86\_64 macOS上启用。需要设置一个环境变量，\texttt{ASAN\_OPTIONS=detect\_leaks=1}，这样LSan在过程结束时就可以执行泄漏检测。LSan也可以作为一个独立的库使用，而不需要AddressSanitizer，但是这种模式的测试要少得多。
 
-ThreadSanitizer (TSan), as we previously mentioned, detects problems with concurrency such as data races and deadlocks. You can enable it with the -fsanitize=thread flag to Clang.
+正如前面提到的，threadsantizer(TSan)可以检测并发性问题，如数据竞争和死锁。可以使用\texttt{-fsanitize=thread}标志来启用。
 
-MemorySanitizer (MSan) focuses on bugs related to access to uninitialized memory. It implements some of the features of Valgrind that we covered in the previous subsection. MSan supports 64-bit x86, ARM, PowerPC, and MIPS platforms. You can enable it with the -fsanitize=memory -fPIE -pie flag to Clang (which also turns on positionindependent executables, a concept we'll discuss later on).
+MemorySanitizer(MSan)专注于与访问未初始化内存相关的bug，实现了在前一小节中介绍的Valgrind的一些特性。MSan支持64位x86、ARM、PowerPC和MIPS平台。可以使用Clang的\texttt{-fsanitize=memory -fPIE -pie}标志来启用(还会打开独立于位置的可执行文件，这个稍后会讨论)。
 
-Hardware-Assisted Address Sanitizer (HWASAN) is similar to the regular ASan. The main difference is the use of hardware assistance when possible. This feature is, for now, available only on 64-bit ARM architectures.
+硬件辅助地址消杀程序(HWASAN)类似于常规的ASan。主要区别是在可能的情况下使用硬件辅助。目前，该特性仅在64位ARM架构上可用。
 
-UndefinedBehaviorSanitizer (UBSan) looks for other possible causes of undefined behavior, such as integer overflow, division by zero, or improper bit shift operations. You can enable it with the -fsanitize=undefined flag to Clang.
+UndefinedBehaviorSanitizer(UBSan)查找未定义行为的其他可能原因，如整数溢出、被零除或不当的位移位操作。可以使用Clang的\texttt{-fsanitize=undefined}标志来启用它。
 
-Even though sanitizers can help you uncover many potential problems, they are only as good as the tests that you run them against. When using the sanitizers, keep in mind to keep the code coverage of your tests high because otherwise, you may get a false sense of security.
+尽管消杀程序可以发现许多潜在的问题，但它们的性能仅与运行它们的测试一样。在使用消杀程序时，请保持测试的代码高覆盖率。否则，可能会对安全性产生错觉。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textit{模糊测试}
 
-A subcategory of DAST tools, fuzz-testing checks the behavior of your application when confronted with invalid, unexpected, random, or maliciously formed data. Such checks can be especially useful when used against the interfaces that cross the trust boundary (such as end user file upload forms or inputs).
+模糊测试是DAST工具的子类，其检查应用程序在遇到无效、意外、随机或恶意格式的数据时的行为。当对跨信任边界的接口(如最终用户文件上传表单或输入)使用这种检查时，会特别有用。
 
-Some interesting tools from this category include the following:
+这个类别中一些有趣的工具包括:
 
 \begin{itemize}
 \item 
-Peach Fuzzer: https://www.peach.tech/products/peach-fuzzer/
+Peach Fuzzer: \url{https://www.peach.tech/products/peach-fuzzer/}
 
 \item 
-PortSwigger Burp: https://portswigger.net/burp
+PortSwigger Burp: \url{https://portswigger.net/burp}
 
 \item 
-The OWASP Zed Attack Proxy project: https://www.owasp.org/index.php/OWAS\_Zed\_Attack\_Proxy\_Project
+OWASP Zed攻击代理项目: \url{https://www.owasp.org/index.php/OWAS\_Zed\_Attack\_Proxy\_Project}
 
 \item 
-Google's ClusterFuzz: https://github.com/google/clusterfuzz (and OSSFuzz: https://github.com/google/oss-fuzz)
+Google的ClusterFuzz: \url{https://github.com/google/clusterfuzz} (和OSSFuzz: \url{https://github.com/google/oss-fuzz})
 \end{itemize}
 
-\subsubsubsection{10.4.3\hspace{0.2cm}Process isolation and sandboxing}
+\subsubsubsection{10.4.3\hspace{0.2cm}处理隔离和沙盒}
 
-If you want to run unverified software in your own environment, you may want to isolate it from the rest of your system. Some ways to sandbox the executed code is via VMs, containers, or micro VMs such as Firecracker (https://firecracker-microvm.github.io/) used by AWS Lambda.
+如果想在自己的环境中运行未经验证的软件，可能希望将其与系统的其余部分隔离开来。一些使用沙箱的方法是通过虚拟机、容器或微虚拟机，如AWS Lambda使用的是Firecracker(\url{https://firecracker-microvm.github.io/})。
 
-This way, the crashes, leaks, and security problems of one application won't propagate to the entire system, rendering it either useless or compromised. As each process will have its own sandbox, the worst-case scenario would be the loss of only this one service.
+这样，应用程序的崩溃、泄漏和安全问题就不会传播到整个系统，从而使它变得无用或受损。由于每个进程都有自己的沙箱，最坏的情况是只丢失这一个服务。
 
-For C and C++ code, there is also Sandboxed API (SAPI; https://github.com/google/sandboxed-api) an open source project led by Google. It allows building sandboxes not for entire processes but for libraries. It is used by Google's own Chrome and Chromium web browsers, among others.
+对于C和C++代码，也有沙盒API(SAPI：\url{https://github.com/google/sandboxed-api})是一个由谷歌领导的开源项目，允许为库而不是整个过程构建沙盒。它在谷歌自己的Chrome和Chromium网络浏览器中就有使用。
 
-Even though VMs and containers can be a part of the process isolation strategy, don't confuse them with microservices, which often use similar building blocks. Microservices are an architectural design pattern and they don't automatically equal better security.
+尽管VM和容器可以是过程隔离策略的一部分，但不要将它们与微服务混淆，后者通常使用类似的构建块。微服务是一种架构设计模式，它们并不自动等于更好的安全性。
 
 
 
