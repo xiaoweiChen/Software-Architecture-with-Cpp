@@ -141,21 +141,21 @@ amount)
 
 \subsubsubsection{10.1.2\hspace{0.2cm}安全编码指南和GSL}
 
-The Standard C++ Foundation released a set of guidelines to document the best practices for building C++ systems. It is a Markdown document released on GitHub under https://github.com/isocpp/CppCoreGuidelines. It is an evolving document without a release schedule (unlike the C++ standard itself). The guidelines are aimed at modern C++, which basically means code bases that implement at least C++11 features.
+标准C++基金会发布了一套指导方针，以记录构建C++系统的最佳实践。它是在\ur{https://github.com/isocpp/CppCoreGuidelines}下发布的Markdown文档。它是一个没有发布时间表的演进文档(不像C++标准本身)。这些准则针对的是现代C++，这意味着至少要基于C++11特性进行实现。
 
-Many of the rules presented in the guidelines cover the topics that we present in this chapter. For example, there are rules related to interface design, resource management, and concurrency. The editors of the guidelines are Bjarne Stroustrup and Herb Sutter, both respected members of the C++ community.
+指南中提出的许多规则涵盖了在本章中提出的主题，有一些与接口设计、资源管理和并发性相关的规则。指导方针的编辑是Bjarne Stroustrup和Herb Sutter，他们都是C++社区中的元老级成员。
 
-We won't go into detail describing the guidelines. We encourage you to read them yourself. This book is inspired by many of the rules presented there and we follow them in our examples.
+这里不会详细描述这些指导原则，但建议读者们自行阅读。这本书的灵感来自于其提出的许多规则，本书的例子也遵循这些规则。
 
-To ease the use of these rules in various code bases, Microsoft released the Guidelines Support Library (GSL) as an open source project hosted on https://github.com/microsoft/GSL. It is a header-only library that you can include in your project to use the defined types. You can either include the whole GSL or selectively use only some of the types you plan on using.
+为了方便在各种代码库中使用这些规则，微软将指南支持库(GSL)作为一个开源项目发布在\ur{https://github.com/microsoft/GSL}上。它是一个头文件库，可以包含在项目中以使用已定义的类型。可以包含整个GSL，也可以有选择地只使用或计划使用的一些类型。
 
-What's also interesting about the library is the fact that it uses CMake for building, Travis for continuous integration, and Catch for unit testing. It is, therefore, a good example of the topics we've covered in Chapter 7, Building and Packaging, and Chapter 8, Writing Testable Code, and Chapter 9, Continuous Integration and Continuous Deployment.
+这个库的另一个有趣之处在于，它使用CMake进行构建，使用Travis进行持续集成，使用Catch进行单元测试。因此，它是的一个很好的例子，应用了在第7章、第8章和第9章中所了解的知识。
 
 \subsubsubsection{10.1.3\hspace{0.2cm}防御性编码，验证一切}
 
-In a previous chapter on testability, we mentioned the method of defensive programming. Even though this method is not strictly a security feature, it happens to help with creating a robust interface. Such interfaces, in turn, increase the overall security of your system.
+在关于可测试性的章节中，提到了防御性编程的方法。尽管这个方法严格来说不是一个安全特性，但它有助于创建一个健壮的接口。这样的接口反过来可以增加了系统的总体安全性。
 
-As a good heuristic, you can treat all the external data as unsafe. What we mean by external data is every input coming to the system via some interface (either a programming interface or user interface). To denote this, you can go as far as prefixing the appropriate types as Unsafe, as follows:
+作为一种良好的启发式方法，可以将所有外部数据视为不安全数据。这里所说的外部数据是指通过某些接口(编程接口或用户接口)进入系统的每一个输入。为了明确表达这一点，可以在适当的类型前加上不安全的前缀，如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 RegistrationResult registerUser(UnsafeUsername username, PasswordHash
@@ -183,53 +183,53 @@ passwordHash)
 }
 \end{lstlisting}
 
-If you have already read the guidelines, you will know that you should generally avoid using the C API directly. Some of the functions in the C API can be used in an unsafe way and require special care to use them defensively. It is much better to instead use respective concepts from C++ that ensure better type safety as well as protection (for example, against buffer overflow).
+如果已经阅读了指南，就会知道通常应该避免直接使用C API。C API中的一些函数可能会以不安全的方式使用，需要注意以防御的方式使用。相反，最好使用C++中的概念，以确保更好的类型安全性和保护(例如，防止缓冲区溢出)。
 
-Another facet of defensive programming is the intelligent reuse of the existing code. Each time you try to implement some technique, ensure nobody else has implemented it before you. Writing a sorting algorithm yourself may be a fun challenge to do when you're learning a new programming language, but for production code, it's much better to use the sorting algorithms available in the standard library. The same goes for password hashing. No doubt you can find some clever way to calculate the password hashes and store them in a database but it is generally wiser to go with the tried and true (and don't forget peerreviewed!) bcrypt. Keep in mind that intelligent code reuse assumes you check and audit the third-party solutions with the same due diligence as  you would your own code. We will dive deeper into this topic in the next section, Are my dependencies secure?.
+防御性编程的另一个方面是对现有代码的重用。每次当尝试某些技术时，确保没有其他人在你之前执行过。在学习一门新的编程语言时，自己编写排序算法可能是一项有趣的挑战，但对于生产代码来说，使用标准库中提供的排序算法要好得多，哈希密码也是如此。毫无疑问，可以找到一些聪明的方法来计算哈希密码，并将它们存储在数据库中，但更明智的做法是使用经过验证的(不要忘记同行评比!)方式，或是bcrypt(跨平台文件加密工具)。请记住，代码重用假定检查和审计第三方解决方案，与人工检查和审计自己的代码时一样仔细。我们将在下一节“依赖关系安全吗?”中继续探讨。
 
-It's worth noting that defensive programming shouldn't turn into paranoid programming. Checking user input is a sane thing to do, while asserting whether an initialized variable is still equal to the original value just after the initialization is going too far. You want to control the integrity of your data and algorithms and the integrity of third-party solutions. You don't want to verify the correctness of your compiler by embracing language features.
+防御性编程不应该变成偏执型编程。检查用户输入是一件合理的事情，而在初始化之后断言初始化的变量是否仍然等于初始值就过分了。需要控制数据和算法的完整性，以及第三方解决方案的完整性。没谁想通过包含语言特性来验证编译器的正确性吧。
 
-In short, it's a good idea from both a security and readability point of view to use Expects() and Ensures() as presented in C++ Core Guidelines and to distinguish between unsafe and safe data through typing and conversions.
+简而言之，从安全性和可读性的角度来看，使用C++ Core Guidelines中的\texttt{expect()}和\texttt{ensure()}并通过输入和转换区分不安全数据和安全数据是一中不错的方式。
 
-\subsubsubsection{10.1.4\hspace{0.2cm}The most common vulnerabilities}
+\subsubsubsection{10.1.4\hspace{0.2cm}最常见的漏洞}
 
-To check whether your code is safe against the most common vulnerabilities, you should first learn about the said vulnerabilities. After all, a defense is only possible when you know what the offense looks like. The Open Web Application Security Project (OWASP) has cataloged the most common vulnerabilities and has published them at https://www.owasp.org/index.php/Category:OWASP\_Top\_Ten\_Project. At the moment of writing this book, those vulnerabilities are as follows:
+要检查代码对于最常见的漏洞是否安全，首先要了解常见漏洞。只有当知道进攻是什么样子，才可能进行防守。开放Web应用程序安全项目(OWASP)已经编目了最常见的漏洞，并在\url{https://www.owasp.org/index.php/Category:OWASP\_Top\_Ten\_Project}上发布了它们。在撰写本书时，这些漏洞有以下几种:
 
 \begin{itemize}
 \item 
-Injection: Commonly known as SQL injection. It is not limited to SQL; this vulnerability occurs when untrusted data is passed directly to an interpreter (such as a SQL database, NoSQL database, shell, or eval function). The attacker may this way gain access to parts of the system that should be protected.
+注入:俗称SQL注入，但不仅限于SQL。当不受信任的数据直接传递给解释器(如SQL数据库、NoSQL数据库、shell或eval函数)时，就会发生此漏洞。攻击者可以通过这种方式访问系统中应该受到保护的部分。
 
 \item 
-Broken Authentication: If authentication is improperly implemented, attackers may use flaws to either compromise secret data or impersonate other users.
+失效的身份验证:如果身份验证实现不正确，攻击者可能会利用漏洞泄露秘密数据或冒充其他用户。
 
 \item 
-Sensitive Data Exposure: The lack of encryption and proper access rights may lead to sensitive data being exposed publicly.
+敏感数据暴露:由于缺乏加密和适当的访问权限，可能导致敏感数据被公开。
 
 \item 
-XML External Entities (XXE): Some XML processors may disclose the contents of the server's filesystem or allow remote code execution.
+XML外部实体(XXE):一些XML处理器可能会公开服务器文件系统的内容或允许远程代码执行。
 
 \item 
-Broken Access Control: When access control is not enforced properly, attackers may gain access to files or data that should be restricted.
+失效的访问控制:当访问控制没有正确执行时，攻击者可能会获得对应该限制的文件或数据的访问。
 
 \item 
-Security Misconfiguration: Using insecure defaults and improper care with configuration are the most common sources of vulnerabilities.
+安全错误配置:使用不安全的默认值和配置不当是最常见的漏洞来源。
 
 \item 
-Cross-Site Scripting (XSS): Including and executing untrusted external data, especially with JavaScript, that allows control of the user's web browser. 
+跨站脚本(XSS):包括和执行不受信任的外部数据，特别是使用JavaScript，这允许控制用户的Web浏览器。
 
 \item 
-Insecure Deserialization: Some flawed parsers may fall prey to denial of services attacks or remote code execution.
+不安全的反序列化:一些有缺陷的解析器可能成为拒绝服务攻击或远程代码执行的牺牲品。
 
 \item 
-Using Components with Known Vulnerabilities: A lot of the code in modern applications comes as third-party components. These components should be regularly audited and updated as known security flaws in a single dependency can result in your entire application and data being compromised. Fortunately, there are tools that help automate this.
+使用有已知漏洞的组件:现代应用程序中的很多代码都作为第三方组件出现。应该定期审计和更新这些组件，因为单个依赖项中的已知安全缺陷可能会导致整个应用程序和数据受损。幸运的是，有一些工具可以自动化实现这个过程。
 
 \item 
-Insufficient Logging \& Monitoring: If your system is under attack and your logging and monitoring is not very thorough, the attacker may obtain deeper access and still become unnoticed.
+日志记录和\或监控不足:如果系统受到攻击，而日志记录和监控不是很彻底，攻击者可能会获得更深入的访问，但仍然不被注意。
 \end{itemize}
 
-We won't go into detail regarding each of the mentioned vulnerabilities. What we want to highlight here is that you can prevent injection, XML external entities, and insecure deserialization by following the defensive programing techniques we mentioned before. By treating all external data as unsafe, you can first sanitize it by removing all the unsafe content before you start the actual processing.
+这里不会详细讨论每个提到的漏洞。但在这里要强调的是，可以通过前面提到的防御性编程技术来防止注入、XML外部实体和不安全的反序列化。通过将所有外部数据视为不安全数据，可以在开始实际处理之前先删除所有不安全的内容，从而对其进行消杀。
 
-When it comes to insufficient logging and monitoring, we will go into detail in Chapter 15, Cloud-Native Design. There we will present some possible approaches to observability, including logging, monitoring, and distributed tracing.
+当谈到日志和监控不足时，将在第15章中详细介绍。届时，将了解一些可能的可观察性方法，包括日志、监视和分布式跟踪。
 
 
 
