@@ -1,40 +1,40 @@
-You can reduce the number of common security vulnerabilities in your own code by using modern C++ constructions as opposed to older C equivalents. Yet, there are always cases when even more secure abstractions prove to be vulnerable as well. It is not enough to choose the more secure implementation and decide you've done your best. Most of the time, there are ways to further harden your code.
+可以通过使用现代的C++结构，来减少代码中常见安全漏洞的数量，而不是使用较老的C等价代码。然而，总是有更安全的抽象也证明是脆弱的。仅仅选择更安全的实现，并认为已经尽了最大努力是不够的。大多数情况下，有一些方法可以进一步加强代码。
 
-But what is code hardening? According to the definition, it is the process of reducing the system's surface of vulnerability. Often, this means turning off the features you won't be using and aiming for a simpler system over a complicated one. It may also mean using tools to increase the robustness of the already-available functions.
+但是什么是加强代码？根据定义，是减少系统表面脆弱性的过程。通常，这意味着关闭不使用的功能，并着眼于更简单的系统而不是复杂的系统。这还可能使用工具来增加现有功能的健壮性。
 
-Such tools may mean kernel patches, firewalls, and Intrusion Detection Systems (IDSes) when applied at the operating system level. At the application level, it may mean various  buffer overrun and underflow protection mechanisms, using containers and Virtual Machines (VMs) for privilege separation and process isolation, or enforcing encrypted communication and storage.
+当应用于操作系统级别时，这些工具可能意味着内核补丁、防火墙和入侵检测系统(IDS)。在应用程序级别，这可能意味着各种缓冲区溢出和下溢保护机制，使用容器和虚拟机(VM)进行特权隔离和进程隔离，或强制加密通信和存储。
 
-In this section, we'll focus on some examples from the application level, while the next section will focus on the operating system level.
+本节中，我们将关注应用程序级别的一些示例，而下一节将关注操作系统级别。
 
-\subsubsubsection{10.4.1\hspace{0.2cm}Security-oriented memory allocator}
+\subsubsubsection{10.4.1\hspace{0.2cm}面向安全性的内存分配器}
 
-If you are serious about protecting your application from heap-related attacks, such as heap overflow, use-after-free, or double free, you may consider replacing your standard memory allocator with a security-oriented version. Two projects that may be of interest are as follows:
+如果非常重视保护应用程序免受堆相关的攻击，例如：堆溢出、释放后使用或双重释放，可以考虑用面向安全的版本替换标准内存分配器。以下是两个可能会引起兴趣的项目:
 
 \begin{itemize}
 \item 
-FreeGuard, available at https://github.com/UTSASRG/FreeGuard and described in a paper at https://arxiv.org/abs/1709.02746
+FreeGuard，可在\url{https://github.com/UTSASRG/FreeGuard}获得，并在\url{https://arxiv.org/abs/1709.02746}的一篇论文中描述
 
 \item 
-hardened\_malloc from the GrapheneOS project, available at https://github.com/GrapheneOS/hardened\_malloc
+GrapheneOS项目的hardened\_malloc，可在\url{https://github.com/GrapheneOS/hardened\_malloc}处获得
 \end{itemize}
 
-FreeGuard was released in 2017 and it hasn't seen much change since then other than sporadic bug fixes. hardened\_malloc, on the other hand, is actively developed. Both allocators are designed to act as drop-in replacements for the standard malloc(). You can use them without modifying your application simply by setting the LD\_PRELOAD environment variable or adding the library to the /etc/preload.so configuration file. While FreeGuard targets Linux with the Clang compiler on 64-bit x86 systems, hardened\_malloc aims at broader compatibility, though at the moment supports mostly Android's Bionic, musl, and glibc. hardened\_malloc is also based on OpenBSD's alloc, with OpenBSD being the security-focused project itself.
+FreeGuard于2017年发布，自那以来除了零星的bug修复外，并没有太大的变化。另一方面，hardened\_malloc正在积极地开发。这两个分配器都设计为作为标准malloc()的替代品。可以在不修改应用程序的情况下使用它们，只需设置LD\_PRELOAD环境变量或将库添加到/etc/preload.so配置文件中。FreeGuard的目标是Linux和64位x86系统上的Clang编译器，而hardened\_malloc的目标是更广泛的兼容性，尽管目前主要支持Android的Bionic，musl和glibc。hardened\_malloc也是基于OpenBSD的alloc, OpenBSD本身就是以安全为中心的项目。
 
-Instead of replacing the memory allocator, you can replace the collections you use for their safer equivalents. The SaferCPlusPlus (https://duneroadrunner.github.io/SaferCPlusPlus/) project provides substitutes for std::vector<>, std::array<>, and std::string that can be used as drop-in replacements in the existing code. The project also includes substitutes for basic types that guard against uninitialized use or sign mismatch, concurrent data types, and replacements for pointers and references.
+可以将所使用的集合替换为更安全的等价物，而不是替换内存分配器。SaferCPlusPlus(\url{https://duneroadrunner.github.io/SaferCPlusPlus/})项目提供了\texttt{std::vector<>}、\texttt{std::array<>}和\texttt{std::string}的替代品，这些替代品可以作为现有代码中的临时替换。该项目还包括防止未初始化使用或符号不匹配的基本类型的替代品、并发数据类型，以及指针和引用的替代品。
 
-\subsubsubsection{10.4.2\hspace{0.2cm}Automated checks}
+\subsubsubsection{10.4.2\hspace{0.2cm}自动检查}
 
-There are tools that can be especially helpful to ensure the security of the system you are building. We will cover them in the following section.
+有一些工具可以有助于确保正在构建的系统的安全性。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Compiler warnings}
+\textbf{编译器警告}
 
-While not necessarily a tool in itself, compiler warnings can be used and tweaked to achieve even better output from the one tool every C++ developer will be using: the C++ compiler.
+虽然编译器警告本身不是一种工具，但可以使用并调整编译器警告，以获得每个C++开发人员都将使用的工具——C++编译器——更好的输出。
 
-Since the compiler can already do some deeper checks than those required by the standard, it is advised to take advantage of this possibility. When using a compiler such as GCC or Clang, the recommended setting involves -Wall -Wextra flags. This will generate much more diagnostics and result in warnings when your code doesn't follow the diagnostics. If you want to be really strict, you can also enable -Werror, which will turn all the warnings into errors and prevent the compilation of code that doesn't pass the enhanced diagnostics. If you want to keep strictly to the standards, there are the -pedantic and -pedanticerrors flags that will look for conformance against the standards.
+因为编译器可以做一些比标准要求的更深入的检查，所以建议利用这种可能性。当使用GCC或Clang等编译器时，推荐的设置包括\texttt{-Wall -Wextra}标志。这将产生更多的诊断信息，并在代码没有遵循诊断时产生警告。如果希望更严格一些，还可以启用\texttt{-Werror}，它会把所有警告转换为错误，并防止编译没有通过增强诊断的代码。如果想严格遵守标准，有\texttt{-pedantic}和\texttt{-pedanticerrors}标志，它们将检查代码是否符合标准。
 
-When using CMake for building, you can use the following function to enable these flags during compilation:
+当使用CMake进行构建时，可以使用以下函数在编译期间启用这些标志:
 
 \begin{lstlisting}[style=styleCMake]
 add_library(customer ${SOURCES_GO_HERE})
@@ -42,71 +42,71 @@ target_include_directories(customer PUBLIC include)
 target_compile_options(customer PRIVATE -Werror -Wall -Wextra)
 \end{lstlisting}
 
-This way, the compilation will fail unless you fix all the warnings (turned errors) reported by the compiler.
+这样，除非修复编译器报告的所有警告(已转换的错误)，否则编译将失败。
 
-You can also find suggested settings for toolchain hardening in these articles from OWASP (https://www.owasp.org/index.php/C-Based\_Toolchain\_Hardening) and Red Hat (https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc/).
+也可以在OWASP(\url{https://www.owasp.org/index.php/C-Based\_Toolchain\_Hardening})和Red Hat (\url{https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc/})的这些文章中找到工具链的建议设置。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Static analysis}
+\textbf{静态分析}
 
-One class of tools that can help with making your code more secure is the so-called Static Application Security Testing (SAST) tools. They are a variant of static analysis tools only focused on security aspects.
+有一类工具可以提高代码的安全性，这就是所谓的静态应用程序安全测试(SAST)工具。它们是只关注安全方面的静态分析工具。
 
-SAST tools integrate well into CI/CD pipelines as they are simply reading your source code. The output is usually suitable for CI/CD as well since it highlights problems found in particular places in the source code. On the other hand, static analysis may omit many types of problems that cannot be found automatically or cannot be found solely with static analysis. These tools are also oblivious to issues related to configuration, as configuration files aren't represented in the source code itself.
+SAST工具可以很好地集成到CI/CD流水中，它们只是读取源代码。输出通常也适用于CI/CD，因为它突出了源代码中特定位置发现的问题。另一方面，静态分析可能会忽略许多类型的问题，这些问题无法自动找到，或者仅通过静态分析无法找到。这些工具也不关心与配置相关的问题，因为配置文件没有在源代码本身中表示。
 
-Examples of C++ SAST tools include the following open source solutions:
+C++ SAST工具的例子包括以下开源解决方案:
 
 \begin{itemize}
 \item 
-Cppcheck (http://cppcheck.sourceforge.net/), which is a general-purpose static analysis tool focused on the low number of false positives
+Cppcheck(\url{http://cppcheck.sourceforge.net/})，是一个通用的静态分析工具，专注于低误报数量
 
 \item 
-Flawfinder (https://dwheeler.com/flawfinder/), which doesn't seem to be actively maintained 
+Flawfinder(\url{https://dwheeler.com/flawfinder/})，似乎没有积极地维护
 
 \item 
-LGTM (https://lgtm.com/help/lgtm/about-lgtm), supporting several different languages and featuring automated analysis of pull requests
+LGTM(\url{https://lgtm.com/help/lgtm/about-lgtm})，支持几种不同的语言，具有自动分析拉请求的功能
 
 \item 
-SonarQube (https://www.sonarqube.org/), which has great CI/CD integration and language coverage, and offers a commercial version as well
+SonarQube(\url{https://www.sonarqube.org/})，可以很好的CI/CD集成和语言覆盖，并提供了一个商业版本
 
 \item 
-Checkmarx CxSAST (https://www.checkmarx.com/products/staticapplication-security-testing/), which promises zero configuration and road language coverage
+Checkmarx CxSAST(\url{https://www.checkmarx.com/products/staticapplication-security-testing/})，它可以零配置和语言覆盖
 
 \item 
-CodeSonar (https://www.grammatech.com/products/codesonar), which focuses on in-depth analysis and finding the most flaws
+CodeSonar(\url{https://www.grammatech.com/products/codesonar})，专注于深度分析和发现缺陷
 
 \item 
-Klocwork (https://www.perforce.com/products/klocwork), which focuses on accuracy
+Klocwork(\url{https://www.perforce.com/products/klocwork})，专注于准确性
 
 \item 
-Micro Focus Fortify (https://www.microfocus.com/en-us/products/staticcode-analysis-sast/overview), with broad language support and integration of other tools by the same manufacturer
+Micro Focus Fortify(\url{https://www.microfocus.com/en-us/products/staticcode-analysis-sast/overview})，具有广泛的语言支持和集成的其他工具(由同一制造商)
 
 \item 
-Parasoft C/C++test (https://www.parasoft.com/products/ctest), which is an integrated solution for static and dynamic analysis, unit testing, tracing, and more
+Parasoft C/C++测试(\url{https://www.parasoft.com/products/ctest})，这是一个静态和动态分析、单元测试、跟踪等的(集成)解决方案
 
 \item 
-Polyspace Bug Finder from MathWorks (https://www.mathworks.com/products/polyspace-bug-finder.html), with the integration of Simulink models 
+Polyspace Bug Finder来自MathWorks(\url{https://www.mathworks.com/products/polyspace-bug-finder.html})，可以与Simulink模型的集成
 
 \item 
-Veracode Static Analysis (https://www.veracode.com/products/binarystatic-analysis-sast), which is a SaaS solution for static analysis 
+Veracode静态分析(\url{https://www.veracode.com/products/binarystatic-analysis-sast})，是一个用于静态分析的SaaS解决方案
 
 \item 
-WhiteHat Sentinel Source (https://www.whitehatsec.com/platform/staticapplication-security-testing/), which also focuses on eliminating false positives
+白帽哨兵源(\url{https://www.whitehatsec.com/platform/staticapplication-security-testing/})，也专注于消除误报
 \end{itemize}
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Dynamic analysis}
+\textbf{动态分析}
 
-Just like static analysis is performed on the source code, dynamic analysis is performed on the resulting binaries. The "dynamic" in the name refers to the observation of the code in action processing the actual data. When focused on security, this class of tools can also be called Dynamic Application Security Testing (DAST).
+就像对源代码执行静态分析一样，对生成的二进制文件执行动态分析，名称中的“动态”是指观察代码在动作中处理的实际数据。当关注安全性时，这类工具也可以称为动态应用程序安全测试(DAST)。
 
-Their main advantage over their SAST counterparts is that they can find many flows that cannot be seen from the source code analysis point of view. This, of course, introduces the drawback that you have to run your application in order to perform the analysis. And as we know, running an application can be both time- and memory-consuming.
+与SAST相比，主要优势是可以找到许多从源代码分析角度看不到的流。当然，这也带来了一个缺点，必须运行应用程序才能执行分析。我们知道，运行应用程序可能既耗时又耗内存。
 
-DAST tools usually focus on web-related vulnerabilities such as XSS, SQL (and other) injection, or disclosed sensitive information. We will focus more on one of the more general-purpose dynamic analysis tools, Valgrind, in the next subsection.
+DAST工具通常专注于Web相关的漏洞，如XSS、SQL(和其他)注入，或公开的敏感信息。下一小节中，将更多地关注更通用的动态分析工具之一Valgrind。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{Valgrind and Application Verifier}
+\textit{Valgrind和应用验证器}
 
 Valgrind is mostly known as a memory leak debugging tool. It is, in fact, an instrumentation framework that helps to build dynamic analysis tools not necessarily related to memory problems. Besides the memory error detector, the suite of tools currently consists of a thread error detector, a cache and branch prediction profiler, and a heap profiler. It's supported on various platforms on Unix-like operating systems (including Android).
 
@@ -116,7 +116,7 @@ If you're developing on Windows, you can use Application Verifier (AppVerifier) 
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{Sanitizers}
+\textit{消杀工具}
 
 Sanitizers are dynamic testing tools that are based on compile-time instrumentation of code. They can help with the overall stability and security of the system, as well as avoiding undefined behavior. At https://github.com/google/sanitizers, you can find implementations for LLVM (which Clang is based on) and GCC. They address problems with memory access, memory leaks, data races and deadlocks, uninitialized memory use,
 and undefined behavior.
@@ -137,7 +137,7 @@ Even though sanitizers can help you uncover many potential problems, they are on
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textit{Fuzz-testing}
+\textit{模糊测试}
 
 A subcategory of DAST tools, fuzz-testing checks the behavior of your application when confronted with invalid, unexpected, random, or maliciously formed data. Such checks can be especially useful when used against the interfaces that cross the trust boundary (such as end user file upload forms or inputs).
 
