@@ -1,35 +1,33 @@
 
-There are many things that can help your compiler generate efficient code for you. Some boil down to steering it properly, others require writing your code in a compiler-friendly way.
+有很多东西可以帮助编译器生成高效的代码。有些方法可以归结为正确地操纵它，有些则需要以编译器友好的方式编写代码。
 
-It's also important to know what you need to do on your critical path and to design it efficiently. For instance, try to avoid virtual dispatch there (unless you can prove it's being devirtualized), and try not to allocate new memory on it. Often, the clever design of code to avoid locking (or at least using lock-free algorithms) is helpful. Generally speaking, everything that can worsen your performance should be kept outside your hot path. Having both your instruction and data caches hot is really going to pay out. Even attributes such as [[likely]] and [[unlikely]] that hint to the compiler which branch it should expect to be executed can sometimes change a lot.
+同样重要的是，要知道在关键路径上需要做什么，并有效地设计它。例如，尽量避免在那里进行虚拟分派(除非您能证明它正在去虚拟化)，并尽量不要在其上分配新的内存。通常，避免锁定(或至少使用无锁算法)的代码设计很有用。一般来说，所有可能使性能恶化的内容都应该排除在热路径之外。让指令和数据缓存都处于热状态会付出巨大的代价。甚至像[[likely]]和[[unlikely]]这样的属性提示编译器应该执行哪个分支，有时也会产生很大的变化。
 
-\subsubsubsection{11.3.1\hspace{0.2cm}Optimizing whole programs}
+\subsubsubsection{11.3.1\hspace{0.2cm}优化整个项目}
 
-An interesting way to increase the performance of many C++ projects is to enable link-time optimization (LTO). During compilation, your compiler doesn't know how the code will get linked with other object files or libraries. Many opportunities to optimize arise only at this point: when linking, your tools can see the bigger picture of how the parts of your program interact with each other. By enabling LTO, you can sometimes grab a significant improvement in performance with very little cost. In CMake projects, you can enable LTO by setting either the global CMAKE\_INTERPROCEDURAL\_OPTIMIZATION flag or by setting the INTERPROCEDURAL\_OPTIMIZATION property on your targets.
+提高C++项目性能的一种的方法是启用链接时间优化(LTO)。在编译期间，编译器不知道代码将如何与其他目标文件或库链接。许多优化的机会只出现在这时，当链接时，工具可以看到程序各部分如何相互交互的宏观场景。启用LTO，有时可以以很少的成本获得性能上的显著改进。在CMake项目中，可以通过设置全局\texttt{CMAKE\_INTERPROCEDURAL\_OPTIMIZATION}标志或在目标上设置\texttt{INTERPROCEDURAL\_OPTIMIZATION}属性来启用LTO。
 
-One drawback of using LTO is that it makes the building process longer. Sometimes a lot longer. To mitigate this cost for developers, you may want to only enable this optimization for builds that undergo performance testing or are meant to be released.
+使用LTO的一个缺点是，它使构建过程更长。有时会特别久。为了降低开发人员的成本，可以只对经过性能测试或打算发布的构建版本启用这种优化。
 
-\subsubsubsection{11.3.2\hspace{0.2cm}Optimizing based on real-world usage patterns}
+\subsubsubsection{11.3.2\hspace{0.2cm}基于使用模式进行优化}
 
-Another interesting way to optimize your code is to use Profile-Guided Optimization (PGO). This optimization is actually a two-step one. In the first step, you need to compile your code with additional flags that cause the executable to gather special profiling information during runtime. You should then execute it under the expected production load. Once you're done with it, you can use the gathered data to compile the executable a second time, this time passing a different flag that instructs the compiler to use the gathered data to generate code better suited for your profile. This way, you'll end up with a binary that's prepared and tuned to your specific workload.
+另一种优化代码的有趣方法是使用Profile-Guided Optimization(PGO)。这个优化有两个步骤。第一步，需要使用标志来编译代码，这些标志会导致可执行文件在运行时收集特殊的分析信息，然后在预期的生产负载下执行。完成后，可以使用收集到的数据第二次编译可执行文件，这次传递一个不同的标志，指示编译器使用收集到的数据来生成更适合您的配置文件的代码。这样，将得到一个准备好，并针对特定工作负载进行调优的二进制文件。
 
+\subsubsubsection{11.3.3\hspace{0.2cm}缓存友好的代码}
 
-\subsubsubsection{11.3.3\hspace{0.2cm}Writing cache-friendly code}
+这两种类型的优化都很有用，但在处理高性能系统时，还有一件更重要的事情需要记住:缓存友好性。使用平面数据结构而不是基于节点的数据结构意味着，在运行时需要执行更少的指针跟踪，这有助于提高性能。使用内存中连续的数据，无论是向前读还是向后读，都意味着CPU的内存预取器可以在使用前加载，这通常会产生巨大的差异。基于节点的数据结构和前面提到的指针追逐会导致随机的内存访问模式，这可能会把预取器搞懵，使其无法预取正确的数据。
 
-Both those types of optimization can be of use, but there's one more important thing that you need to keep in mind when working on performant systems: cache friendliness. Using flat data structures instead of node-based ones means that you need to perform less pointer chasing at runtime, which helps your performance. Using data that's contiguous in memory, regardless of whether you're reading it forward or backward, means your CPU's memory prefetcher can load it before it's used, which can often make a huge difference. Node-based data structures and the mentioned pointer chasing cause random memory access patterns that can "confuse" the prefetcher and make it impossible for it to prefetch correct data.
+如果想查看一些性能结果，请参阅扩展阅读部分链接的C++容器基准测试。比较了\texttt{std::vector}、\texttt{std::list}、\texttt{std::deque}和\texttt{plf::colony}的各种使用场景。有些读者可能不了解最后一个，它是一个有趣的“包”式容器，可以非常快速地插入和删除大量数据。
 
-If you want to see some performance results, please refer to the C++ Containers Benchmark linked in the Further reading section. It compares various usage scenarios of std::vector, std::list, std::deque, and plf::colony. If you don't know that last one, it's an interesting "bag"-type container with great fast insertion and deletion of large data.
+选择关联容器时，通常希望使用“平面”实现，而不是基于节点的实现。所以，除了使用\texttt{std::unordered\_map}和\texttt{std::unordered\_set}，可以尝试\texttt{tsl::hopscotch\_map}或Abseil的\texttt{flat\_hash\_map}和\texttt{flat\_hash\_set}。
 
-When choosing from associative containers, you'll most often want to use "flat" implementations instead of node-based ones. This means that instead of using std::unordered\_map and std::unordered\_set, you might want to try out ones like tsl::hopscotch\_map or Abseil's flat\_hash\_map and flat\_hash\_set.
+将较冷的指令(如异常处理代码)放入非内联函数中的方式，可以提高指令缓存的热度。这样，用于处理罕见情况的冗长代码就不会加载到指令缓存中，从而为应该存在的更多代码留出空间，这也可以提高性能。
 
-Techniques such as putting colder instructions (such as exception handling code) in a noninline function can help to increase the hotness of your instruction cache. This way, lengthy code for handling rare cases will not be loaded in the instruction cache, leaving space for more code that should be there, which can also improve your performance.
+\subsubsubsection{11.3.3\hspace{0.2cm}设计代码和数据}
 
+如果想对缓存友好，有一种技术可以使用，就是是面向数据的设计。通常，将经常使用的成员存储在内存中相邻的位置是个好主意。较冷的数据通常可以放在另一个结构中，通过ID或指针与较热的数据连接。
 
-\subsubsubsection{11.3.3\hspace{0.2cm}Designing your code with data in mind}
-
-If you want to help your caches, another technique that can be helpful is data-oriented design. Often, it's a good idea to store members used more often close to each other in memory. Colder data can often be placed in another struct and just be connected with the hotter data by an ID or a pointer.
-
-Sometimes, instead of the more commonly spotted arrays of objects, using objects of arrays can yield better performance. Instead of writing your code in an object-oriented manner, split your object's data member across a few arrays, each containing data for multiple objects. In other words, take the following code:
+有时，使用数组的对象可以获得更好的性能，而不是更常见的对象数组。不是以面向对象的方式编写代码，而是将对象的数据成员拆分为几个数组，每个数组包含多个对象的数据。换句话说，以以下代码为例:
 
 \begin{lstlisting}[style=styleCXX]
 struct Widget {
@@ -41,7 +39,7 @@ struct Widget {
 auto widgets = std::vector<Widget>{};
 \end{lstlisting}
 
-And consider replacing it with the following:
+考虑将其替换为以下内容:
 
 \begin{lstlisting}[style=styleCXX]
 struct Widgets {
@@ -51,9 +49,9 @@ struct Widgets {
 };
 \end{lstlisting}
 
-This way, when processing a specific set of data points against some objects, the cache hotness increases and so does the performance. If you don't know whether this will yield more performance from your code, measure.
+这样，当针对某些对象处理一组特定的数据点时，缓存热度会提高，性能也会提高。如果不知道这是否会产生更多的性能收益，可以测试一下。
 
-Sometimes even reordering members of your types can give you better performance. You should take into account the alignment of your types of data members. If performance matters, usually it's a good idea to order them so that the compiler doesn't need to insert too much padding between the members. Thanks to that, the size of your data type can be smaller, so many such objects can fit into one cache line. Consider the following example (let's assume we're compiling for the x86\_64 architecture):
+有时，即使对类型的成员进行重新排序也可以获得更好的性能。可以考虑数据成员类型的对齐。如果性能很重要，通常最好对它们进行排序，这样编译器就不需要在成员之间插入太多的填充。由于这一点，数据类型的大小可以更小，因此可以将许多这样的对象放入一条缓存线中。考虑下面的例子(假设正在为x86\_64架构编译):
 
 \begin{lstlisting}[style=styleCXX]
 struct TwoSizesAndTwoChars {
@@ -65,9 +63,9 @@ struct TwoSizesAndTwoChars {
 static_assert(sizeof(TwoSizesAndTwoChars) == 32);
 \end{lstlisting}
 
-Despite the sizes being 8 bytes each and chars being just 1 byte each, we end up with 32 bytes in total! That's because second\_size must start on an 8-byte aligned address, so after first\_char, we get 7 bytes of padding. The same goes for second\_char, as types need to be aligned with respect to their largest data type member.
+尽管每个大小是8个字节，每个字符只有1个字节，最终得到了32个字节！这是因为\texttt{second\_size}必须从一个8字节对齐的地址开始，所以在\texttt{first\_char}之后，得到7个字节的填充。对于\texttt{second\_char}也是如此，因为类型需要与最大的数据类型成员对齐。
 
-Can we do better? Let's try switching the order of our members:
+能做得更好吗？试着交换成员的顺序:
 
 \begin{lstlisting}[style=styleCXX]
 struct TwoSizesAndTwoChars {
@@ -79,9 +77,9 @@ struct TwoSizesAndTwoChars {
 static_assert(sizeof(TwoSizesAndTwoChars) == 24);
 \end{lstlisting}
 
-By simply putting the biggest members first, we were able to cut the size of our structure by 8 bytes, which is 25\% of its size. Not bad for such a trivial change. If your goal is to pack many such structs in a contiguous block of memory and iterate through them, you could see a big performance boost of that code fragment.
+通过简单地将最大的成员放在前面，能够将结构的大小减少8个字节，这是其大小的25\%。对于这样一个微不足道的变化来说还不错，若目标是将许多这样的结构打包在一个连续的内存块中并遍历它们，那么可以看到该代码段的性能大大提高。
 
-Let's now talk about another way to improve your  performance.
+现在来看看另一种提高性能的方法。
 
 
 

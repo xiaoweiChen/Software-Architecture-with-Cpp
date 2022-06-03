@@ -1,109 +1,108 @@
 
-Coroutines are functions that can suspend their execution and resume it later on. They allow writing asynchronous code in a very similar manner to how you would write synchronous code. Compared to writing asynchronous code with std::async, this allows writing cleaner code that's easier to understand and maintain. There's no need to write callbacks anymore, and no need to deal with the verbosity of std::async with promises and futures.
+协程是可以暂停执行并在稍后继续执行的函数，可以以与编写同步代码非常相似的方式编写异步代码。与使用\texttt{std::async}编写异步代码相比，这允许编写更清晰、更容易理解和维护的代码。不需要再写回调函数，也不需要用promise和future来处理冗长的\texttt{std::async}。
 
-Aside from all that, they can also often provide you with much better performance. std::async based code usually has more overhead for switching threads and waiting. Coroutines can resume and suspend very cheaply even compared to the overhead of calling functions, which means they can yield better latency and throughput. Also, one of their design goals was to be highly scalable, even to billions of concurrent coroutines.
+除此之外，还可以为提供更好的性能。基于\texttt{std::async}的代码通常在切换线程和等待方面有更多的开销。与调用函数的开销相比，协程可以非常快捷地恢复和挂起，这意味着可以产生更好的延迟和吞吐量。此外，其设计目标是具有高度的可扩展性，甚至可以扩展到数十亿个并发协程。
 
 \begin{center}
-\includegraphics[width=0.9\textwidth]{content/3/chapter11/images/1.jpg}\\
-Figure 11.1 – Calling and executing coroutines is different from using regular functions as they can be suspended and resumed
+\includegraphics[width=0.6\textwidth]{content/3/chapter11/images/1.jpg}\\
+图11.1 -调用和执行协程与使用常规函数不同，因为它们可以挂起和恢复
 \end{center}
 
-C++ coroutines are stackless, which means their state is not stored on the calling thread's stack. This gives them an interesting property: several different threads can pick up the execution of a coroutine. In other words, even though it looks like the coroutine function body would be executed sequentially, parts of it can be executed in different threads. This makes it possible to leave parts of the function to be executed on dedicated threads. For instance, I/O operations can be done in a dedicated I/O thread.
+C++协程无堆栈，它们的状态不存储在调用线程的堆栈上。这给了它们一个有趣的属性:几个不同的线程可以执行一个协程。换句话说，尽管协程函数体看起来是按顺序执行的，但某些部分可以在不同的线程中执行。这使得将函数的一部分留给专用线程来执行成为可能。例如，I/O操作可以在专用的I/O线程中完成。
 
-To check whether a function is a C++ coroutine, you need to look for one of the following keywords in its body:
-
-\begin{itemize}
-\item 
-co\_await, which suspends the coroutine.
-
-\item 
-co\_yield for returning a value to the caller and suspending the coroutine.
-
-\item 
-Similar to Python's yield keyword used in generators. Allows generating values lazily.
-
-\item 
-co\_return, which returns a value and finishes executing the coroutine. It's a coroutine equivalent of the return keyword.
-\end{itemize}
-
-Whenever a function body has one of those keywords, the function automatically becomes a coroutine. Although this means it's an implementation detail, there's one more hint that you can use: coroutine return types must satisfy certain requirements, which we'll discuss later on.
-
-Coroutines are first-class citizens in the C++ world. This means you can get their address, use them as function arguments, return them from functions, and store them in objects.
-
-In C++, you could write coroutines even before C++20. This was possible thanks to libraries such as Boost.Coroutine2, or Bloomberg's Quantum. The latter was even used to implement CoroKafka – a library for efficiently dealing with Kafka streams using coroutines. With the advent of standard C++ coroutines, new libraries started popping up. Now, we're going to show you one of them.
-
-\subsubsubsection{11.5.1\hspace{0.2cm}Distinguishing between cppcoro utilities}
-
-It's hard to write coroutine-based code from scratch. C++20 only offers the fundamental utilities for writing coroutines, so we need a set of primitives to use when writing our own coroutines. The cppcoro library created by Lewis Baker is one of the most commonly used coroutine frameworks for C++. In this section, we'll showcase the library and demonstrate how to use it when writing coroutine-based code.
-
-Let's start with an overview of the coroutine types the library offers us:
+要检查函数是否为C++协程，需要在函数体中查找以下关键字:
 
 \begin{itemize}
 \item 
-task<>: For scheduling work to be executed later – starts executing when it's co\_awaited for.
+co\_await，暂停协程。
 
 \item 
-shared\_task<>: A task that multiple coroutines can await. It can be copied so that multiple coroutines reference the same result. Doesn't offer any thread-safety on its own.
+co\_yield用于向调用方返回值，并暂停协程。
 
 \item 
-generator: Produces a sequence of Ts lazily and synchronously. It's effectively a std::range: it has a begin() returning an iterator and an end() returning a sentinel.
+类似于Python在生成器中使用的\texttt{yield}关键字，允许惰性生成值。
 
 \item 
-recursive\_generator: Similar to generator<T>, but can yield either a T or recursive\_generator<T>. Has some extra overhead.
-
-\item 
-async\_generator: Similar to generator<T>, but values may be produced asynchronously. This means that, as opposed to generator, asynchronous
-
-\item 
-generators can use co\_await in their bodies.
+co\_return，返回一个值并完成协程的执行，与\texttt{return}关键字等价。
 \end{itemize}
 
-You should use those types as return types for your coroutines. Usually, in your generators (coroutines returning one of the preceding generator types), you'd want to return values using co\_yield (similar to in Python generators). In your tasks, however, usually, you'll want to schedule work with co\_await.
+只要函数体中有其中一个关键字，函数就会自动变成协程。虽然这意味着它是一个实现细节，但还有一个提示:协程返回类型必须满足某些要求(后面再说)。
 
-The library actually offers many more programming abstractions than just the preceding coroutine types. It also provides the following types:
+协程是C++世界中的一等公民，可以获取它们的地址，将它们用作函数参数，从函数返回它们，并将它们存储在对象中。
+
+在C++中，可以在C++20之前编写协程。这要感谢Boost等库。Coroutine2，也就是彭博的Quantum。后者用来实现CoroKafka——使用协程高效处理Kafka流的库。随着标准C++协程的出现，新的库开始出现。现在，我们将向展示其中一个。
+
+\subsubsubsection{11.5.1\hspace{0.2cm}与cppcoro的区别}
+
+从头编写基于协程的代码很困难。C++20只提供了编写协程的基本实用程序，所以在编写自己的协程时需要一组原语。Lewis Baker创建的cppcoro库是C++中最常用的协程框架之一。本节中，我们将展示这个库，并演示如何在编写基于协程的代码时使用它。
+
+先来概述一下库提供的协程类型:
 
 \begin{itemize}
 \item 
-Awaitables types that you can co\_await on, such as coroutine-flavored events and synchronization primitives: mutexes, latches, barriers, and so on.
+\texttt{task<>}: 为了调度工作稍后执行——当\texttt{co\_await}开始执行。
 
 \item 
-Cancellation-related utilities, essentially allowing you to cancel the execution of your coroutines.
+\texttt{shared\_task<>}: 多个协程可以等待一个任务。可以复制，以便多个协程引用相同的结果。本身没有提供任何线程安全性。
 
 \item 
-Schedulers – objects allowing you to schedule work through them, such as static\_thread\_pool, or ones for scheduling work on a specific thread.
+\texttt{generator}: 缓慢而同步地产生一个T序列。它实际上是\texttt{std::range}，它有一个返回迭代器的\texttt{begin()}和一个返回哨兵的\texttt{end()}。
 
 \item 
-I/O and networking utilities, allowing you to read from and write to files and IP sockets.
+\texttt{recursive\_generator}: 类似于\texttt{generator<T>}，但可以生成\texttt{T}或\texttt{recursive\_generator<T>}。这里会有一些额外的开销。
 
 \item 
-Meta-functions and concepts, such as awaitable\_traits, Awaitable, and Awaiter.
+\texttt{async\_generator}: 类似于\texttt{generator<T>}，但是可以异步生成值。这意味着，与生成器相反，异步
+
+\item 
+生成器可以在它们的函数体内使用\texttt{co\_await}。
 \end{itemize}
 
-Aside from the preceding utilities, cppcoro offers us functions – utilities for using other classes and steering execution, such as the following:
+应该使用这些类型作为协程的返回类型。通常，在生成器中(协程返回前面的生成器类型)，可以使用\texttt{co\_yield}的返回值(类似于Python生成器)。然而，在任务中，通常需要使用\texttt{co\_await}来安排工作。
+
+与前面的协程类型相比，这个库实际上提供了更多的编程抽象。它还提供以下类型:
 
 \begin{itemize}
 \item 
-sync\_wait: Block until the passed awaitable completes.
+\texttt{co\_await}的可等待类型，比如协程事件和同步原语:互斥锁、锁存、障碍等。
 
-\item
-when\_all, when\_all\_ready: Return an awaitable that completes when all the passed awaitables complete. The difference between those two is in handling failures of the sub-awaitables. when\_all\_ready will complete even in the event of failures and the caller can examine each result, while when\_all will rethrow an exception if any of the sub-awaitables throws one (it's impossible to know which one did, though). It will also cancel any incomplete tasks.
+\item 
+可取消，可以取消协程的执行。
 
-\item
-fmap: Similarly to functional programming, applies a function to an awaitable. You can think of it as transforming a task of one type into a task of another. For example, you can serialize types returned by your coroutines by calling fmap(serialize, my\_coroutine()).
+\item 
+调度器——可以通过它们调度工作的对象，例如\texttt{static\_thread\_pool}，或在特定线程上调度工作。
 
-\item
-resume\_on: Instructs the coroutine which scheduler to use to continue execution once some work is completed. This enables you to execute certain work in certain execution contexts, such as running I/O-related tasks on a dedicated I/O thread. Note that this means a single C++ function (coroutine) can execute its parts on separate threads. Can be "piped" with computations similarly to std::ranges.
+\item 
+I/O和网络工具，允许读写文件和IP套接字。
 
-\item
-schedule\_on: Instructs the coroutine which scheduler to use to start some work. Commonly used as auto foo = co\_await schedule\_on(scheduler,
-do\_work());.
+\item 
+元函数和概念，比如\texttt{awaitable\_traits}、\texttt{awaitable}和\texttt{Awaiter}。
 \end{itemize}
 
-Before we start using those utilities together, let's say a few more words about awaitables.
+除了前面的实用程序之外，cppcoro还提供了一些函数——用于使用其他类和指导执行的程序，例如:
 
-\subsubsubsection{11.5.2\hspace{0.2cm}Looking under the hood of awaitables and coroutines}
+\begin{itemize}
+\item 
+\texttt{sync\_wait}: 阻塞式，直到传递的可等待对象完成工作。
 
-Aside from cppcoro, the standard library offers two more trivial awaitables: suspend\_never and suspend\_always. By looking at them, we can see how to implement our own awaitables when needed:
+\item
+\texttt{when\_all}，\texttt{when\_all\_ready}: 返回一个可等待对象，该对象在传递的所有可等待对象完成时完成。这两者之间的区别在于处理子可等待对象的失败。即使在失败的情况下，\texttt{when\_all\_ready}将完成，调用者可以检查每个结果，而\texttt{when\_all}将重新抛出一个异常，如果任何子可等待对象抛出一个异常(虽然不知道是哪个)。它还会取消所有未完成的任务。
+
+\item
+\texttt{fmap}: 与函数式编程类似，将函数应用于可等待对象。可以将其视为将一种类型的任务转换为另一种类型的任务。例如，可以通过调用\texttt{fmap(serialize, my\_coroutine())}来序列化协程返回的类型。
+
+\item
+\texttt{resume\_on}: 指示协程在完成某些工作后，使用哪个调度器继续执行。这能够在特定的执行上下文中执行特定的工作，例如在专用的I/O线程上运行与I/O相关的任务。注意，这意味着一个C++函数(协程)可以在单独的线程上执行它的各个部分。可以使用类似于\texttt{std::ranges}的计算“通道”。
+
+\item
+\texttt{schedule\_on}: 指示协程使用哪个调度器来启动某些工作。通常用法\texttt{auto foo = co\_await schedule\_on(scheduler, do\_work());}。
+\end{itemize}
+
+在开始使用这些实用程序之前，再了解一下可等待程序。
+
+\subsubsubsection{11.5.2\hspace{0.2cm}剖析可等待程序和协程}
+
+除了cppcoro之外，标准库还提供了两个可等待对象:\texttt{suspend\_never}和\texttt{suspend\_always}。通过查看它们，可以看到如何在需要时实现自己的可等待对象:
 
 \begin{lstlisting}[style=styleCXX]
 struct suspend_never {
@@ -119,24 +118,24 @@ struct suspend_always {
 };
 \end{lstlisting}
 
-When typing co\_await, you tell the compiler to first call the awaiter's await\_ready(). If it says the awaiter is ready by returning true, await\_resume() will get called. The return type of await\_resume() should be the type the awaiter is actually producing. If the awaiter was not ready, the program will instead execute await\_suspend(). After it's done, we have three cases:
+当输入\texttt{co\_await}时，告诉编译器首先调用等待者的\texttt{await\_ready()}。如果返回true表示已经准备好了，\texttt{await\_resume()}将调用。\texttt{await\_resume()}的返回类型应该是等待者实际生成的类型。如果没有准备好，程序将执行\texttt{await\_suspend()}。完成后，有三种情况:
 
 \begin{itemize}
 \item 
-await\_suspend returns void: The execution will always suspend afterwards.
+\texttt{await\_suspend}返回\texttt{void}:执行之后总是挂起。
 
 \item 
-await\_suspend returns bool: The execution will suspend or not depending on the returned value.
+\texttt{await\_suspend}返回\texttt{bool}:执行是否挂起取决于返回值。
 
 \item 
-await\_suspend returns std::coroutine\_handle<PromiseType>: Another coroutine will get resumed.
+\texttt{await\_suspend}返回\texttt{std::coroutine\_handle<PromiseType>}:另一个协程将恢复运行。
 \end{itemize}
 
-There's much more going on with coroutines under the hood. Even though coroutines don't use the return keyword, the compiler will generate code under the hood to make them compile and work. When using keywords such as co\_yield, it will rewrite them to calls to the appropriate member functions of helper types. For instance, a call to co\_yield x is equivalent to co\_await promise.yield\_value(x). If you want to learn more about what's happening exactly and write your own coroutine types, refer to the Your First Coroutine article from the Further reading section.
+协程的背后还有更多的东西。即使协程不使用\texttt{return}关键字，编译器也会在后台生成代码，使它们能够编译和工作。当使用诸如\texttt{co\_yield}这样的关键字时，将把它们重写为对协助类型的适当成员函数的调用。例如，对\texttt{co\_yield x}的调用等价于\texttt{co\_await promise.yield\_value(x)}。如果想进一步了解协程更多信息，并编写自己的协程类型，请参阅扩展阅读部分的《第一个协程》一文。
 
-Okay, let's now use all this knowledge to write our own coroutines. We'll create a simple application that mimics doing meaningful work. It will use a thread pool to fill a vector with some numbers.
+好了，让我们用这些知识来写自己的协程吧。我们将创建一个简单的应用程序来模拟有意义的工作，这里现来使用一个线程池来用一些数字填充向量。
 
-Our CMake target will look as follows:
+CMake目标如下:
 
 \begin{lstlisting}[style=styleCMake]
 add_executable(coroutines_1 coroutines/main_1.cpp)
@@ -145,13 +144,13 @@ Threads::Threads)
 target_compile_features(coroutines_1 PRIVATE cxx_std_20)
 \end{lstlisting}
 
-We'll link to the cppcoro library. In our case, we're using Andreas Buhr's fork of cppcoro, as it is a well-maintained fork of Lewis Baker's repository and supports CMake. 
+将链接到cppcoro库。在例子中，使用的是Andreas Buhr的cppcoro分支，因为它是Lewis Baker仓库的一个维护良好的分支，并且支持CMake。
 
-We'll also link to the excellent \{fmt\} library for text formatting. If your standard library offers C++20's string formatting, you can use that instead.
+还将链接到用于文本格式化的优秀\{fmt\}库。如果标准库提供了C++20的字符串格式，可以使用标准库的格式化方法。
 
-Last but not least, we're going to need a threading library – after all, we want to use multiple threads in a pool.
+最后，需要一个线程库——希望在池中使用多个线程。
 
-Let's start our implementation with some constants and a main function:
+以一些常量和一个main函数开始实现:
 
 \begin{lstlisting}[style=styleCXX]
 inline constexpr auto WORK_ITEMS = 5;
@@ -160,7 +159,7 @@ int main() {
 	auto thread_pool = cppcoro::static_thread_pool{3};
 \end{lstlisting}
 
-We want to produce five items using three pooled threads. cppcoro's thread pool is a neat way to schedule work. By default, it creates as many threads as your machine has hardware ones. Moving onward, we need to specify our work:
+希望使用三个池中的线程生成五个元素。cppcoro的线程池以一种简单的方法对工作进行安排。默认情况下，创建的线程数量与机器的硬件线程数量相同。接下来，需要具体说明相应的工作:
 
 \begin{lstlisting}[style=styleCXX]
 fmt::print("Thread {}: preparing work\n", std::this_thread::get_id());
@@ -170,9 +169,9 @@ fmt::print("Thread {}: starting work\n", std::this_thread::get_id());
 const auto ints = cppcoro::sync_wait(work);
 \end{lstlisting}
 
-We'll sprinkle our code with log messages so you can better see what's going on in which thread. This will help us better understand how coroutines work. We create work by calling a coroutine named do\_routine\_work. It returns us the coroutine, which we run using the sync\_wait blocking function. A coroutine won't start executing until it is actually being awaited. This means that our actual work will start inside this function call.
+在代码中散布日志消息，这样就可以更好地看到在哪个线程中发生了什么。这将帮助我们更好地理解协程是如何工作的。可以通过调用名为\texttt{do\_routine\_work}的协程来创建工作。返回协程，使用\texttt{sync\_wait}阻塞函数运行协程，协程只有在实际待时才会执行。这样，实际工作的将在这个函数调用中开始。
 
-Once we have our results, let's log them:
+当运行有了结果，就可以把结果记录下来:
 
 \begin{lstlisting}[style=styleCXX]
 fmt::print("Thread {}: work done. Produced ints are: ",
@@ -183,7 +182,7 @@ for (auto i : ints) {
 fmt::print("\n");
 \end{lstlisting}
 
-No voodoo magic here. Let's define our do\_routine\_work coroutine:
+这里没有巫毒魔法。来定义我们的\texttt{do\_routine\_work}协程:
 
 \begin{lstlisting}[style=styleCXX]
 cppcoro::task<std::vector<int>>
@@ -193,7 +192,7 @@ do_routine_work(cppcoro::static_thread_pool &thread_pool) {
 	ints.reserve(WORK_ITEMS);
 \end{lstlisting}
 
-It returns a task, which produces some integers. Because we're going to use the thread pool, let's use cppcoro's async\_mutex to synchronize the threads. Let's now start using the pool:
+它返回一个任务，该任务生成一些整数。因为使用线程池，所以让使用cppcoro的\texttt{async\_mutex}来同步线程。现在来使用池:
 
 \begin{lstlisting}[style=styleCXX]
 fmt::print("Thread {}: passing execution to the pool\n",
@@ -201,9 +200,9 @@ fmt::print("Thread {}: passing execution to the pool\n",
 co_await thread_pool.schedule();
 \end{lstlisting}
 
-You might be surprised that the schedule() call doesn't pass in any callable to execute. In the coroutine's case, we're actually making our current thread suspend the coroutine and start executing its caller. This means it will now wait for the coroutine to finish (somewhere in the sync\_wait call).
+\texttt{schedule()}调用没有传入可调用对象来执行，在协程的情况下，实际上当前线程暂停协程。并开始执行它的调用程序。这意味着它现在将等待协程完成(在\texttt{sync\_wait}调用的地方)。
 
-In the meantime, a thread from our pool will resume the coroutine – simply continuing to execute its body. Here's what we've prepared for it:
+与此同时，池中的一个线程将恢复协程——继续执行它的任务。以下是我们为此做的准备:
 
 \begin{lstlisting}[style=styleCXX]
 fmt::print("Thread {}: running first pooled job\n",
@@ -218,13 +217,13 @@ co_await cppcoro::when_all_ready(std::move(tasks));
 co_return ints;
 \end{lstlisting}
 
-We create a vector of tasks to execute. Each task fills one number in ints under the mutex. The schedule\_on call runs the filling coroutine using another thread from our pool. Finally, we wait for all the results. At this point, our tasks start executing. Finally, as our coroutine is a task, we use co\_return .
+我们创建一个要执行的任务集，每个任务在互斥锁下填充一个整数。s\texttt{chedule\_on}调用池中的另一个线程运行填充协程。最后，等待所有的结果。此时，任务开始执行。最后，由于协程是一个任务，这里使用\texttt{co\_return}。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}Don't forget to co\_return the produced value. If we removed the co\_return ints; line from our example, we would simply return a default constructed vector. The program would run, happily print the empty vector, and exit with code 0.
+\hspace*{0.7cm}不要忘记\texttt{co\_return}生成的值。如果移除\texttt{co\_return int;}，将简单地返回一个默认构造的数组。程序将运行，愉快地打印空数组，并以代码0退出。
 \end{tcolorbox}
 
-Our last step is to implement the coroutine that will produce a number:
+最后一步是实现产生数字的协程:
 
 \begin{lstlisting}[style=styleCXX]
 cppcoro::task<> fill_number(int i, std::vector<int> &ints,
@@ -234,7 +233,7 @@ cppcoro::async_mutex &mutex) {
 		std::chrono::milliseconds((WORK_ITEMS - i) * 200));
 \end{lstlisting}
 
-This one is a task that doesn't return any value. Instead, it will add it to our vector. Its hard work will actually be done by dozing off for a number of milliseconds. After the wake-up, the coroutine will continue with more productive endeavors:
+这个任务不返回任何值。相反，会把它加到数组上。它的繁重工作实际上是通过休眠几毫秒来完成的。睡醒后，协作程序将继续进行更有成效的工作:
 
 \begin{lstlisting}[style=styleCXX]
 {
@@ -243,22 +242,22 @@ This one is a task that doesn't return any value. Instead, it will add it to our
 }
 \end{lstlisting}
 
-It will lock the mutex. In our case, it's just an await. When the mutex is locked, it will add a number to our vector – the same number it was called with.
+它将锁定互斥对象。其实，只是等待而已。当互斥锁锁定时，会给\texttt{vector}添加一个数字——与调用时相同的数字。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}Remember to co\_await. If you forget and your awaitable allows that (perhaps because its okay to not consume each awaitable), then you might skip some essential computations. In our example, this could mean not locking a mutex.
+\hspace*{0.7cm}还记得\texttt{co\_await}么？如果忘记了，可以不使用可等待对象(可能因为不使用每个可等待对象也是可以的)，那么就会跳过一些必要的计算。在例子中，这可能代表着不锁定互斥对象。
 \end{tcolorbox}
 
-Let's finish the coroutine's implementation now:
+现在来完成协程的实现:
 
 \begin{lstlisting}[style=styleCXX]
  fmt::print("Thread {}: produced {}\n", std::this_thread::get_id(), i);
 co_return;
 \end{lstlisting}
 
-Just a simple status print and a co\_return to mark the coroutine as complete. Once it returns, the coroutine frame can be destroyed, freeing the memory occupied by it.
+一个简单的状态打印和一个\texttt{co\_return}来标记协程完成。返回时，协程框架就可以销毁了，释放其占用的内存。
 
-That's all. Let's now run our code and see what happens:
+这是所有了！现在让我们运行代码，看看会发生什么:
 
 \begin{tcblisting}{commandshell={}}
 Thread 140471890347840: preparing work
@@ -278,8 +277,8 @@ Thread 140471890282240: produced 2
 Thread 140471890347840: work done. Produced ints are: 4, 3, 1, 0, 2,
 \end{tcblisting}
 
-Our main thread was used to fire up the work on the pool and then waited for the results to come. Then, our three threads from the pool were producing numbers. The last task scheduled was actually the first one that ran, producing the number 4. This is because it was the one that continued executing do\_routine\_work all the time: first, it scheduled all other tasks on the pool, then started performing the first task when when\_all\_ready was called. Later on, the execution continued with the first free thread taking the next task scheduled on the pool until the whole vector was filled. Finally, the execution returned to our main thread.
+主线程用于启动池上的工作，然后等待结果。然后，池中的三个线程产生数字。最后安排的任务实际上是第一个运行的任务，产生数字4。这是因为它一直在执行\texttt{do\_routine\_work}:首先，调度池中的其他任务，然后在调用\texttt{when\_all\_ready}时开始执行第一个任务。稍后，执行继续进行，第一个空闲线程接受池上调度的下一个任务，直到整个数组填满。最后，执行返回到主线程。
 
-This concludes our short example. And with it, we conclude our last section of this chapter. Let's now summarize what we've learned.
+这个小例子到此结束。通过它，我们就结束了本章的最后一部分。现在来回顾一下本章了解到的内容。
 
 

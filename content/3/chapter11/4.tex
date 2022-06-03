@@ -1,69 +1,69 @@
 
-In this section, we'll discuss a few different ways to parallelize computations. We will start with a comparison between threads and processes, after which we'll show you the tools available in the C++ standard, and last but not least, we'll say a few words about the OpenMP and MPI frameworks.
+本节中，将讨论几种并行计算的不同方法。将从比较线程和进程开始，之后将向展示C++标准中可用的工具，最后，将简单介绍OpenMP和MPI框架。
 
-Before we start, let's say a few words on how to estimate the maximum possible gains you can have from parallelizing your code. There are two laws that can help us here. The first is Amdahl's law. It states that if we want to speed up our program by throwing more cores at it, then the part of our code that must remain sequential (cannot be parallelized) will limit our scalability. For instance, if 90\% of your code is parallelizable, then even with infinite cores you can still get only up to a 10x speedup. Even if we cut down the time to execute that 90\% to zero, the 10\% of the code will always remain there.
+开始之前，简单介绍一下如何估计代码并行化可能带来的最大收益。这里有两条规律可以给予我们帮助。首先是阿姆达尔定律，如果想通过添加更多的核心来加快程序的速度，那么代码中必须保持顺序(不能并行化)的部分将限制可扩展性。例如，如果代码有90\%是可并行的，那么即使核数无限，仍然只能获得10倍的加速。即使将90\%的执行时间减少到零，10\%的代码仍然会留在那里。
 
-The second law is Gustafson's law. It states that every large-enough task can be efficiently parallelized. This means that by increasing the size of the problem, we can obtain better parallelization (assuming we have free computing resources to use). In other words, sometimes it's better to add more capabilities to be run in the same time frame instead of trying to reduce the execution time of existing code. If you can cut the time of a task by half by doubling the cores, at some point, doubling them again and again will get you diminishing returns, so their processing power can be better spent elsewhere.
+第二定律是古斯塔夫森定律，每个足够大的任务都可以并行化。通过增加问题的规模，可以获得更好的并行化(假设有免费的计算资源可以使用)。换句话说，有时添加更多的功能以在同一时间段内运行，而不是试图减少现有代码的执行时间，这是更好的做法。如果可以通过加倍核心来减少一半的任务时间，那么在某些情况下，一次次地加倍会让性能回报递减，所以处理能力可以花在其他地方。
 
-\subsubsubsection{11.4.1\hspace{0.2cm}Understanding the differences between threads and processes}
+\subsubsubsection{11.4.1\hspace{0.2cm}理解线程和进程的区别}
 
-To parallelize computations efficiently, you need to also understand when to use processes to perform computation and when threads are the better tool for the job. Long story short, if your only target is to actually parallelize work, then it's best to start with adding extra threads up to the point where they don't bring extra benefits. At such a point, add more processes on other machines in your network, each with multiple threads too.
+为了有效地并行化计算，还需要了解何时使用进程来执行计算，以及何时线程是这项工作的更好工具。长话短说，如果目标是实际并行工作，那么最好从添加额外的线程开始。此时，在网络中的其他机器上添加更多进程，每个机器也有多个线程。
 
-Why is that? Because processes are more heavyweight than threads. Spawning a process and switching between them takes longer than creating and switching between threads. Each process requires its own memory space, while threads within the same process share their memory. Also, inter-process communication is slower than just passing variables between threads. Working with threads is easier than it is with processes, so the development will be faster too.
+这是为什么呢？因为进程比线程更重量级。生成一个进程并在它们之间切换所花费的时间比创建线程和在线程之间切换要长。每个进程需要自己的内存空间，而同一个进程中的线程共享它们的内存。而且，进程间通信比线程之间传递变量要慢。使用线程比使用进程更容易，开发速度也会更快。
 
-Processes, however, also have their uses in the scope of a single application. They're great for isolating components that can independently run and crash without taking down the whole application with them. Having separate memory also means one process can't snoop another one's memory, which is great when you need to run third-party code that could turn out to be malicious. Those two reasons are why they're used in web browsers, among other apps. Aside from that, it's possible to run different processes with different OS permissions or privileges, which you can't achieve with multiple threads.
+然而，进程在单个应用程序的范围内也有其用途。非常适合隔离那些可以独立运行和崩溃的组件，而不会破坏整个应用程序。拥有独立的内存还意味着一个进程不能窥探另一个进程的内存，当运行可能是恶意的第三方代码时，这是非常好的。这两个原因就是为什么它们用于网络浏览器和其他应用程序。除此之外，还可以运行具有不同操作系统权限或特权的不同进程，这是多线程无法实现的。
 
-Let's now discuss a simple way to parallelize work in the scope of a single machine.
+现在讨论在单个机器范围内并行工作的一种简单方法。
 
-\subsubsubsection{11.4.2\hspace{0.2cm}Using the standard parallel algorithms}
+\subsubsubsection{11.4.2\hspace{0.2cm}使用标准的并行算法}
 
-If the computations you perform can be parallelized, there are two ways you can use that to your advantage. One is by replacing your regular calls to standard library algorithms with parallelizable ones. If you're not familiar with parallel algorithms, they were added in C++17 and in essence are the same algorithms, but you can pass each of them an execution policy. There are three execution policies:
+如果执行的计算可以并行化，有两种方法可以使用。一种是用可并行的算法替换对标准库算法的常规调用。如果不熟悉并行算法，它们是在C++17中添加，本质上是相同的算法，但可以为传递一个执行策略。有三种执行策略:
 
 \begin{itemize}
 \item 
-std::execution::seq: The sequenced policy for the plain-old execution of an algorithm in a non-parallelized way. This one we know too well.
+\texttt{std::execution::seq}:以非并行方式执行算法的顺序策略。
 
 \item
-std::execution::par: A parallel policy that signals that the execution may be parallelized, usually using a thread pool under the hood.
+\texttt{std::execution::par}:一种并行策略，表明执行可能并行化，通常在后台使用线程池。
 
 \item
-std::execution::par\_unseq: A parallel policy that signals that the execution may be parallelized and vectorized.
+\texttt{std::execution::par\_unseq}: 一种并行策略，表示执行可以并行化和向量化。
 
 \item
-std::execution::unseq: A C++20 addition to the family. This policy signals that the execution can be vectorized, but not parallelized.
+\texttt{std::execution::unseq}:C++20的新成员。该策略表示可以向量化执行，但不能并行化执行。
 \end{itemize}
 
-If the preceding policies are not enough for you, additional ones may be provided by a standard library implementation. Possible future additions may include ones for CUDA, SyCL, OpenCL, or even artificial intelligence processors.
+如果上述策略都还不够，那么标准库实现可能会提供其他策略。可能的未来添加可能包括CUDA，SyCL，OpenCL，甚至人工智能处理器的支持。
 
-Let's now see the parallel algorithms in action. As an example, to sort a vector in a parallel way, you can write the following:
+现在来看看并行算法的实际应用。举个例子，要对一个数组进行并行排序，可以这样写:
 
 \begin{lstlisting}[style=styleCXX]
 std::sort(std::execution::par, v.begin(), v.end());
 \end{lstlisting}
 
-Simple and easy. Although in many cases this will yield better performance, in some cases you might be better off executing the algorithms in the traditional way. Why? Because  scheduling work on more threads requires additional work and synchronization. Also, depending on the architecture of your app, it may influence the performance of other already existing threads and flush their cores' data caches. As always, measure first.
+简单且容易！尽管在许多情况下，这将产生更好的性能，但在某些情况下，以传统的方式执行算法可能会更好。为什么呢？因为在更多的线程上调度工作需要额外的工作和同步。此外，根据应用程序的架构，可能会影响其他已经存在的线程的性能，并刷新核心数据缓存。这里同样也需要先进行测试。
 
-\subsubsubsection{11.4.3\hspace{0.2cm}Parallelizing computations using OpenMP and MPI}
+\subsubsubsection{11.4.3\hspace{0.2cm}使用OpenMP和MPI并行计算}
 
-An alternative to using the standard parallel algorithms would be to leverage OpenMP's pragmas. They're an easy way to parallelize many types of computations by just adding a few lines of code. And if you want to distribute your code across a cluster, you might want to see what MPI can do for you. Those two can also be joined together.
+使用标准并行算法的另一种选择是利用OpenMP的实用程序，是一种简单的方法，只需添加几行代码，就可以并行处理许多类型的计算。如果想在集群中分发代码，可能想了解MPI能为您做些什么。这两者也可以连接在一起。
 
-With OpenMP, you can use various pragmas to easily parallelize code. For instance, you can write \#pragma openmp parallel for before a for loop to get it executed using parallel threads. The library can do much more, such as executing computations on GPUs and other accelerators.
+使用OpenMP，您可以使用各种\texttt{pragmas}来轻松地并行化代码。例如，您可以在for循环之前添加\texttt{\#pragma openmp parallel for}，以便使用并行线程执行它。这个库可以做更多的事情，比如在GPU和其他加速器上执行计算。
 
-Integrating MPI into your project is harder than just adding an appropriate pragma. Here, you'll need to use the MPI API in your code base to send or receive data between processes (using calls such as MPI\_Send and MPI\_Recv), or perform various gather and reduce operations (calling MPI\_Bcast and MPI\_Reduce, among other functions in this family). Communication can be done point to point or to all clusters using objects called communicators.
+将MPI集成到项目中比添加适当的\texttt{pragma}更困难。这里，需要在代码库中使用MPI API来发送或接收进程之间的数据(使用如\texttt{MPI\_Send}和\texttt{MPI\_Recv}的调用)，或执行各种收集和减少操作(调用\texttt{MPI\_Bcast}和\texttt{MPI\_Reduce})。通信可以使用通信器对象进行点对点，或对所有集群的通讯。
 
-Depending on your algorithm implementation, MPI nodes can all execute the same code or it can vary when needed. The node will know how it should behave based on its rank: a unique number assigned when the computations start. Speaking of which, to start a process using MPI, you should run it through a wrapper, like so:
+根据算法实现的不同，MPI节点可以全部执行相同的代码，也可以根据需要不同。节点将根据排名知道应该如何行为:计算开始时分配的唯一数字。说到这里，使用MPI启动一个进程，应该通过一个包装器运行它，像这样:
 
 \begin{tcblisting}{commandshell={}}
 $ mpirun --hostfile my_hostfile -np 4 my_command --with some ./args
 \end{tcblisting}
 
-This would read hosts from said file one by one, connect to each of them, and run four instances of my\_command on each with the args passed.
+这将从上述文件逐一读取主机，连接到每个主机，并在每个主机上运行\texttt{my\_command}的四个实例，并传递参数。
 
-There are many implementations of MPI. One of the most notable is OpenMPI (don't confuse that with OpenMP). Among some useful features, it offers fault tolerance. After all, it's not uncommon for a node to go down.
+MPI有很多实现。其中最值得注意的是OpenMPI(不要将其与OpenMP混淆)，一些特性提供了容错功能。毕竟，节点宕机的情况并不少见。
 
-The last tool we'd like to mention in this section is GNU Parallel, which you might find useful if you want to easily span processes that perform work by spawning parallel processes. It can be used both on a single machine and across a compute cluster.
+本节中，最后一个工具是GNU Parallel，如果想通过生成并行进程来轻松地跨越执行工作的进程，就会发现它很有用。它既可以在一台机器上使用，也可以跨计算集群使用。
 
-Speaking about different ways to execute code, let's now discuss one more big topic from C++20: coroutines.
+说到执行代码的不同方式，那就要说一下C++20中的另一个大主题:协程。
 
 
 
