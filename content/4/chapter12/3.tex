@@ -1,82 +1,82 @@
 
-As we've mentioned previously in this chapter, messaging has many different use cases, ranging from IoT and sensor networks to microservices-based distributed applications running in the cloud.
+正如在本章前面提到的，消息传递有许多不同的用例，从物联网和传感器网络到运行在云中基于微服务的分布式应用程序。
 
-One of the benefits of messaging is that it is a neutral way to connect services implemented using different technologies. When developing an SOA, each service is typically developed and maintained by a dedicated team. Teams may choose the tools they feel comfortable with. This applies to programming languages, third-party libraries, and build systems.
+消息传递的好处之一是，连接使用不同技术实现服务的中立。在开发SOA时，每个服务通常由专门的团队开发和维护。团队可以选择他们觉得舒服的工具，这适用于编程语言、第三方库和构建系统。
 
-Maintaining a uniform set of tools may be counter-productive as different services may have different needs. For example, a kiosk application may require a Graphical User Interface (GUI) library such as Qt. A hardware controller that is a part of the same application will have other requirements, possibly linking to the hardware manufacturer's third-party components. These dependencies may then impose some restrictions that cannot be satisfied for both components simultaneously (for example, a GUI application may require a recent compiler, while the hardware counterpart may be pinned to an older one). Using messaging systems to decouple these components lets them have separate life cycles.
+维护统一的工具集可能会适得其反，因为不同的服务可能有不同的需求。例如，kiosk应用程序可能需要图形用户界面(GUI)库，例如Qt。作为同一应用程序一部分的硬件控制器可能有其他需求，可能链接到硬件制造商的第三方组件。这些依赖可能会施加一些不能同时满足两个组件的限制(例如，GUI应用程序可能需要一个最新的编译器，而硬件对应的可能固定在一个旧的编译器上)。使用消息传递系统来解耦这些组件使它们具有独立的生命周期。
 
-Some use cases for messaging systems include the following:
+消息传递系统的一些用例包括:
 
 \begin{itemize}
 \item 
-Financial operations
+金融业务
 
 \item 
-Fleet monitoring
+车辆监控
 
 \item 
-Logistics capturing
+物流捕获
 
 \item 
-Processing sensor
+处理传感器
 
 \item 
-Data order fulfillment
+执行数据订单
 
 \item 
-Task queuing
+任务队列
 \end{itemize}
 
-The following sections focus on the messaging systems designed for low overhead and message systems with brokers used for distributed systems.
+以下部分将重点介绍为低开销设计的消息传递系统，以及用于分布式系统的代理的消息系统。
 
-\subsubsubsection{12.3.1\hspace{0.2cm}Low-overhead messaging systems}
+\subsubsubsection{12.3.1\hspace{0.2cm}低开销的消息传递系统}
 
-Low-overhead messaging systems are typically used in environments that either require a small footprint or low latency. These are usually sensor networks, embedded solutions, and IoT devices. They are less common in cloud-based and distributed services, but it's still possible to use them in such solutions.
+低开销的消息传递系统通常用于占用空间小或延迟低的环境中，这些通常是传感器网络、嵌入式解决方案和物联网设备。它们在基于云的分布式服务中不太常见，但也可以在此类解决方案中使用它们。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{MQTT}
 
-MQTT stands for Message Queuing Telemetry Transport. It is an open standard both under OASIS and ISO. MQTT uses the PubSub model usually over TCP/IP, but it can also work with other transport protocols.
+MQTT表示消息队列遥测传输。它是OASIS和ISO下的开放标准。MQTT通常在TCP/IP上使用PubSub模型，也可以与其他传输协议一起工作。
 
-As the name suggests, MQTT's design goals are a low-code footprint and the possibility of running in low-bandwidth locations. There is a separate specification called MQTT-SN, which stands for MQTT for Sensor Networks. It focuses on battery-powered embedded devices without the TCP/IP stack.
+顾名思义，MQTT的设计目标是低代码占用和在低带宽位置运行的可能性。有一个独立的规范称为MQTT-SN，它代表传感器网络的MQTT。它专注于没有TCP/IP栈的电池供电的嵌入式设备。
 
-MQTT uses a message broker that receives all the messages from the client and routes those messages to their destinations. QoS is provided on three levels:
+MQTT使用消息代理接收来自客户机的所有消息，并将这些消息路由到目的地。服务质素分为三个级别:
 
 \begin{itemize}
 \item 
-At most once delivery (no guarantee)
+最多发一次(不保证交付)
 
 \item 
-At least once delivery (acknowledged delivery)
+至少发一次(确认交付)
 
 \item 
-Exactly once delivery (assured delivery)
+一次发送(保证交付)
 \end{itemize}
 
-It should be no surprise that MQTT is especially popular with various IoT applications. It's supported by OpenHAB, Node-RED, Pimatic, Microsoft Azure IoT Hub, and Amazon IoT. It's also popular with instant messaging, being used in ejabberd and Facebook Messanger. Other use cases include carsharing platforms, logistics, and transportation.
+MQTT在各种物联网应用程序中特别受欢迎，这并不奇怪。它由OpenHAB、Node-RED、Pimatic、Microsoft Azure IoT Hub和Amazon IoT支持。在即时通讯中也很流行，在ejabberd和Facebook messenger中使用。其他用例包括汽车共享平台、物流和运输。
 
-The two most popular C++ libraries supporting this standard are Eclipse Paho and mqtt\_cpp based on C++14 and Boost.Asio. For Qt applications, there's also qmqtt.
+支持该标准的两个最流行的C++库是基于C++ 14和Boost.Asio的Eclipse Paho和mqtt\_cpp。对于Qt应用程序，还有qmqtt。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{ZeroMQ}
 
-ZeroMQ is a brokerless messaging queue. It supports common messaging patterns, such as PubSub, client/server, and several others. It is independent of a particular transport and may be used with TCP, WebSockets, or IPC.
+ZeroMQ是一个无代理消息队列。它支持常见的消息传递模式，如PubSub、客户机/服务器和其他几种模式。它独立于特定的传输，可以与TCP、WebSockets或IPC一起使用。
 
-The main idea, contained in the name, is that ZeroMQ requires zero brokers and zero administration. It is also advocated as providing zero latency, which means no latency is added coming from the presence of a broker.
+其主要思想包含在名称中，即ZeroMQ不需要任何代理和管理。还提倡提供零延迟，这意味着代理的存在不会增加延迟。
 
-The low-level library is written in C, and it has implementations for various popular programming languages, including C++. The most popular implementation for C++ is cppzmq, which is a header-only library targeting C++11.
+底层库是用C编写的，它有各种流行编程语言的实现，包括C++。主流C++实现是cppzmq，它是一个使用C++11的头文件库。
 
-\subsubsubsection{12.3.2\hspace{0.2cm}Brokered messaging systems}
+\subsubsubsection{12.3.2\hspace{0.2cm}代理消息传递系统}
 
-The two most popular messaging systems that don't focus on low overhead are AMQPbased RabbitMQ and Apache Kafka. Both are mature solutions that are extremely popular in a lot of different designs. Many articles focus on superiority in a particular area of either RabbitMQ or Apache Kafka.
+主流的两种不关注低开销的消息系统是基于AMQP的RabbitMQ和Apache Kafka。两者都是成熟的解决方案，在许多不同的设计中都非常受欢迎。很多文章关注RabbitMQ或Apache Kafka在某一特定领域的优势。
 
-This is a slightly incorrect point of view as both messaging systems are based on different paradigms. Apache Kafka focuses on streaming vast amounts of data and storing the stream in persistent memory to allow future replay. RabbitMQ, on the other hand, is often used as a message broker between different microservices or a task queue to handle background jobs. For this reason, routing in RabbitMQ is much more advanced than the one present in Apache Kafka. Kafka's primary use cases are data analysis and real-time processing.
+这是一个稍微不正确的观点，因为两个消息传递系统都基于不同的范例。Apache Kafka专注于将大量数据流化，并将流存储在持久内存中，以允许未来重放。另一方面，RabbitMQ经常用作不同微服务之间的消息代理或处理后台任务的任务队列。因为这个原因，RabbitMQ中的路由比Apache Kafka中的路由要先进得多。Kafka的主要用来进行数据分析和实时处理。
 
-While RabbitMQ uses the AMQP protocol (and supports other protocols as well, such as MQTT and STOMP), Kafka uses its own protocol based on TCP/IP. This means that RabbitMQ is interoperable with other existing solutions based on these supported protocols. If you write an application that uses AMQP to interact with RabbitMQ, it should be possible to migrate it later to use Apache Qpid, Apache ActiveMQ, or managed solutions from AWS or Microsoft Azure.
+而RabbitMQ使用AMQP协议(也支持其他协议，如MQTT和STOMP)， Kafka使用自己的基于TCP/IP的协议。这意味着RabbitMQ可以与基于这些受支持协议的其他现有解决方案互操作。如果你写了一个使用AMQP与RabbitMQ交互的应用程序，应该可以将其迁移到Apache Qpid, Apache ActiveMQ，或者AWS或Microsoft Azure的托管解决方案。
 
-The scaling concerns could also drive the choice of one message broker over another. The architecture of Apache Kafka allows for easy horizontal scaling, which means adding more machines to the existing pool of workers. RabbitMQ, on the other hand, was designed with vertical scaling in mind, which means adding more resources to the existing machine, rather than adding more machines of similar sizes.
+扩展方面的考虑也可能促使选择一个消息代理而不是另一个。Apache Kafka的架构允许轻松的水平扩展，这意味着可以向现有的工作池添加更多的机器。另一方面，RabbitMQ在设计时考虑了垂直扩展，这意味着可以向现有机器添加更多的资源，而不是添加更多机器。
 
 
 

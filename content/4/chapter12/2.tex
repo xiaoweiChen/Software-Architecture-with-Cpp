@@ -1,67 +1,66 @@
 
-Service-Oriented Architecture is an example of a software design that features loosely coupled components that provide services to each other. The components use a shared communication protocol, usually over a network. In this design, services mean units of functionality that can be accessed outside of the originating component. An example of a component could be a mapping service that provides a map of the area in response to geographical coordinates.
+面向服务的架构是一个软件设计的例子，特点是组件松散耦合，这些组件相互提供服务。这些组件通常通过网络使用共享通信协议。这种设计中，服务意味着可以在原始组件外部访问的功能单元。组件的一个例子可以是映射服务，该服务根据地理坐标提供该地区的地图。
 
-According to the definition, a service has four properties:
+根据定义，服务有四个属性:
 
 \begin{itemize}
 \item 
-It is a representation of business activity with a defined outcome.
+具有已定义结果的业务活动的表示。
 
 \item 
-It is self-contained.
+自包含的。
 
 \item 
-It is opaque to its users.
+对用户黑盒。
 
 \item 
-It may be composed of other services.
+由其他服务组成。
 \end{itemize}
 
-\subsubsubsection{12.2.1\hspace{0.2cm}Implementation approaches}
+\subsubsubsection{12.2.1\hspace{0.2cm}实现方法}
 
-Service-Oriented Architecture does not regulate how to approach the service orientation. It's a term that may be applied to many different implementations. There are discussions on whether some approaches actually should be considered to be Service-Oriented Architecture. We don't want to take part in these discussions, only to highlight some of the approaches that often are mentioned as SOA approaches.
+面向服务的架构没有规定如何实现面向服务，这个术语可以应用于许多不同的实现。对于某些方法是否应该视为面向服务的架构，存在一些讨论。我们不想参与这些讨论，只是想强调一些经常称为SOA方法的方法。
 
-Let's compare some of them.
-
+我们来比较一下。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Enterprise Service Bus}
+\textbf{企业服务总线}
 
-ESB is often the first association when someone says Service-Oriented Architecture. It's one of the oldest approaches to implementing SOA.
+当有人说到面向服务的架构时，ESB通常是第一个关联。它是实现SOA的最古老的方法之一。
 
-ESB draws an analogy from computer hardware architecture. Hardware architecture uses computer buses such as PCI to achieve modularity. This way, third-party providers are able to implement modules (such as graphic cards, sound cards, or I/O interfaces) independently of the motherboard manufacturer as long as everyone is adhering to the standards required by the bus.
+ESB借鉴了计算机硬件体系结构，硬件结构采用PCI等计算机总线实现模块化。这样，只要每个人都遵守总线要求的标准，第三方提供商就能够独立于主板制造商实现模块(如图形卡、声卡或I/O接口)。
 
-Much like the PCI, the ESB architecture aims to build a standard, general-purpose way to allow for the interaction of loosely coupled services. Such services are expected to be developed and deployed independently. It should also be possible to combine heterogeneous services.
+与PCI非常相似，ESB体系结构旨在构建一种标准的、通用的方式，以允许松散耦合的服务进行交互。这些服务预计将独立开发和部署，还可以组合为异构服务。
 
-As with SOA itself, ESB is not defined by any global standard. To implement ESB, it is necessary to establish an additional component in the system. This component is the bus itself. The communication over ESB is event-driven and often achieved with the means of message-oriented middleware and message queues, which we'll discuss in later chapters.
+与SOA本身一样，ESB不是由全局标准定义的。要实现ESB，需要在系统中建立一个组件，这个组件就是总线本身。ESB上的通信是事件驱动的，通常通过面向消息的中间件和消息队列来实现，我们将在后面的章节中讨论这些。
 
-The Enterprise Service Bus component serves the following roles:
+企业服务总线组件服务于以下角色:
 
 \begin{itemize}
 \item 
-Controlling the deployment and versioning of services
+控制服务的部署和版本控制
 
 \item 
-Maintaining service redundancy
+维护服务的冗余
 
 \item 
-Routing messages between services
+服务之间的消息路由
 
 \item 
-Monitoring and controlling the message exchange
+监视和控制消息交换
 
 \item 
-Resolving contention between the components
+解决组件之间的争用
 
 \item 
-Providing common services, such as event handling, encryption, or message queuing
+提供公共服务，如事件处理、加密或消息入队
 
 \item 
-Enforcing Quality of Service (QOS)
+加强服务素质(QOS)
 \end{itemize}
 
-There are both proprietary commercial products as well as open source ones that implement the Enterprise Service Bus functionality. Some of the most popular open source products are the following:
+实现企业服务总线功能的产品既有专有的商业产品，也有开源的产品。以下是一些最受欢迎的开源产品:
 
 \begin{itemize}
 \item 
@@ -80,17 +79,17 @@ JBoss ESB
 OpenESB
 
 \item 
-Red Hat Fuse (based on Apache Camel)
+Red Hat Fuse(基于Apache Camel)
 
 \item 
 Spring Integration
 \end{itemize}
 
-The most popular commercial products are the following:
+最受欢迎的商业产品有:
 
 \begin{itemize}
 \item 
-IBM Integration Bus (replacing IBM WebSphere ESB)
+IBM Integration Bus (已经被IBM WebSphere ESB替代)
 
 \item 
 Microsoft Azure Service Bus
@@ -105,96 +104,95 @@ Oracle Enterprise Service Bus
 SAP Process Integration
 \end{itemize}
 
-As with all the patterns and products that we present in this book, you will have to consider the strengths and weaknesses before deciding to go with a particular architecture. Some of the benefits of introducing Enterprise Service Bus are as follows:
+与本书中介绍的所有模式和产品一样，在决定使用特定的架构之前，必须考虑其优点和缺点。引入企业服务总线的一些好处如下:
 
 \begin{itemize}
 \item 
-Better scalability of services
+更好的服务可扩展性
 
 \item 
-Distributed workload
+分布式负载
 
 \item 
-Can focus on configuration rather than implementing custom integration in services
+可以专注于配置，而不是实现服务中的自定义集成
 
 \item 
-An easier way to design loosely coupled services
+设计松散耦合服务的简单方法
 
 \item 
-Services are replaceable
+服务可替换
 
 \item 
-Built-in redundancy capability
+内置的冗余功能
 \end{itemize}
 
-The disadvantages, on the other hand, mostly revolve around the following:
+另一方面，缺点主有以下几个方面:
 
 \begin{itemize}
 \item 
-A single point of failure – the ESB component's failure means the outage of an entire system.
+单点故障——ESB组件的故障意味着整个系统的中断。
 
 \item 
-The configuration is more complex, which impacts maintenance.
+配置比较复杂，影响维护。
 
 \item 
-Message queuing, message translation, and other services provided by ESB may reduce performance or even become a bottleneck.
+消息队列、消息转换和ESB提供的其他服务可能会降低性能，甚至成为瓶颈。
 \end{itemize}
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Web services}
+\textbf{Web服务}
 
-Web services are another popular implementation of Service-Oriented Architecture. By their definition, web services are services offered by one machine to another machine (or operator) where communication occurs over World Wide Web protocols. Even though W3C, the governing body concerning the World Wide Web, allows the use of other protocols such as FTP or SMTP, web services typically use HTTP as transport.
+Web服务是面向服务架构的另一种流行实现。根据Web服务的定义，Web服务是一台机器向另一台机器(或操作员)提供的服务，其中通过万维网协议进行通信。尽管万维网管理机构W3C允许使用其他协议，如FTP或SMTP，但Web服务通常使用HTTP作为传输协议。
 
-Although it is possible to implement web services using proprietary solutions, most implementations are based on open protocols and standards. Although many of the approaches are often referred to as web services, they are fundamentally different from each other. Later in the chapter, we will describe the various approaches in detail. For now, let's focus on their common features.
+虽然可以使用专有的解决方案来实现Web服务，但大多数实现都基于开放协议和标准。尽管许多方法通常称为Web服务，但它们彼此之间有着本质上的不同。本章的后面，将详细描述各种方法。现在，让我们关注它们的共同特性。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Benefits and disadvantages of web services}
+\textbf{Web服务的优缺点}
 
-The benefits of web services are as follows:
+Web服务的好处如下:
 
 \begin{itemize}
 \item 
-Using popular web standards
+使用流行的Web标准
 
 \item 
-A lot of tooling
+很多工具
 
 \item 
-Extensibility
+可扩展性
 \end{itemize}
 
-Given next are the disadvantages:
+下面是缺点:
 
 \begin{itemize}
 \item 
-A lot of overhead.
+开销很大。
 
 \item 
-Some implementations are too complex (for example, SOAP/WSDL/UDDI specifications).
+有些实现复杂(例如，SOAP/WSDL/UDDI规范)。
 \end{itemize}
 
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{消息和流}
+
+介绍企业服务总线体系结构时，已经提到了消息队列和消息代理。除了作为ESB实现的一部分外，消息传递系统还可以是独立的架构元素。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Messaging and streaming}
+\textbf{消息队列}
 
-We've mentioned message queues and message brokers already when covering the Enterprise Service Bus architecture. Other than as part of an ESB implementation, messaging systems may also be standalone architectural elements.
+消息队列是用于进程间通信(IPC)的组件。顾名思义，它们使用队列数据结构在不同进程之间传递消息。通常，消息队列是面向消息中间件(MOM)设计的一部分。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Message queues}
+在最低级别，消息队列在UNIX规范中可用，在System V和POSIX中都有。虽然在单台机器上实现IPC很有趣，但我们更希望关注适合于分布式计算的消息队列。
 
-Message queues are components used for Inter-Process Communication (IPC). As the name suggests, they use the queue data structure to pass messages between different processes. Usually, message queues are a part of Message-Oriented Middleware (MOM) designs.
-
-On the lowest level, message queues are available in UNIX specifications, both in System V and in POSIX. While they are interesting when implementing IPC on a single machine, we would like to focus on message queues that are suitable for distributed computing.
-
-There are currently three standards used in open source software that are related to message queuing:
+目前，开源软件中与消息队列相关的标准有三种:
 
 \begin{enumerate}
 \item 
-Advanced Message Queuing Protocol (AMQP), a binary protocol operating on the application layer of the 7-Layer OSI model. Popular implementations include the following:
+高级消息队列协议(AMQP)，一种运行在7层OSI模型的应用层上的二进制协议。流行的实现包括以下几点:
 
 \begin{itemize}
 \item 
@@ -214,7 +212,7 @@ Azure Service Bus
 \end{itemize}
 
 \item 
-Streaming Text Oriented Messaging Protocol (STOMP), a text-based protocol similar to HTTP (uses verbs such as CONNECT, SEND, SUBSCRIBE). Popular implementations include the following:
+流式面向文本的消息传递协议(STOMP)，类似于HTTP的基于文本的协议(使用诸如CONNECT、SEND、SUBSCRIBE等动词)。流行的实现包括以下几点:
 
 \begin{itemize}
 \item 
@@ -228,7 +226,7 @@ syslog-ng
 \end{itemize}
 
 \item 
-MQTT, a lightweight protocol aimed at embedded devices. Popular implementations include home automation solutions such as the following:
+MQTT，一种针对嵌入式设备的轻量级协议。流行的实现包括家庭自动化解决方案，如以下:
 
 \begin{itemize}
 \item 
@@ -260,41 +258,41 @@ Azure IoT Hub
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Message brokers}
+\textbf{消息代理}
 
-Message brokers deal with the translation, validation, and routing of messages in a messaging system. Like message queues, they are parts of MOM.
+消息代理处理消息系统中消息的转译、验证和路由。与消息队列一样，也是MOM的一部分。
 
-Using message brokers, you can minimize the application's awareness regarding other parts of the system. This leads to designing loosely coupled systems, as message brokers take all the burden related to common operations on messages. It is known as a PublishSubscribe (PubSub) design pattern.
+通过使用消息代理，可以最大限度地减少应用程序对系统其他部分的感知，这会让系统的设计变得松散耦合，因为消息代理承担了与消息上的通用操作相关的所有负担，从而称为PublishSubscribe (PubSub)设计模式。
 
-Brokers typically manage message queues for receivers but are also able to perform additional functions, such as the following:
+代理通常为接收者管理消息队列，也能够执行其他功能，例如:
 
 \begin{itemize}
 \item 
-Translating messages from one representation to another
+将消息从一种表示转换为另一种表示
 
 \item 
-Validating the message sender, receiver, or contents
+验证消息发送方、接收方或内容
 
 \item 
-Routing messages to one or more destinations
+将消息路由到一个或多个目的地
 
 \item 
-Aggregating, decomposing, and recomposing messages in transit
+聚合、分解和重组传输中的消息
 
 \item 
-Retrieving data from external services
+从外部服务检索数据
 
 \item 
-Augmenting and enriching messages through interaction with external services
+通过与外部服务的交互来增强和丰富消息
 
 \item 
-Handling and responding to errors and other events
+处理和响应错误和其他事件
 
 \item 
-Providing different routing patterns, such as PubSub
+提供不同的路由模式，如PubSub
 \end{itemize}
 
-Popular implementations of message brokers are the following:
+消息代理的主流实现如下:
 
 \begin{itemize}
 \item 
@@ -330,85 +328,85 @@ Azure Service Bus
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Cloud computing}
+\textbf{云计算}
 
-Cloud computing is a broad term with a lot of different meanings. Initially, the term cloud referred to a layer of abstraction that the architecture shouldn't be too worried about. This could, for example, mean servers and network infrastructure managed by a dedicated operations team. Later, service providers started applying the term cloud computing to their own products that abstracted the underlying infrastructure with all its complexities. Instead of having to configure each piece of infrastructure individually, it was possible to use a simple Application Programming Interface (API) to set up all the necessary resources.
+云计算是一个宽泛的术语，有很多不同的含义。最初，术语云指的是架构不应该太担心的抽象层。例如，这可能意味着由专门的运营团队管理服务器和网络基础设施。后来，服务提供商开始将术语云计算应用到他们自己的产品中，这些产品抽象了底层基础设施的所有复杂性。不必单独配置每个基础设施，而是可以使用简单的应用程序编程接口(Application Programming Interface, API)来设置所有必要的资源。
 
-Nowadays, cloud computing has grown to include many novel approaches to application architecture. It may consist of the following:
+如今，云计算已经发展到包括许多应用程序架构的新方法。它可能包括以下内容:
 
 \begin{itemize}
 \item 
-Managed services, such as databases, cache layers, and message queues
+托管服务，如数据库、缓存层和消息队列
 
 \item 
-Scalable workload orchestration
+可扩展的工作负载编排
 
 \item 
-Container deployment and orchestration platforms
+容器部署和编制平台
 
 \item 
-Serverless computing platforms
+无服务的计算平台
 \end{itemize}
 
-The most important thing to remember when considering cloud adoption is that hosting your application in the cloud requires an architecture designed specifically for the cloud. Most often, it also means architecture designed specifically for the given cloud provider.
+考虑使用云时，要记住的最重要的一点是，在云中托管应用程序需要专门为云设计的架构。通常，还意味着专门为给定的云提供商设计的架构。
 
-This means choosing a cloud provider is not just a decision about whether one choice is better than another at a given moment in time. It means that the future cost of switching a provider may be too big to warrant the move. Migration between providers requires architectural changes and for a working application, they may outweigh the savings expected from the migration.
+这意味着选择云提供商，不仅仅是在给定的时间点上决定一个选择是否比另一个更好，更换供应商的未来成本可能太大，不值得这样做。提供者之间的迁移需要更改架构，而对于一个没问题的应用程序，这些更改可能会超过迁移所节省的成本。
 
-There is also another consequence of cloud architecture design. For legacy applications, it means that in order to take advantage of the cloud benefits, the applications would first have to be rearchitected and rewritten. Migration to the cloud is not just a matter of copying binary and configuration files from on-premises hosting to virtual machines managed by a cloud provider. Such an approach would only mean a waste of money as cloud computing is only cost-effective if your applications are scalable and cloud-aware.
+云架构设计的另一个后果。对于遗留应用程序，这意味着为了利用云的优势，应用程序首先必须重新构建和编写。迁移到云不仅仅是将二进制文件和配置文件从本地托管复制到云提供商管理的虚拟机。这种方法只会浪费金钱，因为只有当应用程序具有可扩展性和云感知能力时，云计算才具有成本效益。
 
-Cloud computing doesn't necessarily mean using external services and leasing machines from third-party providers. There are also solutions such as OpenStack that run onpremises, which allow you to leverage the benefits of cloud computing using the servers you already own.
+云计算并不一定意味着使用外部服务和从第三方提供商租赁机器，还有一些解决方案，比如在本地运行的OpenStack，可以使用已经拥有的服务器来获得云计算的红利。
 
-We will cover managed services later in this chapter. Containers, cloud-native design, and serverless architecture will have their own dedicated chapters later in the book.
+我们将在本章后面讨论托管服务。容器、云本地设计和无服务器架构将在本书后面的章节中具体描述。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Microservices}
+\textbf{微服务}
 
-There is some debate regarding whether microservices are a part of SOA or not. Most of the time, the term SOA is pretty much equivalent to the ESB design. Microservices are in many respects the opposite of ESB. This leads to opinions that microservices are a distinct pattern from SOA, being the next step in the evolution of software architecture.
+关于微服务是否是SOA的一部分存在一些争论。大多数时候，术语SOA几乎等同于ESB设计。微服务在许多方面与ESB相反。这导致人们认为微服务是不同于SOA的一种模式，是软件架构发展的下一步。
 
-We believe that they are, in fact, a modern approach to SOA that aims to eliminate some of the problems featured in ESB. After all, microservices fit within the definition of ServiceOriented Architecture very well.
+我们相信它们是一种现代的SOA方法，旨在消除ESB中出现的一些问题。毕竟，微服务非常符合面向服务架构的定义。
 
-Microservices are the subject of the next chapter.
+微服务是下一章的主题。
 
-\subsubsubsection{12.2.2\hspace{0.2cm}Benefits of Service-Oriented Architecture}
+\subsubsubsection{12.2.2\hspace{0.2cm}面向服务架构的优点}
 
-Splitting the system's functionality over multiple services has several benefits. First of all, each service can be maintained and deployed separately. This helps the team focus on a given task, without the need to understand every possible interaction within the system. It also enables agile development as tests only have to cover a particular service, not the entire system.
+将系统的功能拆分到多个服务上有几个好处。首先，每个服务都可以单独维护和部署。这有助于团队专注于给定的任务，而不需要理解系统内的每一个可能的交互，其还支持敏捷开发，因为测试只需要覆盖特定的服务，而不是整个系统。
 
-The second benefit is that the modularity of the services helps create a distributed system. With a network (usually based on the Internet Protocol) as a means of communication, services can be split between different machines to provide scalability, redundancy, and better resource usage.
+第二个好处是服务的模块化有助于创建分布式系统。使用网络(通常基于Internet协议)作为通信手段，服务可以在不同的机器之间分割，以提供可扩展性、冗余和更好的资源使用。
 
-Implementing new features and maintaining the existing software is a difficult task when there are many producers and many consumers for each service. This is why SOA encourages the use of documented and versioned APIs.
+当每个服务都有许多生产者和消费者时，实现新特性和维护现有软件是一项困难的任务。这就是SOA鼓励使用文档化和版本化API的原因。
 
-Another way to make it easier for both service producers and consumers to interact is by using established protocols that describe how to pass data and metadata between different services. These protocols may include SOAP, REST, or gRPC.
+另一种使服务生产者和消费者更容易交互的方法是，使用描述如何在不同服务之间传递数据和元数据的既定协议。这些协议可能包括SOAP、REST或gRPC。
 
-The use of APIs and standard protocols makes it easy to create new services that provide added value over the existing ones. Considering we have a service, A, that returns our geographical location and another service, B, that provides the current temperature for a given location, we can invoke A and use its response in a request to B. This way, we get the current temperature for the current location without implementing the entire logic on our own.
+API和标准协议的使用使得创建新服务变得很容易，这些新服务提供了比现有服务更高的价值。考虑到我们有一个服务A，它返回我们的地理位置，另一个服务B，它提供给定位置的当前温度，我们可以调用A并在向B的请求中使用它的响应。这样，我们就可以获得当前位置的当前温度，而不用自己实现整个逻辑。
 
-All of the complexity and implementation details of both services are unknown to us and we treat them as black boxes. The maintainers of both services may also introduce new functionality and release new versions of the services without the need to inform us about it.
+这两个服务的所有复杂性和实现细节对外都是未知的，我们将它们视为黑盒。这两个服务的维护者也可能引入新的功能并发布服务的新版本，但不需要通知我们。
 
-Testing and experimenting with Service-Oriented Architecture is also easier than with monolithic applications. A small change in a single place doesn't require the recompilation of an entire code base. It is often possible to invoke services in an ad hoc manner using client tools.
+使用面向服务的架构进行测试和试验也比使用单块应用程序更容易，小更改不需要重新编译整个代码库。通常可以使用客户端工具以特定的方式调用服务。
 
-Let's return to our example with the weather and geographical location service. If both services are exposing a REST API, we are able to build a prototype using nothing more than a cURL client to send appropriate requests manually. When we confirm that the response is satisfactory, we may then start writing code that will automate the entire operation and possibly expose the results as another service.
+回到天气和地理位置服务的示例。如果两个服务都公开一个REST API，就能够构建一个原型，只使用cURL客户机手动发送适当的请求。当确认响应是令人满意的时，可以开始编写代码，使整个操作自动化，并可能将结果作为另一个服务公开。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}To get the benefits of SOA, we need to remember that all of the services have to be loosely coupled. If services depend on each other's implementation, it means they are no longer loosely coupled and are tightly coupled instead. Ideally, any given service should be replaceable by a different analogous service without impacting the operation of the entire system.
+\hspace*{0.7cm}要获得SOA的好处，需要记住所有服务都必须是松散耦合的。如果服务依赖于彼此的实现，这意味着它们不再是松散耦合的，而是紧密耦合的。理想情况下，给定的服务都可以被不同的类似服务替代，而不会影响整个系统的运行。
 \end{tcolorbox}
 
-In our weather and location example, this means that reimplementing a location service in a different language (say, switching from Go to C++) should not affect the downstream consumers of that service as long as they use the established API.
+在天气和位置的例子中，这意味着用另一种语言重新实现位置服务(比如从Go切换到C++)应该不会影响到该服务的下游使用者，只要他们使用已建立的API即可。
 
-It is possible to still introduce breaking changes in the API by releasing a new API version. A client connecting to version 1.0 would observe the legacy behavior while clients connecting to 2.0 would benefit from bugfixes, better performance, and other improvements that come at the cost of compatibility.
+通过发布新的API版本，仍然有可能在API中引入破坏性的变化。连接到1.0版本的客户机将观察遗留行为，而连接到2.0版本的客户机将受益于bug修复、更好的性能和其他以兼容性为代价的改进。
 
-For services relying on HTTP, API versioning usually occurs at the URI level. So a version 1.0, 1.1, or 1.2 API can be accessed when calling https://service.local/v1/customer while the version 2.0 API resides at https://service.local/v2/customer. An API gateway, HTTP proxy, or a load balancer is then able to route the requests to appropriate services.
+对于依赖于HTTP的服务，API版本控制通常发生在URI级别。因此，当调用\url{URLhttps://service.local/v1/customer}时可以访问版本1.0、1.1或1.2的API，而版本2.0的API位于\url{https://service.local/v2/customer}。然后，API网关、HTTP代理或负载均衡器能够将请求切换到适当的服务。
 
-\subsubsubsection{12.2.3\hspace{0.2cm}Challenges with SOA}
+\subsubsubsection{12.2.3\hspace{0.2cm}SOA的挑战}
 
-Introducing an abstraction layer always comes at a cost. The same rule applies to ServiceOriented Architecture. It's easy to see the abstraction costs when looking at Enterprise Service Bus, web services, or message queues and brokers. What may be less obvious is that microservices also come at a cost. Their cost is related to the Remote Procedure Call (RPC) frameworks they use and the resource consumption related to service redundancy and duplication of their functionality. 
+引入抽象层总是要付出代价的。同样的规则也适用于面向服务的架构。在查看企业服务总线、Web服务或消息队列和代理时，很容易看到抽象成本。可能不那么明显的是，微服务也是有代价的。其成本与它们使用的远程过程调用(Remote Procedure Call, RPC)框架有关，以及与服务冗余和功能重复相关的资源消耗。 
 
-Another target of criticism related to SOA is the lack of uniform testing frameworks. Individual teams that develop the services of an application may use tooling unknown to other teams. Other issues related to testing are that the heterogeneous nature and interchangeability of components mean there is a huge set of combinations to test. Some combinations may introduce edge cases that are not typically observed.
+与SOA相关的另一个批评是缺乏统一的测试框架，开发应用程序服务的单个团队可能会使用其他团队不知道的工具。与测试相关的其他问题是，组件的异构性质和互换性意味着需要测试大量的组合。一些组合可能会引入通常观察不到的边界情况。
 
-As the knowledge about particular services is mostly concentrated in a single team, it is much harder to understand how an entire application works.
+由于关于特定服务的知识主要集中在单个团队中，因此很难理解整个应用程序如何工作。
 
-When the SOA platform is developed during the lifetime of an application, it may introduce the need for all the services to update their version to target the recent platform development. This means that instead of introducing new features, developers would be focused on making sure their application functions correctly after the changes to the platform. In an extreme case, maintenance costs may rise drastically for those services that don't see new releases and are constantly patched to adhere to platform requirements.
+应用程序的生命周期中开发SOA平台时，可能需要所有服务更新其版本，以针对最近的平台开发。这意味着在平台发生变化后，开发人员将专注于确保应用程序功能正确，而不是引入新特性。极端的情况下，维护成本可能会急剧上升，因为那些服务没有看到新版本，并不断打补丁以坚持平台需求。
 
-Service-Oriented Architecture follows Conway's law, described in Chapter 2, Architectural Styles.
+面向服务的体系结构遵循Conway的法则，在第2章中有介绍过。
 
 
 

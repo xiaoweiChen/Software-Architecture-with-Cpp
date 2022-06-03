@@ -1,85 +1,85 @@
 
-As mentioned earlier in the chapter, the common characteristic of web services is that they are based on standard web technologies. Most of the time, this will mean the Hypertext Transfer Protocol (HTTP) and this is the technology we will focus on. Although it is possible to implement web services based on different protocols, such services are extremely rare and therefore out of our scope.
+如本章前面提到的，Web服务的共同特征是基于标准的Web技术。大多数时候，这将意味着超文本传输协议(HTTP)，这是本节重点关注的技术。尽管可以基于不同的协议实现Web服务，但这样的服务非常罕见，超出了本书的范围。
 
-\subsubsubsection{12.4.1\hspace{0.2cm}Tools for debugging web services}
+\subsubsubsection{12.4.1\hspace{0.2cm}用于调试Web服务的工具}
 
-One of the major benefits of using HTTP as transport is the wide availability of tools. For the most part, testing and debugging a web service may be performed using nothing more than a web browser. Apart from that, there are a lot of additional programs that may be helpful in automation. These include the following:
+使用HTTP作为传输的主要好处之一是工具的广泛可用性。在大多数情况下，测试和调试Web服务只需要使用Web浏览器即可。除此之外，还有很多其他的程序可能对自动化很有帮助。其中包括:
 
 \begin{itemize}
 \item 
-The standard Unix file downloader wget
+标准的Unix文件下载程序wget
 
 \item 
-The modern HTTP client curl
+现代HTTP客户端curl
 
 \item 
-Popular open source libraries such as libcurl, curlpp, C++ REST SDK, cpr (C++ HTTP requests library), and NFHTTP
+流行的开源库，如libcurl、curlpp、c++ REST SDK、cpr(C++ HTTP请求库)和NFHTTP
 
 \item 
-Testing frameworks such as Selenium or Robot Framework
+测试框架，如Selenium或Robot Framework
 
 \item 
-Browser extensions such as Boomerang
+浏览器扩展，如Boomerang
 
 \item 
-Standalone solutions such as Postman and Postwoman
+独立的解决方案，如Postman和Postwoman
 
 \item 
-Dedicated testing software including SoapUI and Katalon Studio
+专用测试软件包括SoapUI和Katalon Studio
 \end{itemize}
 
-HTTP-based web services work by returning an HTTP response to an HTTP request that uses appropriate HTTP verbs (such as GET, POST, and PUT). The semantics of how the request and the response should look and what data they should convey differs from implementation to implementation.
+基于HTTP的Web服务通过向使用适当HTTP动词(如GET、POST和PUT)的HTTP请求返回HTTP响应来工作。请求和响应，以及它们应该传递数据的语义在不同的实现中也是不同的。
 
-Most implementations fall into one of two categories: XML-based web services and JSONbased web services. JSON-based web services are currently displacing XML-based ones, but it is still common to find services that use XML formats.
+大多数实现分为两类:基于XML的Web服务和基于JSON的Web服务。目前，基于JSON的Web服务正在取代基于XML的Web服务，但使用XML格式的服务仍然很常见。
 
-For dealing with data encoded with either JSON or XML, additional tools such as xmllint, xmlstarlet, jq, and libxml2 may be required.
+对于处理用JSON或XML编码的数据，可能需要额外的工具，如xmllint、xmlstarlet、jq和libxml2。
 
-\subsubsubsection{12.4.2\hspace{0.2cm}XML-based web services}
+\subsubsubsection{12.4.2\hspace{0.2cm}基于XML的Web服务}
 
-The first web services that gained traction were primarily based on XML. XML or eXtensible Markup Language was at the time the interchange format of choice in distributed computing and in the web environment. There were several different approaches to designing services with an XML payload.
+第一个获得关注的Web服务主要基于XM的。XML或可扩展标记语言在当时是分布式计算和网络环境中交换格式的选择。使用XML有效负载设计服务有几种不同的方法。
 
-It is possible that you may want to interact with existing XML-based web services that are developed either internally within your organization or externally. However, we advise you to implement new web services using more lightweight methods, such as JSON-based web services, RESTful web services, or gRPC.
+可能希望与组织内部或外部开发的基于XML的现有Web服务进行交互。但是，建议使用更轻量级的方法来实现新的Web服务，比如基于JSON的Web服务、REST的Web服务或gRPC。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{XML-RPC}
 
-One of the first standards that emerged was called XML-RPC. The idea behind the project was to provide an RPC technology that would compete with the then prevalent Common Object Model (COM), and CORBA. The aim was to use HTTP as a transport protocol and make the format human-readable and human-writable as well as parsable to machines. To achieve that, XML was chosen as the data encoding format.
+出现的第一个标准被称为XML-RPC。该项目背后的想法是提供一种RPC技术，可以与当时流行的公共对象模型(COM)和CORBA竞争。其目的是将HTTP作为一种传输协议，并使这种格式既可由人类读、可由人类写，也可由机器解析。为此，选择XML作为数据编码格式。
 
-When using XML-RPC, the client that wants to perform a remote procedure call sends an HTTP request to the server. The request may have multiple parameters. The server answers with a single response. The XML-RPC protocol defines several data types for parameters and results.
+当使用XML-RPC时，希望执行远程过程调用的客户机向服务器发送HTTP请求。请求可以有多个参数。服务器用一个响应响应。XML-RPC协议为参数和结果定义了几种数据类型。
 
-Although SOAP features similar data types, it uses XML schema definitions, which make the messages much less readable than the ones in XML-RPC.
+尽管SOAP具有类似的数据类型，但它使用XML模式定义，这使得消息的可读性比XML-RPC低得多。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Relationship to SOAP}
+\textbf{与SOAP的关系}
 
-Since XML-RPC is no longer actively maintained, there aren't any modern C++ implementations for the standard. If you want to interact with XML-RPC web services from modern code, the best way may be to use the gSOAP toolkit that supports XML-RPC and other XML web service standards.
+由于XML-RPC不再积极地维护，因此标准没有任何现代C++实现。如果想从现代代码中与XML-RPC Web服务交互，最好的方法可能是使用支持XML-RPC和其他基于XML Web服务标准的gSOAP工具包。
 
-The main criticism of XML-RPC was that it didn't give much value over sending plain XML requests and responses while making the messages significantly larger.
+对XML-RPC的批评是，与发送普通的XML请求和响应相比，它没有提供太多的价值，同时使消息明显变多了。
 
-As the standard evolved, it became SOAP. As SOAP it formed the basis for the W3C web services stack of protocols.
+随着标准的发展，它变成了SOAP。作为SOAP，它形成了W3C Web服务协议栈的基础。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{SOAP}
 
-The original abbreviation of SOAP stood for Simple Object Access Protocol. The abbreviation was dropped in version 1.2 of the standard. It's an evolution of the XML-RPC standard.
+SOAP最初的缩写是简单对象访问协议(Simple Object Access Protocol)。该缩写在标准的1.2版中删除了。它是XML-RPC标准的发展。
 
-SOAP consists of three parts:
+SOAP由三部分组成:
 
 \begin{itemize}
 \item 
-The SOAP envelope, defining the message's structure and processing rules
+SOAP包络，定义消息的结构和处理规则
 
 \item 
-The SOAP header rules defining application-specific data types (optional)
+SOAP头规则定义特定于应用程序的数据类型(可选)
 
 \item 
-The SOAP body, which carries remote procedure calls and responses
+SOAP主体，它携带远程过程调用和响应
 \end{itemize}
 
-Here's an example SOAP message using HTTP as transport:
+下面是一个使用HTTP作为传输的SOAP消息示例:
 
 \begin{tcblisting}{commandshell={}}
 POST /FindMerchants HTTP/1.1
@@ -102,75 +102,75 @@ SOAPAction: "http://www.w3.org/2003/05/soap-envelope"
 </soap:Envelope>
 \end{tcblisting}
 
-The example uses standard HTTP headers and the POST method to call a remote procedure. One header that is unique to SOAP is the SOAPAction. It points to a URI identifying the intent of the action. It is up to the clients to decide how to interpret this URI.
+该示例使用标准HTTP头和POST方法调用远程过程，SOAP唯一的一个报头是SOAPAction。它指向一个标识操作意图的URI，由客户机决定如何解释这个URI。
 
-soap:Header is optional so we leave it empty. Together with soap:Body, it is contained within soap:Envelope. The main procedure call takes place within soap:Body. We introduce our own XML namespace that is specific to the Dominican Fair application. The namespace points to the root of our domain. The procedure we call is FindMerchants and we provide three arguments: latitude, longtitude, and distance.
+\texttt{soap:Header}是可选的，所以保留它为空。它与\texttt{soap:Body}一起包含在\texttt{soap:Envelope}中，主要调用发生在\texttt{soap:Body}中。我们引入了自己的XML名称空间，这是多米尼加博览会应用程序特有的。命名空间指向域的根，调用FindMerchants，并提供三个参数:纬度、纬度和距离。
 
-As SOAP was designed to be extensible, transport-neutral, and independent of the programming model, it also led to the creation of other accompanying standards. This means it is usually necessary to learn all the related standards and protocols before using SOAP.
+由于SOAP设计为可扩展、传输中立和独立于编程模型，导致了其他伴随标准的创建。从而在使用SOAP之前，通常有必要学习所有相关的标准和协议。
 
-This is not a problem if your application makes extensive use of XML and your development team is familiar with all the terms and specifications. However, if all you want is to expose an API for a third party, a much easier approach would be to build a REST API as it is much easier to learn for both producers and consumers.
+如果应用程序大量使用XML，并且开发团队熟悉所有术语和规范，这自然不是问题。然而，如果想要的只是为第三方公开一个API，那么更简单的方法是构建一个REST API，因为它对开发者和使用者来说学习成本更低。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{WSDL}
 
-Web Services Description Language (WSDL) provides a machine-readable description of how services can be called and how messages should be formed. Like the other W3C web services standards, it is encoded in XML.
+Web服务描述语言(Web Services Description Language, WSDL)提供了关于如何调用服务以及应该如何形成消息的机器可读描述。与其他W3C Web服务标准一样，它是用XML编码的。
 
-It is often used with SOAP to define interfaces that the web service offers and how they may be used.
+它经常与SOAP一起使用来定义Web服务提供的接口，以及如何使用它们。
 
-Once you define your API in WSDL, you may (and should!) use automated tooling to help you create code out of it. For C++, one framework with such tools is gSOAP. It comes with a tool named wsdl2h, which will generate a header file out of the definition. You can then use another tool, soapcpp2, to generate bindings from the interface definition to your implementation.
+当用WSDL定义了API，就可以(而且应该!)使用自动化工具在此基础上创建代码。对于C++来说，gSOAP就是一个带有此类工具的框架。它附带了一个名为wsdl2h的工具，该工具将根据定义生成一个头文件。然后可以使用另一个工具soapcpp2生成从接口定义到实现的绑定。
 
-Unfortunately, due to the verbosity of the messages, the size and bandwidth requirements for SOAP services are generally huge. If this is not an issue, then SOAP can have its uses. It allows for both synchronous and asynchronous calls, as well as stateful and stateless operations. If you require rigid, formal means of communication, SOAP can provide them. Just make sure to use version 1.2 of the protocol due to the many improvements it introduces. One of them is the enhanced security of the services. Another is the improved definition of services themselves, which aids interoperability, or the ability to formally define the means of transportation (allowing for the usage of message queues), to name just a few.
+不幸的是，由于消息的冗长，SOAP服务的大小和带宽需求通常非常大。如果这不是问题，那么SOAP可以使用。它同时允许同步和异步调用，以及有状态和无状态操作。如果需要严格的、正式的通信方式，SOAP可以提供。只要确保使用协议的1.2版本，因为它引入了许多改进。其中之一就是增强了服务的安全性。另一个优点是改进了服务本身的定义，这有助于互操作性，或者能够正式定义传输方式(允许使用消息队列)，等等。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{UDDI}
 
-The next step after documenting the web service interfaces is service discovery, which allows applications to find and connect to the services implemented by other parties.
+记录Web服务接口之后的下一步是服务发现，它允许应用程序查找并连接到由其他方实现的服务。
 
-Universal Description, Discovery, and Integration (UDDI) is a registry for WSDL files that may be searched manually or automatically. As with the other technologies discussed in this section, UDDI uses an XML format.
+统一描述、发现和集成(UDDI)是可以手动或自动搜索的WSDL文件的注册中心。与本节讨论的其他技术一样，UDDI使用XML格式。
 
-UDDI registry may be queried with SOAP messages for automated service discovery. Even though UDDI provided the logical extensions of WSDL, its adoption in the open was disappointing. It is still possible to find UDDI systems used internally by companies.
+可以用SOAP消息查询UDDI注册中心，以便自动发现服务。尽管UDDI提供了WSDL的逻辑扩展，但它的公开版本仍然令人失望。仍然有可能找到公司内部使用的UDDI系统。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{SOAP libraries}
+\textbf{SOAP库}
 
-Two of the most popular libraries for SOAP are Apache Axis and gSOAP.
+两个主流的SOAP库是Apache Axis和gSOAP。
 
-Apache Axis is suitable for implementing both SOAP (including WSDL) and REST web services. It's worth noting that the library hasn't seen a new release for over a decade.
+Apache Axis适合实现SOAP(包括WSDL)和REST Web服务。值得注意的是，该库已经有十多年没有发布过新版本了。
 
-gSOAP is a toolkit that allows for creating and interacting with XML-based web services with a focus on SOAP. It handles data binding, SOAP and WSDL support, JSON and RSS parsing, UDDI APIs, and several other related web services standards. Although it doesn't use modern C++ features, it is still actively maintained.
+gSOAP是一个工具包，它允许创建基于XML的Web服务并与之交互，重点关注于SOAP。它处理数据绑定、SOAP和WSDL支持、JSON和RSS解析、UDDI API以及其他一些相关的Web服务标准。虽然它没有使用现代的C++，但是它仍然被积极地维护着。
 
-\subsubsubsection{12.4.3\hspace{0.2cm}JSON-based web services}
+\subsubsubsection{12.4.3\hspace{0.2cm}基于JSON的Web服务}
 
-JSON stands for JavaScript Object Notation. Contrary to what the name suggests, it is not limited to JavaScript. It is language-independent. Parsers and serializers for JSON exist in most programming languages. JSON is much more compact than XML.
+JSON代表JavaScript对象表示法。与它的名字相反，它并不局限于JavaScript。它是独立于语言。JSON的解析器和序列化器存在于大多数编程语言中。JSON比XML紧凑得多。
 
-Its syntax is derived from JavaScript as it was based on a JavaScript subset.
+其语法来源于JavaScript，因为它基于JavaScript子集。
 
-Supported data types for JSON are the following:
+JSON支持的数据类型如下:
 
 \begin{itemize}
 \item 
-Number: The exact format may vary between implementations; defaults to the double-precision floating-point in JavaScript.
+数字:具体的格式可能在不同的实现中有所不同;默认为JavaScript中的双精度浮点。
 
 \item 
-String: Unicode-encoded.
+字符串:unicode编码的。
 
 \item 
-Boolean: Using true and false values.
+布尔值:使用true和false值。
 
 \item 
-Array: May be empty.
+数组:可能为空。
 
 \item 
-Object: A map with key-value pairs.
+对象:具有键-值对的映射。
 
 \item 
-null: Representing an empty value.
+null:表示空值。
 \end{itemize}
 
-The Packer configuration presented in Chapter 9, Continuous Integration/Continuous Deployment, is an example of a JSON document:
+在第9章中介绍的Packer配置是一个JSON文档的例子:
 
 \begin{tcblisting}{commandshell={}}
 {
@@ -194,6 +194,8 @@ The Packer configuration presented in Chapter 9, Continuous Integration/Continuo
     "user": "admin",
     "host_alias": "baseimage"
   }],
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
   "post-processors": [{
     "type": "manifest",
     "output": "manifest.json",
@@ -202,15 +204,15 @@ The Packer configuration presented in Chapter 9, Continuous Integration/Continuo
 }
 \end{tcblisting}
 
-One of the standards using JSON as a format is the JSON-RPC protocol.
+使用JSON作为格式的标准之一是JSON-RPC协议。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{JSON-RPC}
 
-JSON-RPC is a JSON-encoded remote procedure call protocol similar to XML-RPC and SOAP. Unlike its XML predecessor, it requires little overhead. It is also very simple while maintaining the human-readability of XML-RPC.
+JSON-RPC是一种JSON编码的远程过程调用协议，类似于XML-RPC和SOAP。与XML前身不同，它需要很少的开销。在维护XML-RPC的人类可读性的同时，它也是非常简单的。
 
-This is how our previous example expressed in a SOAP call will look with JSON-RPC 2.0:
+这就是前面用JSON-RPC 2.0在SOAP调用中表示的示例:
 
 \begin{tcblisting}{commandshell={}}
 {
@@ -225,70 +227,70 @@ This is how our previous example expressed in a SOAP call will look with JSON-RP
 }
 \end{tcblisting}
 
-This JSON document still requires proper HTTP headers, but even with the headers, it is still considerably smaller than the XML counterpart. The only metadata present is the file with the JSON-RPC version and the request ID. The method and params fields are pretty much self-explanatory. The same can't always be said about SOAP.
+这个JSON文档仍然需要适当的HTTP报头，但即使有了报头，仍然比对应的XML文档小得多。唯一存在的元数据是带有JSON-RPC版本和请求ID的文件，方法和参数字段几乎是自解释的，SOAP并不总是如此。
 
-Even though the protocol is lightweight, easy to implement, and easy to use, it hasn't seen widespread adoption when compared to both SOAP and REST web services. It was released much later than SOAP and around the same time that REST services started to get popular. While REST quickly rose to success (possibly due to its flexibility), JSON-RPC failed to get similar traction.
+尽管该协议是轻量级的，易于实现和使用，但与SOAP和REST Web服务相比，还没有广泛采用。它发布的时间比SOAP晚得多，与REST服务开始流行的时间差不多。REST很快就获得了成功(可能是由于它的灵活性)，而JSON-RPC却未能获得类似的成功。
 
-Two useful implementations for C++ are libjson-rpc-cpp and json-rpc-cxx. json-rpc-cxx is a modern reimplementation of the previous library.
+两个有用的C++实现是libjson-rpc-cpp和json-rpc-cxx。json-rpc-cxx是以前库的现代重置版。
 
-\subsubsubsection{12.4.4\hspace{0.2cm}REpresentational State Transfer (REST)}
+\subsubsubsection{12.4.4\hspace{0.2cm}表述性状态转移(REST)}
 
-An alternative approach to web services is REpresentional State Transfer (REST). Services that conform to this architectural style are often called RESTful services. The main difference between REST and SOAP or JSON-RPC is that REST is based almost entirely on HTTP and URI semantics.
+Web服务的另一种方法是表示状态传输(representational State Transfer, REST)。符合这种架构风格的服务通常称为RESTful服务。REST与SOAP或JSON-RPC之间的主要区别在于REST几乎完全基于HTTP和URI语义。
 
-REST is an architectural style defining a set of constraints when implementing web services. Services that conform to this style are called RESTful. These constraints are as follows:
-
-\begin{itemize}
-\item 
-Must use a client-server model.
-
-\item 
-Statelessness (neither the client nor the server needs to store the state related to their communication).
-
-\item 
-Cacheability (responses should be defined as cacheable or non-cacheable to benefit from standard web caching to improve scalability and performance).
-
-\item 
-Layered system (proxies and load balancers should by no means affect the communication between the client and server).
-\end{itemize}
-
-REST uses HTTP as the transport protocol with URIs representing resources and HTTP verbs that manipulate the resources or invoke operations. There is no standard regarding how each HTTP method should behave, but the semantics most often agreed on are the following:
+REST是在实现Web服务时定义一组约束的架构样式，符合这种风格的服务称为RESTful。其限制如下:
 
 \begin{itemize}
 \item 
-POST – Create a new resource.
+必须使用客户机-服务器模型。
 
 \item 
-GET – Retrieve an existing resource.
+无状态(客户机和服务器都不需要存储与其通信相关的状态)。
 
 \item 
-PATCH – Update an existing resource.
+可缓存性(响应应该定义为可缓存或不可缓存，以受益于标准的Web缓存来提高可扩展性和性能)。
 
 \item 
-DELETE – Delete an existing resource.
-
-\item 
-PUT – Replace an existing resource.
+分层系统(代理和负载均衡器不应该影响客户端和服务器之间的通信)。
 \end{itemize}
 
-Due to reliance on web standards, RESTful web services can reuse existing components such as proxies, load balancers, and the cache. Thanks to the low overhead, such services are also very performant and efficient.
+REST使用HTTP作为传输协议，RUI代表资源和操作资源或调用操作的HTTP动词。没有关于每个HTTP方法应该如何行为的标准，但最常达成一致的语义如下:
+
+\begin{itemize}
+\item 
+POST – 创建一个新的资源。
+
+\item 
+GET – 检索现有资源。
+
+\item 
+PATCH – 更新现有资源。
+
+\item 
+DELETE – 删除已有资源。
+
+\item 
+PUT – 替换已有资源。
+\end{itemize}
+
+由于对Web标准的依赖，RESTful web服务可以重用现有的组件，如代理、负载均衡器和缓存。由于开销低，这些服务的性能和效率也非常高。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Description languages}
+\textbf{描述语言}
 
-Just like with XML-based web services, RESTful services can be described in both a machine and human-readable way. There are a few competing standards available, with OpenAPI being the most popular.
+就像基于XML的Web服务一样，可以用机器和人类可读的方式描述RESTful服务。目前有一些相互竞争的标准，OpenAPI是最受欢迎的。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{OpenAPI}
 
-OpenAPI is a specification overseen by the OpenAPI Initiative, part of the Linux Foundation. It used to be known as the Swagger Specification as it used to be a part of the Swagger framework.
+OpenAPI是由OpenAPI计划(Linux基金会的一部分)监督的规范。它曾经被称为Swagger规范，因为它曾经是Swagger框架的一部分。
 
-The specification is language agnostic. It uses JSON or YAML input to generate documentation of methods, parameters, and models. This way, using OpenAPI helps to keep the documentation and source code up to date.
+该规范与语言无关。它使用JSON或YAML输入来生成方法、参数和模型的文档。通过这种方式，使用OpenAPI有助于保持文档和源代码的更新。
 
-There is a good selection of tools compatible with OpenAPI, such as code generators, editors, user interfaces, and mock servers. The OpenAPI generator can generate code for C++ using either cpp-restsdk or Qt 5 for client implementation. It can also generate server code using Pistache, Restbed, or Qt 5 QHTTPEngine. There's also a convenient OpenAPI editor available online: https://editor.swagger.io/.
+有很多与OpenAPI兼容的工具可供选择，比如代码生成器、编辑器、用户界面和模拟服务器。OpenAPI生成器可以使用cpp-restsdk或Qt 5为客户端实现生成C++代码。还可以使用Pistache，Restbed或Qt 5 QHTTPEngine生成服务器代码。在线上还有一个方便的OpenAPI编辑器: \url{https://editor.swagger.io/}。
 
-An API documented with OpenAPI would look like the following:
+使用OpenAPI文档化的API会像下面这样:
 
 \begin{tcblisting}{commandshell={}}
 {
@@ -330,19 +332,19 @@ An API documented with OpenAPI would look like the following:
 }
 \end{tcblisting}
 
-The first two fields (openapi and info) are metadata describing the document. The paths field contains all of the possible paths that correspond to the resources and methods of the REST interface. In the preceding example, we are only documenting a single path (/item) and a single method (GET). This method takes itemId as a required parameter. We provide a single possible response code, which is 200. A 200 response contains a body that is a JSON document itself. The value associated with the example key is the example payload of a successful response.
+前两个字段(openapi和info)是描述文档的元数据。paths字段包含与REST接口的资源和方法对应的所有可能路径。前面的示例中，只记录了单个路径(/项目)和单个方法(GET)。此方法将itemId作为必需参数。提供了一个可能的响应码，即200。200响应包含一个JSON文档本身的主体。与示例键相关联的值是成功响应的示例负载。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{RAML}
 
-A competing specification, RAML, stands for RESTful API Modeling Language. It uses YAML for description and enables discovery, code reuse, and pattern-sharing.
+另一个与之竞争的规范是RAML，它代表RESTful API建模语言。它使用YAML进行描述，并支持发现、代码重用和模式共享。
 
-The rationale behind establishing RAML was that while OpenAPI is a great tool to document existing APIs, it was not, at the time, the best way to design new APIs. Currently, the specification is being considered to become a part of the OpenAPI Initiative.
+建立RAML的基本原理是，虽然OpenAPI是一个记录现有API的伟大工具，但在当时，它并不是设计新API的最佳方式。目前，该规范正被考虑成为OpenAPI计划的一部分。
 
-A RAML document may be converted to OpenAPI to make use of the available tooling.
+可以将RAML文档转换为OpenAPI来使用可用的工具。
 
-Here's an example of an API documented with RAML:
+下面是一个使用RAML编写的API示例:
 
 \begin{tcblisting}{commandshell={}}
 #%RAML 1.0
@@ -369,25 +371,27 @@ annotationTypes:
              {
                "itemId": 8,
                "name", "Kürtőskalács",
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
                "locationId": 5
              }
        description: 200 response
     (oas-summary): get item details
 \end{tcblisting}
 
-This example describes the same interface documented previously with OpenAPI. When serialized in YAML, both OpenAPI 3.0 and RAML 2.0 look very similar. The main difference is that OpenAPI 3.0 requires the use of JSON schema for documenting structures. With RAML 2.0, you can reuse the existing XML Schema Definition (XSD), which makes it easier to migrate from XML-based web services or to include external resources.
+这个例子描述了与OpenAPI相同的接口。在YAML中序列化时，OpenAPI 3.0和RAML 2.0看起来非常相似。主要的区别是OpenAPI 3.0要求使用JSON模式来记录结构。使用RAML 2.0，可以重用现有的XML模式定义(XSD)，这使得从基于XML的Web服务迁移或包含外部资源变得更容易。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{API Blueprint}
+\textbf{API蓝图}
 
-API Blueprint presents a different approach to the preceding two specifications. Instead of relying on either JSON or YAML, it uses Markdown to document data structures and endpoints.
+API蓝图提供了与前面两个规范不同的方法。它不依赖JSON或YAML，而是使用Markdown来记录数据结构和端点。
 
-Its approach is similar to the test-driven development methodology, as it encourages designing contracts before implementing features. This way, it is easier to test whether the implementation actually fulfills the contract.
+方法类似于测试驱动开发方法，因为它鼓励在实现特性之前设计契约。通过这种方式，测试实现是否真正履行了契约就更容易了。
 
-Just like with RAML, it is possible to convert the API Blueprint specification to OpenAPI as well as the other way round. There is also a command-line interface and a C++ library for parsing API Blueprints, called Drafter, which you can use in your code.
+就像使用RAML一样，将API蓝图规范转换为OpenAPI也是可能的，反之亦然。还有一个命令行接口和一个用于解析API蓝图的C++库，称为Drafter，可以在代码中使用它。
 
-An example of a simple API documented with API Blueprint looks like the following:
+一个用API蓝图记录的简单API示例如:
 
 \begin{tcblisting}{commandshell={}}
 FORMAT: 1A
@@ -407,29 +411,29 @@ FORMAT: 1A
     }
 \end{tcblisting}
 
-In the preceding, we see that a GET method directed at the /item endpoint should result in a response code of 200. Below that is the JSON message that corresponds to the one our service will typically return.
+前面，看到指向/item端点的GET方法应该会导致响应代码200。下面是对应于我们的服务通常返回的JSON消息。
 
-API Blueprint allows for more natural documentation. The main disadvantage is that it is the least popular of the formats described so far. This means both the documentation and tooling are nowhere near the quality of OpenAPI.
+API蓝图允许更多自然的文档，其主要缺点是它是目前所描述的格式中最不受欢迎的。这意味着文档和工具的质量都远不及OpenAPI。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{RSDL}
 
-Similar to WSDL, RSDL (or RESTful Service Description Language), is an XML description for web services. It is language-independent and designed to be both humanand machine-readable.
+与WSDL类似，RSDL(或RESTful服务描述语言)是Web服务的XML描述。它是独立于语言的，并且设计成人机可读的。
 
-It's much less popular than the previously presented alternatives. It is also much harder to read, especially compared to API Blueprint or RAML.
+API蓝图或RAML相比，比之前提供的替代方案要少得多，也更难阅读。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Hypermedia as the Engine of Application State}
+\textbf{超媒体作为应用状态引擎}
 
-Although providing a binary interface such as a gRPC-based one can give you great performance, in many cases, you'll still want to have the simplicity of a RESTful interface. Hypermedia as the Engine of Application State (HATEOAS) can be a useful principle to implement if you want an intuitive REST-based API.
+尽管提供二进制接口(比如基于gRPC的接口)可以提供很好的性能，但在许多情况下，您仍然希望拥有RESTful接口的简单性。如果您想要直观的基于REST的API，那么超媒体作为应用程序状态引擎(HATEOAS)是一个有用的原则。
 
-Just as you would open a web page and navigate based on the hypermedia shown, you can write your services with HATEOAS to achieve the same thing. This promotes the decoupling of server and client code and allows a client to quickly know what requests are valid to send, which is often not the case with binary APIs. The discovery is dynamic and based on the hypermedia provided.
+就像你打开一个网页并基于显示的超媒体进行导航一样，你可以用HATEOAS编写服务来实现同样的事情。这促进了服务器和客户端代码的分离，并允许客户端快速知道发送哪些请求是有效的，而这通常不是二进制API的情况。该发现是动态的，基于所提供的超媒体。
 
-If you take a typical RESTful service, when executing an operation, you get JSON with data such as an object's state. With HATEOAS, aside from that, you would get a list of links (URLs) showing you the valid operations you can run on said object. The links (hypermedia) are the engine of the application. In other words, the available actions are determined by the state of the resources. While the term hypermedia may sound strange in this context, it basically means linking to the resources, including text, images, and video.
+如果采用典型的RESTful服务，在执行操作时，会得到包含对象状态等数据的JSON。除此之外，使用HATEOAS，将获得一个链接(URL)列表，显示可以在该对象上运行的有效操作，链接(超媒体)是应用程序的引擎。换句话说，可用的操作是由资源的状态决定的。虽然超媒体这个术语在这里听起来很奇怪，但它基本上是指链接资源，包括文本、图像和视频。
 
-For example, if we have a REST method allowing us to add an item by using the PUT method, we could add a return parameter that links to the resource created that way. If we use JSON for serialization, this could take the following form:
+例如，如果有一个REST方法可以通过使用PUT方法添加项，那么可以添加一个返回参数，该参数链接到以这种方式创建的资源。如果使用JSON进行序列化，可能会出现以下形式:
 
 \begin{tcblisting}{commandshell={}}
 {
@@ -446,11 +450,11 @@ For example, if we have a REST method allowing us to add an item by using the PU
 }
 \end{tcblisting}
 
-There is no universally accepted method of serializing HATEOAS hypermedia. On the one hand, it makes it easier to implement regardless of the server implementation. On the other hand, the client needs to know how to parse the response to find the relevant traversal data.
+目前还没有普遍接受的序列化HATEOAS超媒体的方法。一方面，不管服务器实现是什么，都更容易实现。另一方面，客户端需要知道如何解析响应，以找到相关的遍历数据。
 
-One of the benefits of HATEOAS is that it makes it possible to implement the API changes on the server side without necessarily breaking the client code. When one of the endpoints gets renamed, the new endpoint is referenced in subsequent responses, so the client is informed where to direct further requests.
+HATEOAS的一个好处是，使在服务器端实现API更改成为可能，而不必破坏客户端代码。当其中一个端点重命名时，新的端点将在后续响应中引用，因此客户机将被告知将进一步请求定向到哪里。
 
-The same mechanism may provide features such as paging or make it easy to discover methods available for a given object. Getting back to our item example, here's a possible response we could receive after making a GET request:
+同样的机制可以提供分页等特性，或者使发现给定对象可用的方法变得容易。回到我们的条目示例，下面是在发出GET请求后可能收到的响应:
 
 \begin{tcblisting}{commandshell={}}
 {
@@ -483,7 +487,7 @@ The same mechanism may provide features such as paging or make it easy to discov
 }
 \end{tcblisting}
 
-Here, we got links to two methods responsible for modifying the stock. If the stock is no longer available, our response will look like this (note that one of the methods is no longer advertised):
+这里，获得了两个负责修改股票的方法的链接。如果股票不再可用，响应将是这样的(注意其中一个方法不再发布):
 
 \begin{tcblisting}{commandshell={}}
 {
@@ -511,21 +515,21 @@ Here, we got links to two methods responsible for modifying the stock. If the st
 }
 \end{tcblisting}
 
-One of the significant problems related to HATEOAS is that the two design principles seem to be at odds with each other. Adding traversable hypermedia would be much easier to consume if it were always presented in the same format. The freedom of expression here makes it harder to write clients unaware of the server's implementation.
+与HATEOAS相关的一个重要问题是，这两个设计原则似乎彼此不一致。如果总是以相同的格式呈现，添加可遍历的超媒体将更容易使用。这里的表达自由使得编写不知道服务器实现的客户机变得更加困难。
 
-Not all RESTful APIs can benefit from introducing this principle – by introducing HATEOAS you commit to writing clients in a specific manner so that they're able to benefit from this API style.
+并不是所有RESTful API都能从引入这一原则中受益——通过引入HATEOAS，将承诺以特定的方式编写客户机，从而使它们能够从这种API风格中受益。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{REST in C++}
+\textbf{C++实现的REST}
 
-Microsoft's C++ REST SDK is currently one of the best ways to implement RESTful APIs in C++ applications. Also known as cpp-restsdk, it is the library that we're using in this book to illustrate various examples.
+Microsoft的C++ REST SDK是目前在C++应用程序中实现RESTful API的最佳方法之一。它也称为cpp-restsdk，在本书中使用它来演示各种示例。
 
 \subsubsubsection{12.4.5\hspace{0.2cm}GraphQL}
 
-A recent alternative to REST web services is GraphQL. The QL in the name stands for Query Language. Rather than relying on the server to serialize and present the necessary data, in GraphQL clients query and manipulate the data directly. Apart from the reversal of responsibility, GraphQL also features mechanisms that make it easier to work with data. Typing, static validation, introspection, and schemas are all parts of the specification.
+REST Web服务的最新替代方案是GraphQL，名称中的QL代表查询语言。在GraphQL中，客户机不依赖服务器序列化和呈现必要的数据，而是直接查询和操作数据。除了职责颠倒之外，GraphQL还具有使数据处理更容易的机制。类型、静态验证、内省和模式都是规范的一部分。
 
-There are server implementations of GraphQL available for a lot of languages including C++. One of the popular implementations is cppgraphqlgen from Microsoft. There are also many tools that help with development and debugging. What's interesting is that you can use GraphQL to query the database directly thanks to products such as Hasura or PostGraphile, which add the GraphQL API on top of a Postgres database.
+GraphQL的服务器实现可用于很多语言，包括C++。其中一个主流的实现是来自Microsoft的cppgraphqlgen。还有许多工具可以帮助开发和调试。有趣的是，由于Hasura或PostGraphile等产品在Postgres数据库上添加了GraphQL API，就可以直接使用GraphQL查询数据库。
 
 
 
