@@ -1,83 +1,83 @@
 
 
-There are a lot of opinions concerning monolithic applications. Some architects believe that monoliths are inherently evil because they don't scale well, are tightly coupled, and are hard to maintain. There are others who claim that the performance benefits coming from monoliths counterbalance their shortcomings. It's a fact that tightly coupled components require much less overhead in terms of networking, processing power, and memory than their loosely coupled counterparts.
+关于单应用有很多观点。一些架构师认为，单应用本身就是邪恶的，因为它们不能很好地扩展，是紧密耦合的，而且很难维护。还有一些人声称，来自单应用的性能优势抵消了它们的缺点。事实上，紧密耦合的组件在网络、处理能力和内存方面所需的开销比松散耦合的组件要小得多。
 
-As each application has unique business requirements and operates in a unique environment when it comes to stakeholders, there is no universal rule regarding which approach is better suited. Even more confusing is the fact that after the initial migration from monoliths to microservices, some companies started consolidating microservices into macroservices. This was because the burden of maintaining thousands of separate software instances proved to be too big to handle.
+当涉及到相关方时，每个应用程序都有独特的业务需求，并在独特的环境中操作，因此没有关于哪种方法更适合的通用规则。更令人困惑的是，在从单一服务到微观服务的最初迁移之后，一些公司开始将微观服务整合为宏观服务。这是因为维护数千个独立软件实例的负担太大，有时可能无法处理。
 
-The choice of one architecture over another should always come from the business requirements and careful analysis of different alternatives. Putting ideology before pragmatism usually results in a lot of waste within an organization. When a team tries to adhere to a given approach at all costs, without considering different solutions or diverse external opinions, that team is no longer fulfilling its obligations to deliver the right tools for the right job.
+一个架构的选择应该总是来自于业务需求和对不同备选方案的仔细分析，将意识形态置于实用主义之前通常会导致组织内部的大量浪费。当一个团队不考虑不同的解决方案或不同的外部意见，而试图不惜一切代价坚持给定的方法时，这个团队就不再履行为正确的工作交付正确的工具的义务。
 
-If you are developing or maintaining a monolith, you may consider improving its scalability. The techniques presented in this section aim to solve this problem while also making your application easier to migrate to microservices if you decide so.
+如果正在开发或维护一个单应用，可以考虑提高它的扩展性。本节介绍的技术旨在解决这个问题，同时也使应用程序更容易迁移到微服务(如果决定这样做的话)。
 
-The three primary causes of bottlenecks are as follows:
+瓶颈的主要原因有三:
 
 \begin{itemize}
 \item 
-Memory
+内存
 
 \item 
-Storage
+存储
 
 \item 
-Computing
+计算
 \end{itemize}
 
-We will show you how to approach each of them to develop scalable solutions based on microservices.
+这里将展示如何使用它们来开发基于微服务的可扩展解决方案。
 
-\subsubsubsection{13.3.1\hspace{0.2cm}Outsourcing memory management}
+\subsubsubsection{13.3.1\hspace{0.2cm}外包的内存管理}
 
-One of the ways to help microservices scale is to outsource some of their tasks. One such task that may hinder scaling efforts is memory management and caching data.
+帮助微服务规模扩大的方法是外包他们的任务。内存管理和缓存数据可能会阻碍扩展工作。
 
-For a single monolithic application, storing cached data directly in the process memory is not a problem as the process will be the only one accessing the cache anyway. But with several replicas of a process, this approach starts to show some problems.
+对于单应用程序，将缓存的数据直接存储在进程内存中没有问题，因为进程将是唯一访问缓存的进程。但是由于一个过程有多个副本，这种方法会出现一些问题。
 
-What if one replica has already computed a piece of a workload and stored it in a local cache? The other replica is unaware of this fact and has to compute it again. This way, your application wastes both computational time (as the same task has to be performed multiple times) and memory (as the results are also stored with each replica separately).
+如果一个副本已经计算了工作负载的一部分并将其存储在本地缓存中，该怎么办？另一个副本不知道这一事实，必须再次计算。这样，应用程序既浪费了计算时间(因为必须多次执行相同的任务)，又浪费了内存(因为结果也分别存储在每个副本中)。
 
-To mitigate such challenges, consider switching to an external in-memory store rather than managing the cache internally within an application. Another benefit of using an external solution is that the life cycle of your cache is no longer tied to the life cycle of your application. You can restart and deploy new versions of your application and the values already stored in the cache are preserved.
+为了避免这种挑战，请考虑切换到外部内存存储，而不是在应用程序内部管理缓存。使用外部解决方案的另一个好处是，缓存的生命周期不再与应用程序的生命周期绑定。可以重新启动并部署新版本的应用程序，并保留已经存储在缓存中的值。
 
-This may also result in shorter startup times as your application no longer needs to perform the computing during startup. Two popular solutions for in-memory cache are Memcached and Redis.
+这也可能导致更短的启动时间，因为应用程序不再需要在启动期间执行计算。两种主流行的内存缓存解决方案是Memcached和Redis。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Memcached}
 
-Memcached, released in 2003, is the older product of the two. It's a general-purpose,  distributed key-value store. The original goal of the project was to offload databases used in web applications by storing the cached values in memory. Memcached is distributed by design. Since version 1.5.18, it is possible to restart the Memcached server without losing the contents of the cache. This is possible through the use of RAM disk as a temporary storage space.
+2003年发布的Memcached是两者中较老的产品。它是一个通用的、分布式的键值存储。该项目最初的目标是通过将缓存的值存储在内存中来卸载Web应用程序中使用的数据库。Memcached是按设计分发的，从1.5.18版本开始，可以在不丢失缓存内容的情况下重新启动Memcached服务器。这可以通过使用RAM磁盘作为临时存储空间来实现。
 
-It uses a simple API that can be operated via telnet or netcat or using bindings for many popular programming languages. There aren't any bindings specifically for C++, but it's possible to use the C/C++ libmemcached library.
+它使用了一个简单的API，可以通过telnet或netcat进行操作，也可以使用许多流行编程语言的绑定。没有针对C++的绑定，但是可以使用C/C++的libmemcached库。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Redis}
 
-Redis is a newer project than Memcached with the initial version released in 2009. Since then, Redis has replaced the usage of Memcached in many cases. Just like Memcached, it is a distributed, general-purpose, in-memory key-value store.
+Redis是一个比Memcached更新的项目，它的最初版本发布于2009年。从那以后，Redis在很多情况下都取代了Memcached。就像Memcached一样，它是一个分布式的、通用的、内存中的键值存储。
 
-Unlike Memcached, Redis also features optional data durability. While Memcached operates on keys and values being simple strings, Redis also supports other data types, such as the following:
+与Memcached不同的是，Redis还有可选的数据持久性。虽然Memcached操作的键和值是简单的字符串，Redis也支持其他数据类型，例如:
 
 \begin{itemize}
 \item 
-Lists of strings
+字符串列表
 
 \item 
-Sets of strings
+字符串集合
 
 \item 
-Sorted sets of strings
+已排序的字符串集合
 
 \item 
-Hash tables where keys and values are strings
+其中键和值为字符串的哈希表
 
 \item 
-Geospatial data (since Redis 3.2)
+地理空间数据(从Redis 3.2开始)
 
 \item 
-HyperLogLogs
+HyperLog日志
 \end{itemize}
 
-The design of Redis makes it a great choice for caching session data, caching web pages, and implementing leaderboards. Apart from that, it may also be used for message queueing. The popular distributed task queue library for Python, Celery, uses Redis as one of the possible brokers, along with RabbitMQ and Apache SQS.
+Redis的设计使它成为缓存会话数据、缓存网页和实现排行榜的绝佳选择。除此之外，它还可以用于消息队列。Python中流行的分布式任务队列库Celery，使用Redis作为可能的代理之一，还有RabbitMQ和Apache SQS。
 
-Microsoft, Amazon, Google, and Alibaba all offer Redis-based managed services as part of their cloud platforms.
+Microsoft，Amazon，Google和Alibaba都将基于redis的管理服务作为其云平台的一部分。
 
-There are many implementations of a Redis client in C++. Two interesting ones are the redis-cpp library (https://github.com/tdv/redis-cpp) written using C++17 and QRedisClient (https://github.com/uglide/qredisclient) using the Qt toolkit.
+Redis客户端有很多C++的实现。两个有趣的是使用C++17编写的redis-cpp库(\url{https://github.com/tdv/redis-cpp})和使用Qt工具包编写的QRedisClient (\url{https://github.com/uglide/qredisclient})。
 
-The following example of redis-cpp usage taken from the official documentation illustrates how to use it to set and get some data in the store:
+以下使用redis-cpp的示例取自官方文档，演示了如何来设置和获取存储中的一些数据:
 
 \begin{lstlisting}[style=styleCXX]
 #include <cstdlib>
@@ -110,35 +110,35 @@ int main() {
 }
 \end{lstlisting}
 
-As you can see, the library handles processing different data types. The example sets the value to a list of strings.
+该库处理不同的数据类型，该示例将该值设置为字符串列表。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Which in-memory cache is better?}
+\textbf{内存中的哪个缓存更好？}
 
-For most applications, Redis would be a better choice nowadays. It has a better user community, a lot of different implementations, and is well-supported. Other than that, it features snapshots, replication, transactions, and the pub/sub model. It is possible to embed Lua scripts with Redis and the support for geospatial data makes it a great choice for geoenabled web and mobile applications.
+对于大多数应用程序来说，Redis是一个更好的选择。它有更好的用户社区，许多不同的实现，并且得到很好的支持。除此之外，它还具有快照、复制、事务和发布/订阅模型。在Redis中嵌入Lua脚本是可能的，对地理空间数据的支持使它成为地理支持的Web和移动应用程序的一个很好的选择。
 
-However, if your main goal is to cache the results of database queries in web applications, Memcached is a simpler solution with much less overhead. This means it should use the resources better as it doesn't have to store type metadata or perform conversions between different types.
+但若主要目标是在Web应用程序中缓存数据库查询的结果，Memcached是一个更简单的解决方案，开销要小得多。这意味着其可以更好地使用资源，因为它不必存储类型元数据或执行不同类型之间的转换。
 
-\subsubsubsection{13.3.2\hspace{0.2cm}Outsourcing storage}
+\subsubsubsection{13.3.2\hspace{0.2cm}外包存储}
 
-Another possible limitation when introducing and scaling microservices is storage. Traditionally, local block devices have been used for storing objects that don't belong to the database (such as static PDF files, documents, or images). Even nowadays, block storage is still very popular with both local block devices and network filesystems such as NFS or CIFS.
+引入和扩展微服务时，另一个可能的限制是存储。通常，本地块设备用于存储不属于数据库的对象(如静态PDF文件、文档或图像)。即使在今天，块存储仍然非常受本地块设备和网络文件系统(如NFS或CIFS)的欢迎。
 
-While NFS and CIFS are the domain of Network-Attached Storage (NAS), there are also  protocols related to a concept operating on a different level: Storage Area Network (SAN). Some of the popular ones are iSCSI, Network Block Device (NBD), ATA over Ethernet, Fibre Channel Protocol, and Fibre Channel over Ethernet.
+虽然NFS和CIFS是网络附加存储(NAS)的领域，但还有一些协议与在不同级别上运行的一个概念相关:存储区域网络(SAN)。一些流行的是iSCSI，网络块设备(NBD)，以太网ATA，光纤通道协议和以太网光纤通道。
 
-A different approach features clustered filesystems designed for distributed computing: GlusterFS, CephFS, or Lustre. All of these, however, operate as block devices exposing the same POSIX file API to the user.
+不同的方法为分布式计算设计了集群文件系统:GlusterFS、CephFS或Lustre。然而，所有这些都作为块设备向用户公开相同的POSIX文件API。
 
-A fresh point of view on storage has been proposed as part of Amazon Web Services. Amazon Simple Storage Service (S3) is object storage. An API provides access to objects stored in buckets. This is different from the traditional filesystem as there is no distinction between files, directories, or inodes. There are buckets and keys that point to objects and objects are binary data stored by the service.
+Amazon网络服务提出了一个关于存储的新观点。S3(Amazon Simple Storage Service)是对象存储服务，API提供了对存储在bucket中的对象的访问。这与传统的文件系统不同，因为文件、目录或索引节点之间没有区别。有指向对象的桶和键，对象是服务存储的二进制数据。
 
-\subsubsubsection{13.3.3\hspace{0.2cm}Outsourcing computing}
+\subsubsubsection{13.3.3\hspace{0.2cm}外包计算}
 
-One of the principles of microservices is that a process should only be responsible for doing a single piece of the workflow. A natural step while migrating from monoliths to microservices would be to define possible long-running tasks and split them into individual processes.
+微服务的原则之一是流程应该只负责完成工作流的单个部分。从单服务迁移到微服务的一个自然步骤是定义可能的长时间运行的任务，并将它们拆分为单独的进程。
 
-This is the concept behind task queues. Task queues handle the entire life cycle of managing tasks. Instead of implementing threading or multiprocessing on your own, with task queues, you delegate the task to be performed, which is then asynchronously handled by the task queue. The task may be performed on the same machine as the originating process but it may also run on a machine with dedicated requirements.
+这是任务队列背后的概念，任务队列处理管理任务的整个生命周期。使用任务队列，不需要自己实现线程化或多处理，而是委托要执行的任务，然后由任务队列异步处理。该任务可以在与原始进程相同的机器上执行，但也可以在具有专用需求的机器上运行。
 
-The tasks and their results are asynchronous, so there is no blocking in the main process. Examples of popular task queues in web development are Celery for Python, Sidekiq for Ruby, Kue for Node.js, and Machinery for Go. All of them can be used with Redis as a broker. Unfortunately, there aren't any similar mature solutions available for C++.
+任务及其结果是异步的，因此在主进程中不存在阻塞。Web开发中流行的任务队列例子有Python的Celery，Ruby的Sidekiq, Node.js的Kue和Go的Machinery。所有这些都可以用Redis作为代理。不幸的是，对于C++还没有任何成熟的解决方案。
 
-If you are seriously considering taking this route, one possible approach would be to implement a task queue directly in Redis. Redis and its API provide the necessary primitives to support such a behavior. Another possible approach is to use one of the existing task queues, such as Celery, and invoke them by directly calling Redis. This, however, is not advised, as it depends on the implementation details of the task queue rather than the documented public API. Yet another approach is to interface the task queue using bindings provided by SWIG or similar methods.
+如果正在认真考虑采用这种方式，可能的方法是直接在Redis中实现一个任务队列。Redis和它的API提供了必要的原语来支持这样的行为。另一种可能的方法是使用现有的任务队列之一，如Celery，并通过直接调用Redis来进行调用。但不建议这样做，因为它取决于任务队列的实现细节，而不是文档化的公共API。另一种方法是使用SWIG或类似方法提供的绑定来对接任务队列。
 
 
 

@@ -1,41 +1,41 @@
 
-Microservices are so useful because they can be connected in many different ways with other services, thus creating new value. However, as there is no standard for microservices, there is not a single way to connect to them.
+微服务之所以如此有用，是因为它们可以通过许多不同的方式与其他服务连接起来，从而创造新的价值。然而，由于微服务没有标准，所以没有单一的方式进行连接。
 
-This means that most of the time when we want to use a particular microservice, we have to learn how to interact with it. The good news is that although it is possible to implement any communication method in microservices, there are a few popular approaches that most microservices follow.
+大多数情况下，想要使用一个特定的微服务时，必须学会如何与它交互。好消息是，尽管在微服务中实现任何通信方法都是可能的，但有一些流行的方法是大多数微服务所遵循的。
 
-How to connect microservices is just one of the relevant questions when designing architecture around them. The other is what to connect with and where. This is where service discovery comes into play. With service discovery, we let the microservices use automated means of discovering and connecting to other services within our application.
+如何连接微服务只是围绕设计架构时的相关问题。另一个是连接什么，以及连接在哪里，就是服务发现发挥作用的地方。通过服务发现，让微服务使用自动的方法来发现和连接应用程序中的其他服务。
 
-These three questions, how, what, and where, will be our next topic. We will introduce some of the most popular methods of communication and discovery used by modern microservices.
+这三个问题，\textit{如何，什么，何处}，将是我们的下一个主题。我们将介绍现代微服务中使用的一些主流的通信和发现方法。
 
-\subsubsubsection{13.5.1\hspace{0.2cm}Application programming interfaces (APIs)}
+\subsubsubsection{13.5.1\hspace{0.2cm}应用程序编程接口}
 
-Just like software libraries, microservices often expose APIs. These APIs make it possible to communicate with the microservices. Since the typical manner of communication utilizes computer networking, the most popular form of an API is the web API.
+就像软件库一样，微服务经常公开API。这些API使得与微服务通信成为可能。由于典型的通信方式利用计算机网络，最流行的API形式是Web API。
 
-In the previous chapter, we already covered some possible approaches with web services. Nowadays, microservices typically use web services based on REpresentational State Transfer (REST).
+前一章中，已经介绍了一些使用Web服务的可能方法。如今，微服务通常使用基于具象状态传输(REpresentational State Transfer，REST)的Web服务。
 
-\subsubsubsection{13.5.2\hspace{0.2cm}Remote procedure calls}
+\subsubsubsection{13.5.2\hspace{0.2cm}远程过程调用}
 
-While web APIs such as REST allow easy debugging and great interoperability, there's a lot of overhead related to data translation and using HTTP for transport.
+虽然REST等Web API允许轻松调试和良好的互操作性，但与数据转换和使用HTTP进行传输相关的开销很大。
 
-This overhead may be too much for some microservices, which is the reason for lightweight Remote Procedure Calls (RPCs).
+对于一些微服务来说，这种开销可能太大了，这就是轻量级远程过程调用(Remote Procedure call，RPC)的原因。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Apache Thrift}
 
-Apache Thrift is an interface description language and binary communication protocol. It is used as an RPC method that allows creating distributed and scalable services built in a variety of languages.
+Apache Thrift是一个接口描述语言和二进制通信协议。它用作RPC方法，允许创建以各种语言构建的分布式和可扩展的服务。
 
-It supports several binary protocols and transport methods. Native data types are used for each programming language, so it is easy to introduce even in an existing codebase.
+支持多种二进制协议和传输方法。每种编程语言都使用本机数据类型，因此即使在现有的代码库中也很容易引入本机的数据。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{gRPC}
 
-If you really care about performance, often you'll find that text-based solutions don't work for you. REST, however elegant and easily understandable, may turn out to be too slow for your needs. If that's the case, you should try to build your API around binary protocols. One of them, which is growing in popularity, is gRPC.
+如果真的关心性能，通常会发现基于文本的解决方案并不适合。REST，无论多么优雅和容易理解，对于需求来说可能太慢了。如果是这种情况，应该尝试围绕二进制协议构建API，其中一种是gRPC。
 
-gRPC, as its name suggests, is an RPC system that was initially developed by Google. It uses HTTP/2 for transport, and Protocol Buffers as an Interface Description Language (IDL) for interoperability between multiple programming languages, and for data serialization. It's possible to use alternative technologies for this, for example, FlatBuffers. gRPC can be used both synchronously and in an asynchronous manner and allows creating both simple services and streaming ones. 
+gRPC，顾名思义，是最初由Google开发的RPC系统。使用HTTP/2进行传输，并使用协议缓冲区作为接口描述语言(IDL)来实现多种编程语言之间的互操作性和数据序列化。这可以使用替代技术，例如FlatBuffers。gRPC可以以同步和异步的方式使用，并允许创建简单的服务和流服务。 
 
-Assuming you've decided to use protobufs, our Greeter service defintion can look like this:
+假设决定使用protobufs，我们的Greeter服务定义如下:
 
 \begin{lstlisting}[style=styleCXX]
 service Greeter {
@@ -49,7 +49,7 @@ message GreetResponse {
 }
 \end{lstlisting}
 
-Using the protoc compiler, you can create data access code from this definition. Assuming you want to have a synchronous server for our Greeter, you can create the service in the following way:
+使用协议编译器，您以从这个定义创建数据访问代码。假设想为Greeter创建一个同步服务器，可以按以下方式创建服务:
 
 \begin{lstlisting}[style=styleCXX]
 class Greeter : public Greeter::Service {
@@ -64,7 +64,7 @@ class Greeter : public Greeter::Service {
 };
 \end{lstlisting}
 
-Then, you have to build and run the server for it:
+然后，必须为它构建并运行服务器:
 
 \begin{lstlisting}[style=styleCXX]
 int main() {
@@ -78,7 +78,7 @@ int main() {
 }
 \end{lstlisting}
 
-Simple as that. Let's now take a look at a client to consume this service:
+就这么简单。现在让我们看看使用这个服务的客户端:
 
 \begin{lstlisting}[style=styleCXX]
 #include <grpcpp/grpcpp.h>
@@ -111,11 +111,11 @@ int main() {
 }
 \end{lstlisting}
 
-This was a simple, synchronous example. To make it work asynchronously, you'll need to add tags and CompletionQueue, as described on gRPC's website.
+这是一个简单的同步示例。为了让它异步工作，需要添加标签和CompletionQueue，如gRPC网站上描述的那样。
 
-One interesting feature of gRPC is that it is available for mobile applications on Android and iOS. This means that if you use gRPC internally, you don't have to provide an additional server to translate the traffic from your mobile applications.
+gRPC的一个有趣特性是，可用于Android和iOS上的移动应用程序。如果在内部使用gRPC，不需要提供额外的服务器来转换来自移动应用程序的流量。
 
-In this section, you learned the most popular methods of communication and discovery utilized by microservices. Next, we'll see how microservices can be scaled. 
+本节中，了解了微服务使用的最流行的通信和发现方法。接下来，将了解到微服务是如何扩展的。
 
 
 

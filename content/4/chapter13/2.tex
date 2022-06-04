@@ -1,180 +1,180 @@
 
 
-While microservices are not tied to any particular programming language or technology, a common choice when implementing microservices has been the Go language. That does not mean that other languages are not suitable for microservices development – quite the contrary. The low computational and memory overhead of C++ makes it an ideal candidate for microservices. 
+虽然微服务不依赖于任何特定的编程语言或技术，但实现微服务的一个常见选择是Go语言。这并不意味着其他语言不适合微服务的开发，C++的低计算和内存开销使其成为微服务的理想选择。 
 
-But first, we will start with a detailed view of some of the pros and cons of microservices. After that, we'll focus on design patterns that are often associated with microservices (as opposed to the general design patterns covered in Chapter 4, Architectural and System Design).
+但首先，我们将详细介绍微服务的一些优点和缺点。之后，将重点关注与微服务相关的设计模式(与第4章中涉及的一般设计模式相反)。
 
-\subsubsubsection{13.2.1\hspace{0.2cm}The benefits of microservices}
+\subsubsubsection{13.2.1\hspace{0.2cm}微服务的好处}
 
-You may often hear about microservices in superlatives. It is true that they can bring some benefits and here are some of them.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Modularity}
-
-Since the entire application is split into many relatively small modules, it is easier to understand what each microservice does. The natural consequence of this understanding is that it is also easier to test individual microservices. Testing is also aided by the fact that each microservice typically has a limited scope. After all, it's easier to test just the calendar application than to test the entire Personal Information Management (PIM) suite.
-
-This modularity, however, comes at some cost. Your teams may have a much better understanding of individual microservices, but at the same time they may find it harder to grasp how the entire application is composed. While it shouldn't be necessary to learn all the internal details of the microservices that form an application, the sheer number of relationships between components presents a cognitive challenge. It's good practice to use microservices contracts when using this architectural  approach.
+可能经常听到“微服务”的高级说法，其确实能带来一些好处，以下是其中一些。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Scalability}
+\textbf{模块化}
 
-It is easier to scale applications that are limited in scope. One reason for that is that there are fewer potential bottlenecks.
+由于整个应用程序可分割成许多相对较小的模块，所以更容易理解每个微服务的功能。这种理解的自然结果是，测试单个微服务也更容易。每个微服务通常都有一个有限的范围，这一事实也有助于测试。毕竟，只测试日历应用程序要比测试整个Personal Information Management (PIM)套件容易得多。
 
-Scaling smaller pieces of a workflow is also more cost-effective. Imagine a monolithic application responsible for managing a trade fair. Once the system starts showing performance issues, the only way to scale is to bring in a bigger machine for the monolith to run on. This is called vertical scaling.
-
-With microservices, the first advantage is that you can scale horizontally, that is, bring in more machines instead of a bigger machine (which is usually cheaper). The second advantage comes from the fact that you only need to scale those parts of the application that are having performance issues. This also contributes to money saved on infrastructure.
+然而，这种模块化是有代价的。开发团队可能对单个微服务有更好的理解，但与此同时，可能会发现很难理解整个应用程序是如何组成的。虽然不需要了解构成应用程序的微服务的所有内部细节，但组件之间的关系数量之多对认知构成了挑战。在使用这种架构方法时，应用微服务契约是一个良好的实践。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Flexibility}
+\textbf{扩展性}
 
-Microservices, when properly designed, are less susceptible to vendor lock-in. When you decide you want to switch one of the third-party components, you don't have to do the entire painful migration all at once. Microservices design takes into account that you need to use interfaces, so the only part that requires modification is the interface between your microservice and the third-party component.
+扩展范围有限的应用程序更容易，这样做的一个原因是潜在的瓶颈更少。
 
-The components may also migrate one by one, some still using the software from the old provider. This means you can separate the risk of introducing breaking changes in many places at once. What's more, you can combine this with the canary deployments pattern to manage risk with even more granularity.
+扩展更小的工作流也更划算。想象一个负责管理展会的应用程序，当系统开始出现性能问题，实现规模化的唯一方法就是引入更大的机器来运行整个系统。这叫做垂直扩展。
 
-This flexibility is not related just to single services. It may also mean different databases, different queueing and messaging solutions, or even entirely different cloud platforms. While different cloud platforms typically offer different services and APIs to use them, with a microservices architecture, you can start migrating your  workload piece by piece and test it independently on a new platform.
-
-When rewrites are necessary due to performance issues, scalability, or available dependencies, it is much faster to rewrite a microservice than a monolith.
+使用微服务的第一个优势是可以横向扩展，可以引入更多的机器，而不是更大的机器(通常更便宜)。第二个优势来自于这样一个事实:只需要扩展应用程序中存在性能问题的那些部分。这也有助于节省基础设施的资金。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Integration with legacy systems}
+\textbf{灵活性}
 
-Microservices are not necessarily an all-or-nothing approach. If your application is welltested and migration to microservices may create a lot of risks, there's no pressure to dismantle the working solution altogether. It is even better to split only the parts that require further development and introduce them as microservices that the original monolith will use.
+如果设计得当，微服务不太容易受到供应商的限制。当决定要切换一个第三方组件时，不必一次完成整个痛苦的迁移。微服务的设计考虑到您需要使用接口，因此唯一需要修改的部分是微服务和第三方组件之间的接口。
 
-By following this approach, you will gain the benefits of the agile release cycle associated with microservices, while at the same time avoiding creating a new architecture from scratch and basically rebuilding an entire application. If something is already working well, it's better to focus on how to add new features without breaking the good parts, rather than starting from scratch. Be careful here, as starting from scratch is often used as an ego boost!
+组件也可能一个接一个地迁移，有些仍然使用来自旧供应商的软件。这样，可以将一次在多个地方引入破坏性更改的风险分离开来。更重要的是，可以将此与金丝雀部署模式结合起来，以更细的粒度管理风险。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Distributed development}
+这种灵活性不仅仅与单个服务相关。还可能意味着不同的数据库、不同的队列和消息传递解决方案，甚至完全不同的云平台。虽然不同的云平台通常提供不同的服务和API来使用，但通过微服务架构，可以开始逐个迁移工作负载，并在一个新的平台上独立测试。
 
-The times of development teams being small and colocated are long gone. Remote work and distributed development are a fact even in traditional office-based companies. Giants such as IBM, Microsoft, and Intel have people from different locations working together on a single project.
-
-Microservices allow for smaller and more agile teams, which makes distributed development much easier. When it's no longer necessary to facilitate communication between a group of 20 or more people, it's also easier to build self-organized teams that require less external management.
-
-\subsubsubsection{13.2.2\hspace{0.2cm}Disadvantages of microservices}
-
-Even if you think you may need microservices due to their benefits, keep in mind that they also have some serious drawbacks. In short, they are definitely not for everyone. Larger companies can generally offset these drawbacks, but smaller companies often don't have this luxury.
+由于性能问题、扩展性或可用的依赖关系而需要重写时，重写微服务要比重写整体服务快得多。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Reliance on a mature DevOps approach}
+\textbf{与旧系统集成}
 
-Building and testing microservices should be much faster than performing similar operations on big, monolithic applications. But in order to achieve agile development, this building and testing would need to be performed much more often. 
+微服务不一定是全有或全无的方法。如果应用程序经过了良好的测试，并且迁移到微服务可能会产生很多风险，那么就没有压力去废除可用的解决方案。最好只拆分需要进一步开发的部分，并将它们作为原始服务使用的微服务引入。
 
-While it may be sensible to deploy the application manually when you are dealing with a monolith, the same approach will lead to a lot of problems if applied to microservices.
-
-In order to embrace the microservices in your development, you have to ensure that your team has a DevOps mindset and understands the requirements of both building and running the microservice. It's not enough to simply hand the code to someone else and forget about it.
-
-The DevOps mindset will help your team to automate as much as possible. Developing microservices without a continuous integration/continuous delivery pipeline is probably one of the worst possible ideas in software architecture. Such an approach will bring all the other disadvantages of microservices without enabling most of the benefits.
+通过这种方法，将获得与微服务相关的敏捷发布周期的好处，同时避免从零开始创建新的架构和基本上重新构建整个应用程序。如果某些东西已经运行得很好了，那么最好是专注于如何在不破坏好的部分的情况下添加新功能，而不是从头开始。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Harder to debug}
+\textbf{分布式开发}
 
-Microservices require introducing observability. Without it, when something breaks, you're never sure where to start looking for the potential root cause. Observability is a way to deduce the state of your application without the need to run a debugger or log to the machines your workload is running on.
+开发团队规模小、位置集中的时代已经过去了。即使在传统的基于办公室的公司中，远程工作和分布式开发也是一个事实。像IBM、Microsoft和Intel这样的巨头让来自不同地方的人一起工作在一个项目上。
 
-A combination of log aggregation, application metrics, monitoring, and distributed tracing is a prerequisite to manage microservices-based architecture. This is especially true once you consider that autoscaling and self-healing may even prevent you from accessing individual services if they start crashing.
+微服务支持更小、更敏捷的团队，这使得分布式开发更加容易。当不再需要促进20人或20人以上的团队之间的沟通时，构建需要较少外部管理的自组织团队也更容易。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Additional overhead}
+\subsubsubsection{13.2.2\hspace{0.2cm}微服务的缺点}
 
-Microservices should be lean and agile. And that's usually true. However, microservicesbased architecture usually requires additional overhead. The first layer of overhead is related to the additional interfaces used for microservices communication. RPC libraries and API providers and consumers have to be multiplied not only by the number of microservices but also by the number of their replicas. Then there are auxiliary services, such as databases, message queues, and so on. Those services also include observability facilities that usually consist of both storage facilities and individual collectors that gather data.
-
-The costs that you optimize with better scaling may be outweighed by the costs required to run the entire fleet of services that don't bring immediate business value. What's more, it may be hard for you to justify these costs (both in terms of infrastructure and development overhead) to the stakeholders.
-
-\subsubsubsection{13.2.3\hspace{0.2cm}Design patterns for microservices}
-
-A lot of general design patterns apply to microservices as well. There are also some design patterns that are typically associated with microservices. The patterns presented here are useful for both greenfield projects as well as migration from monolithic applications.
+即使认为可能需要微服务，请记住它们也有一些缺点。简而言之，它们绝对不适合每个人。大公司通常可以抵消这些缺点，但小公司通常不能有这种奢求。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Decomposition patterns}
+\textbf{依赖成熟的DevOps}
 
-These patterns relate to the ways in which microservices are decomposed. We want to ensure the architecture is stable and the services are loosely coupled. We also want to make sure that services are cohesive and testable. Finally, we want autonomous teams to fully own one or more services.
+构建和测试微服务应该比在大型单片应用程序上执行类似操作要快得多。但是为了实现敏捷开发，这种构建和测试将需要更频繁地执行。 
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Decomposition by business capability}
+当处理一个庞然大物时，手动部署应用程序可能是明智的，但是如果将同样的方法应用于微服务，则会导致许多问题。
 
-One of the decomposition patterns requires decomposition by business capability. Business capability relates to what a business does in order to produce value. Examples of business capabilities are merchant management and customer management. Business capabilities are often organized in a hierarchy.
+为了在开发中拥抱微服务，必须确保你的团队有DevOps的思维，理解构建和运行微服务的需求。仅仅把代码交给别人，然后忘记是不够的。
 
-The main challenge when applying this pattern is to correctly identify the business capabilities. This requires an understanding of the business itself and may benefit from cooperation with a business analyst.
+DevOps的思维模式将帮助团队尽可能地实现自动化。在没有持续集成/持续交付流水的情况下开发微服务可能是软件架构中最糟糕的想法。这种方法将带来微服务的所有其他缺点，而没有实现大多数好处。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Decomposition by subdomain}
+\textbf{难以调试}
 
-A different decomposition pattern is related to the Domain-Driven Design (DDD) approach. To define services, it is necessary to identify DDD subdomains. Just like business capability, identifying subdomains requires knowledge of the business context.
+微服务需要引入可观察性。如果没有它，当出现了问题，永远不知道从哪里开始寻找根本原因。可观察性是一种推断应用程序状态的方法，无需运行调试器或将日志记录到运行工作负载的机器上。
 
-The main difference between the two approaches is that with decomposing by business capability, the focus is more on the organization of the business (its structure), whereas with decomposing by subdomain, the focus is on the problems that the business tries to solve.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Database per service pattern}
-
-Storing and handling data is a complex issue in every software architecture. Wrong choices may impact scalability, performance, or maintenance costs. With microservices, there's an added complexity coming from the fact that we want the microservices to be loosely coupled.
-
-This leads to a design pattern where each microservice connects to its own database so it is independent of any changes introduced by the other services. While this pattern adds some overhead, its additional benefit is that you can optimize the schema and indexes for each microservice individually.
-
-Since databases tend to be pretty huge pieces of infrastructure, this approach may not be feasible, so sharing a database between microservices is an understandable trade-off.
+日志聚合、应用程序指标、监视和分布式跟踪的组合是管理基于微服务的体系结构的先决条件。当考虑到自动扩展和自修复可能阻止访问单个服务(如果它们开始崩溃)时，这一点尤为正确。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Deployment strategies}
+\textbf{额外的开销}
 
-With microservices running on multiple hosts, you will probably wonder which is the better way to allocate resources. Let's compare the two possible approaches.
+微服务应该是精简和敏捷的。这通常是正确的。然而，基于微服务的架构通常需要额外的开销。第一层开销与用于微服务通信的附加接口有关。RPC库、API提供者和使用者不仅要乘以微服务的数量，还要乘以副本的数量。然后还有辅助服务，如数据库、消息队列等。这些服务还包括可观察性设施，通常包括存储设施和收集数据的个人收集器。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Single service per host}
+以更好的扩展性进行优化的成本可能会超过运行整个服务所需的成本，这些服务不能立即带来业务价值。更重要的是，可能很难向相关方证明这些成本(在基础设施和开发开销方面)是合理的。
 
-Using this pattern, we allow each host to only serve a particular type of microservice. The main benefit is that you can tweak the machine to better fit the desired workload and services are well isolated. When you provide extra-large memory or fast storage, you'll be sure that it is used only for the microservice that needs it. The service is also unable to consume more resources than provisioned.
+\subsubsubsection{13.2.3\hspace{0.2cm}微服务的设计模式}
 
-The downside of this approach is that some of the hosts may be under-utilized. One possible workaround is to use the smallest possible machines that still satisfy the microservice requirements and scale them when necessary. This workaround, however, does not solve the issue of additional overhead on the host itself.
+很多通用的设计模式也适用于微服务，还有一些通常与微服务相关的设计模式。这里提供的模式对于新建项目和从单一应用程序迁移都很有用。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Multiple services per host}
+\textbf{分解模式}
 
-An opposite approach is hosting multiple services per host. This helps to optimize the utilization of the machines but it also comes with some drawbacks. First of all, different microservices may require different optimizations, so hosting them on a single host will still be impossible. What's more, with this approach, you lose control of the host allocation, so the problems in one microservice may cause outages in a colocated microservice even if the latter would be otherwise unaffected.
-
-Another problem is the dependency conflict between the microservices. When the microservices are not isolated from one another, the deployment has to take into account different possible dependencies. This model is also less secure.
+这些模式与分解微服务的方式有关。我们希望确保体系结构是稳定的，服务是松散耦合的。还希望确保服务具有内聚性和可测试性。最后，希望团队完全拥有一个或多个服务。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Observability patterns}
+\textbf{按业务能力分解}
 
-In the previous section, we mentioned that microservices come at a price. This price includes the requirement to introduce observability or risk losing the ability to debug your applications. Here are some patterns related to observability.
+其中一种分解模式需要根据业务能力进行分解，业务能力与企业为了产生价值所做的事情有关。业务功能的例子有商人管理和客户管理。业务功能通常按层次结构组织。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Log aggregation}
-
-Microservices use logging just like monolithic applications. Instead of storing the logs locally, the logs are aggregated and forwarded to a central facility. This way, the logs are available even if the service itself is down. Storing logs in a centralized manner also helps correlate data coming from different microservices.
+应用此模式时的主要挑战是正确识别业务功能。这需要理解业务本身，并可能从与业务分析师的合作中受益。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Application metrics}
+\textbf{分解子域名}
 
-To make decisions based on data, you first need some data to act on. Collecting application metrics helps to understand the application behavior as used by the actual users, and not in synthetic tests. The approaches to collect those metrics are push (where an application actively calls the performance monitoring service) and pull (where the performance monitoring service regularly checks the configured endpoints).
+另一种分解模式与领域驱动设计(DDD)方法有关。为了定义服务，需要识别DDD子域。就像业务能力一样，标识子域需要业务上下文的知识。
 
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Distributed tracing}
-
-Distributed tracing helps not only to investigate performance issues but also to gain better insight into the application behavior under real-world traffic. Unlike logging, which collects pieces of information from a single point, tracing is concerned with the entire life cycle of a single transaction, starting at the point where it originates from a user action.
+这两种方法的主要区别在于，按业务能力分解时，重点更多地放在业务的组织(其结构)上，而按子域分解时，重点放在业务试图解决的问题上。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Health check APIs}
+\textbf{数据库/服务模式}
 
-Since microservices are often targets of automation, they need to have the ability to communicate their internal state. Even if the process is present in the system, it doesn't mean the application is operational. The same goes for an open network port; the application may be listening, but it is not yet able to respond. Health check APIs provide a way for external services to determine whether the application is ready to process the workload. Self-healing and autoscaling use health checks to determine when an intervention is needed. The base premise is that a given endpoint (such as /health) returns an HTTP code 200 when the application behaves as expected and a different code (or does not return at all) if any problem is found.
+存储和处理数据在每个软件架构中都是一个复杂的问题。错误的选择可能会影响扩展性、性能或维护成本。对于微服务，由于希望微服务是松散耦合的，这就增加了复杂性。
 
-Now that all the pros, cons, and patterns are known to you, we'll show you how you can split the monolithic application and turn it into microservices part by part. The presented approaches are not limited to just microservices; they may be useful in other cases as well, including monolithic applications.
+这导致了这样一种设计模式:每个微服务都连接到自己的数据库，因此不受其他服务引入的任何更改的影响。虽然这种模式会增加一些开销，但额外好处是可以为每个微服务分别优化模式和索引。
+
+由于数据库往往是相当庞大的基础设施，这种方法可能不可行，所以在微服务之间共享数据库是一种可以理解的权衡方式。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{部署策略}
+
+对于在多个主机上运行的微服务，可能想知道哪种分配资源的方式更好。让我们比较一下这两种方法。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{单主机单服务}
+
+使用这个模式，允许每个主机只服务特定类型的微服务。好处是可以调整机器以更好地适应所需的工作负载，并且很好地隔离了服务。当提供超大内存或快速存储时，可以确保其只用于需要它的微服务。服务也无法消耗超过所提供的资源。
+
+这种方法的缺点是有些主机可能没有得到充分利用。一种可能的解决方法是使用尽可能小的机器来满足微服务需求，并在必要时扩展。但这种解决方法不能解决主机本身额外开销的问题。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{单主机多服务}
+
+另一种相反的方法是在每个主机上托管多个服务。这有助于优化机器的利用率，但也有一些缺点。首先，不同的微服务可能需要不同的优化，因此将它们托管在单个主机上仍然不可能。此外，使用这种方法，将失去对主机分配的控制，因此一个微服务中的问题可能会导致一个托管微服务的中断，即使后者在其他方面不会受到影响。
+
+另一个问题是微服务之间的依赖冲突。当微服务没有彼此隔离时，部署必须考虑不同的依赖关系。这个模型也不太安全。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{可观测性模式}
+
+前一节中，提到微服务是有代价的。这个代价包括引入可观察性的需求，或者冒着失去调试应用程序能力的风险。这里有一些与可观察性相关的模式。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{日志收集}
+
+微服务就像单应用程序一样使用日志。日志不是存储在本地，而是聚合并转发到一个中央设施。这样，即使服务本身宕机，日志也是可用的。以集中的方式存储日志还有助于关联来自不同微服务的数据。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{应用指标}
+
+要根据数据做出决策，首先需要一些数据来采取行动。收集应用程序度量有助于理解实际用户使用的应用程序行为，而不是在合成测试中使用的行为。收集这些指标的方法是推(应用程序在其中主动调用性能监视服务)和拉(性能监视服务定期检查配置的端点)。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{分布式追踪}
+
+分布式跟踪不仅有助于研究性能问题，还有助于更好地了解真实流量下的应用程序行为。与从单个点收集信息片段的日志记录不同，跟踪关注单个事务的整个生命周期，从源自用户操作的点开始。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{健康检查API}
+
+由于微服务通常是自动化的目标，因此需要能够传达内部状态。即使进程存在于系统中，也不意味着应用程序是可操作的。这同样适用于开放的网络端口，应用程序可能正在监听，但还不能响应。运行状况检查API为外部服务提供了一种确定应用程序是否已准备好处理工作负载的方法。自修复和自动扩展使用运行状况检查来确定何时需要干预。基本前提是，当应用程序的行为符合预期时，给定端点(例如/health)返回HTTP代码200，如果发现问题，则返回不同的代码(或者根本不返回)。
+
+现在已经了解了所有的优点、缺点和模式，将展示如何将单个应用程序分割并将其部分地转换为微服务。所提出的方法不仅限于微服务;它们在其他情况下也可能有用，包括单应用程序。
 
 
 

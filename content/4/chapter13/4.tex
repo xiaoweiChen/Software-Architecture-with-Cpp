@@ -1,227 +1,227 @@
 
-Each microservice you build needs to follow the general architectural design patterns. The main distinction between microservices and traditional applications is the need for implementing observability for the former.
+构建的每个微服务都需要遵循一般的架构设计模式。微服务和传统应用程序的主要区别在于前者需要实现可观察性。
 
-This section focuses on some approaches to observability. We describe here several open source solutions that you might find useful when designing your system.
+本节主要讨论一些可观察性的方法。在这里描述了几种开源解决方案，可能会发现它们在设计系统时很有用。
 
-\subsubsubsection{13.4.1\hspace{0.2cm}Logging}
+\subsubsubsection{13.4.1\hspace{0.2cm}记录日志}
 
-Logging is a topic that should be familiar to you even if you've never designed microservices. Logs (or log files) store the information about the events happening in a system. The system may mean your application, the operating system your application runs on, or the cloud platform you use for deployment. Each of these components may provide logs.
+即使从未设计过微服务，也应该熟悉日志记录这个主题。日志(或日志文件)保存了系统中发生的事件的信息。系统可能意味着应用程序、应用程序运行的操作系统或用于部署的云平台。这些组件中的每一个都可以提供日志。
 
-Logs are stored as separate files because they provide a permanent record of all the events taking place. When the system becomes unresponsive, we want to query the logs and figure out the possible root cause of the outage.
+日志作为单独的文件存储，因为提供了发生的所有事件的永久记录。当系统变得无响应时，可以查询日志并找出故障的可能根本原因。
 
-This means that logs also provide an audit trail. Because the events are recorded in chronological order, we are able to understand the state of the system by examining the recorded historical state.
+这意味着日志还提供了审计跟踪。因为事件是按时间顺序记录的，所以能够通过检查记录的历史状态来了解系统的状态。
 
-To help with debugging, logs are usually human-readable. There are binary formats for logs, but such formats are rather rare when using files to store the logs.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Logging with microservices}
-
-This approach to logging itself doesn't differ much from the traditional approach. Rather than using text files to store the logs locally, microservices usually print logs to stdout. A unified logging layer is then used to retrieve the logs and process them. To implement logging, you need a logging library that you can configure to suit your needs.
+为了帮助调试，日志通常需要提供好的可读性。日志有二进制格式，但在使用文件存储日志时，这种格式非常罕见。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Logging in C++ with spdlog}
+\textbf{微服务中的日志记录}
 
-One of the popular and fast logging libraries for C++ is spdlog. It's built using C++11 and can be used either as a header-only library or as a static library (which reduces compile time).
+这种日志记录方法本身与传统方法没有太大区别。微服务通常将日志打印到标准输出，而不是使用文本文件在本地存储日志。然后使用统一的日志记录层检索和处理日志。要实现日志记录，需要一个可以配置的日志库。
 
-Some interesting features of spdlog include the following:
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{使用spdlog在C++中进行日志记录}
+
+spdlog是C++中一种流行且快速的日志库。它用C++11构建，既可以作为头文件库使用，也可以作为静态库使用(这样可以减少编译时间)。
+
+spdlog的一些有趣特性包括:
 
 \begin{itemize}
 \item 
-Formatting
+格式化
 
 \item 
-Multiple sinks:
+多种接收方式:
 \begin{itemize}
 \item 
-Rotating files
+文件
 
 \item 
-Console
+控制台
 
 \item 
-Syslog
+系统记录
 
 \item 
-Custom (implemented as a single function)
+自定义(作为单个函数实现)
 \end{itemize}
 
 \item 
-Multi-threaded and single-threaded versions
+多线程和单线程版本
 
 \item 
-Optional asynchronous mode
+可选的异步模式
 \end{itemize}
 
-One feature that might be missing from spdlog is the direct support for Logstash or Fluentd. If you want to use one of these aggregators, it is still possible to configure spdlog with file sink output and use Filebeat or Fluent Bit to forward the file contents to the appropriate aggregator.
+spdlog可能缺少的一个特性是对Logstash或Fluentd的直接支持。如果希望使用这些聚合器，仍然可以使用文件接收输出配置spdlog，并使用Filebeat或Fluent Bit将文件内容转发到适当的聚合器。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Unified logging layer}
+\textbf{统一的日志记录层}
 
-Most of the time, we won't be able to control all of the microservices that we use. Some of them will use one logging library, while others would use a different one. On top of that, the formats will be entirely different and so will their rotation policies. To make things worse, there are still operating system events that we want to correlate with application events. This is where the unified logging layer comes into play.
+大多数时候，无法控制使用的所有微服务。其中一些将使用一个日志库，而其他将使用不同的一个。最重要的是，格式将完全不同，轮换政策也将完全不同。更糟糕的是，仍然希望将操作系统事件与应用程序事件关联起来。这就是统一日志记录层发挥作用的地方。
 
-One of the unified logging layer’s purposes is to collect logs from different sources. Such unified logging layer tools provide many integrations and understand different logging formats and transports (such as file, HTTP, and TCP).
+统一日志记录层的目的之一是收集来自不同来源的日志。这种统一的日志记录层工具提供许多集成，并理解不同的日志记录格式和传输(如文件、HTTP和TCP)。
 
-The unified logging layer is also capable of filtering the logs. We may want filtering to satisfy compliance, anonymize the personal details of our customers, or protect the implementation details of our services.
+统一日志记录层还可以对日志进行过滤。可能需要过滤以满足合规性，匿名化客户个人详细信息，或保护服务的实施细节。
 
-To make it easier to query the logs at a later time, the unified logging layer can also perform translation between formats. Even if the different services that you use store the logs in JSON, CSV, and the Apache format, the unified logging layer solution is able to translate them all to JSON to give them structure.
+为了便于以后查询日志，统一日志层还可以执行格式之间的转换。即使使用的不同服务以JSON、CSV和Apache格式存储日志，统一的日志层解决方案也能够将它们全部转换为JSON。
 
-The final task of the unified logging layer is forwarding the logs to their next destination. Depending on the complexity of the system, the next destination may be a storage facility or another filtering, translation, and forwarding facility.
+统一日志记录层的最后一项任务是将日志转发到下一个目的地。根据系统的复杂性，下一个目的地可能是存储设施或另一个过滤、转换和转发设施。
 
-Here are some interesting components that let you build the unified logging layer.
+以下是一些有趣的组件，允许构建统一的日志记录层。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Logstash}
 
-Logstash is one of the most popular unified logging layer solutions. Currently, it is owned by Elastic, the company behind Elasticsearch. If you've heard of the ELK stack (now known as the Elastic Stack), Logstash is the "L" in the acronym.
+Logstash是最受欢迎的统一日志层解决方案之一。目前，它属于Elasticsearch背后的公司Elastic。如果你听说过ELK堆栈(现在称为弹性堆栈)，Logstash是首字母缩写中的“L”。
 
-Logstash was written in Ruby and then has been ported to JRuby. This unfortunately means that it is rather resource-intensive. For this reason, it is not advisable to run Logstash on each machine. Rather, it is meant to be used mainly as a log forwarder with lightweight Filebeat deployed to each machine and performing just the collection.
+Logstash是用Ruby编写的，然后移植到JRuby上。不幸的是，这意味着它是相当资源密集型的。由于这个原因，不建议在每台机器上运行Logstash。相反，它主要用作日志转发器，在每台机器上部署轻量级的Filebeat，只进行收集。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Filebeat}
 
-Filebeat is part of the Beats family of products. Their aim is to provide a lightweight alternative to Logstash that may be used directly with the application.
+Filebeat是Beats系列产品的一部分。他们的目标是为Logstash提供一个轻量级的替代方案，可以直接与应用程序一起使用。
 
-This way, Beats provide low overhead that scales well, whereas a centralized Logstash installation performs all the heavy lifting, including translation, filtering, and forwarding.
+通过这种方式，Beats提供了低开销和良好的扩展性，而集中的Logstash安装执行所有繁重的工作，包括转译、过滤和转发。
 
-Apart from Filebeat, the other products from the Beats family are as follows:
+除了Filebeat, Beats家族的其他产品如下:
 
 \begin{itemize}
 \item 
-Metricbeat for performance
+Metricbeat用于性能
 
 \item 
-Packetbeat for network data
+Packetbeat用于网络数据
 
 \item 
-Auditbeat for audit data
+Auditbeat用于审计数据
 
 \item 
-Heartbeat for uptime monitoring
+Heartbeat用于运行时监控
 \end{itemize}
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Fluentd}
 
-Fluentd is the main competitor of Logstash. It is also the tool of choice of some cloud providers.
+Fluentd是Logstash的主要竞争对手，也是一些云提供商选择的工具。
 
-Thanks to its modular approach with the use of plugins, you can find plugins for data sources (such as Ruby applications, Docker containers, SNMP, or MQTT protocols), data outputs (such as Elastic Stack, SQL Database, Sentry, Datadog, or Slack), and several other kinds of filters and middleware.
+由于使用插件的模块化方法，可以找到用于数据源(如Ruby应用程序、Docker容器、SNMP或MQTT协议)、数据输出(如Elastic Stack、SQL Database、Sentry、Datadog或Slack)以及其他几种过滤器和中间件的插件。
 
-Fluentd should be lighter on resources than Logstash, but it is still not a perfect solution for running at scale. The counterpart to Filebeat that works with Fluentd is called Fluent Bit.
+Fluentd应该比Logstash更少的资源，但仍然不是大规模运行的完美解决方案。与使用Fluentd的Filebeat对应的称为Fluent Bit。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Fluent Bit}
 
-Fluent Bit is written in C and provides a faster and lighter solution that plugs into Fluentd. As a log processor and forwarder, it also features many integrations for inputs and outputs.
+Fluent Bit用C编写，提供了一种插入Fluentd的更快、更轻的解决方案。作为一个日志处理器和转发器，还具有许多输入和输出的集成功能。
 
-Besides log collection, Fluent Bit can also monitor CPU and memory metrics on Linux systems. It might be used together with Fluentd or it can forward directly to Elasticsearch or InfluxDB.
+除了日志收集，Fluent Bit还可以监控Linux系统上的CPU和内存指标。可以与Fluentd一起使用，也可以直接转发给Elasticsearch或InfluxDB。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Vector}
 
-While Logstash and Fluentd are stable, mature, and tried solutions, there are also newer propositions in the unified logging layer space.
+虽然Logstash和Fluentd是稳定、成熟和经过尝试的解决方案，但在统一日志记录层领域也有新的主张。
 
-One of them is Vector, which aims to handle all of the observability data in a single tool. To differentiate from the competition, it focuses on performance and correctness. This is also reflected in the choice of technology. Vector uses Rust for the engine and Lua for scripting (as opposed to the custom domain-specific languages used by Logstash and Fluentd).
+其中一个是Vector，它的目标是在一个工具中处理所有的可观测数据。为了区别于竞争，它关注性能和正确性。这也体现在技术的选择上。Vector使用Rust作为引擎，使用Lua编写脚本(与Logstash和Fluentd使用的定制领域特定语言相反)。
 
-At the moment of writing, it hasn't yet reached a stable 1.0 version, so at this point, it shouldn't be considered production-ready.
+在撰写本书的时候，它还没有达到稳定的1.0版本，所以在这一点上，不应该认为已经准备好应用于生产。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Log aggregation}
+\textbf{日志聚合}
 
-Log aggregation solves another problem that arises from too much data: how to store and access the logs. While the unified logging layer makes logs available even in the event of machine outage, it is the task of log aggregation to help us quickly find the information that we are looking for.
+日志聚合解决了由于数据过多而产生的另一个问题:如何存储和访问日志。虽然统一的日志记录层使日志即使在机器停机的情况下也可用，但日志聚合的任务是快速找到正在寻找的信息。
 
-The two possible products that allow storing, indexing, and querying huge amounts of data are Elasticsearch and Loki.
+可以存储、索引和查询大量数据的两种产品是Elasticsearch和Loki。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Elasticsearch}
 
-Elasticsearch is the most popular solution for self-hosted log aggregation. This is the "E" in the (former) ELK Stack. It features a great search engine based on Apache Lucene.
+Elasticsearch是自托管日志聚合的最流行的解决方案。这是(前)ELK堆栈中的“E”。它有一个基于Apache Lucene的强大搜索引擎。
 
-As the de facto standard in its niche, Elasticsearch has a lot of integrations and has great support both from the community and as a commercial service. Some cloud providers offer Elasticsearch as a managed service, which makes it easier to introduce Elasticsearch in your application. Other than that, Elastic, the company that makes Elasticsearch, offers a hosted solution that is not tied to any particular cloud provider.
+作为其领域内的事实上的标准，Elasticsearch有很多集成，并且有来自社区和商业服务的强大支持。一些云提供商将Elasticsearch作为托管服务提供，这使得在应用程序中引入Elasticsearch更加容易。除此之外，制造Elasticsearch的公司Elastic提供了一个托管解决方案，不绑定任何特定的云提供商。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Loki}
 
-Loki aims to address some of the shortcomings found in Elasticsearch. The focus area for Loki is horizontal scalability and high availability. It’s built from the ground up as a cloudnative solution.
+Loki的目标是解决Elasticsearch的一些缺点。Loki关注的领域是水平可扩展性和高可用性。它是作为云本机解决方案从头构建的。
 
-The design choices for Loki are inspired by both Prometheus and Grafana. This shouldn't be a surprise since it is developed by the team responsible for Grafana.
+Loki的设计灵感来自普罗米修斯和格拉芙娜。这并不奇怪，因为它是由负责Grafana的团队开发的。
 
-While Loki should be a stable solution, it is not as popular as Elasticsearch, which means some integrations might be missing and the documentation and  community support won't be on the same level as for Elasticsearch. Both Fluentd and Vector have plugins that support Loki for log aggregation.
+虽然Loki应该是一个稳定的解决方案，但它没有Elasticsearch那么受欢迎，这意味着可能会缺少一些集成，文档和社区支持也不会像Elasticsearch那样处于同一级别。Fluentd和Vector都有支持Loki日志聚合的插件。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Log visualization}
+\textbf{日志可视化}
 
-The last piece of the logging stack we want to consider is log visualization. This helps us to query and analyze the logs. It presents the data in an accessible way so it can be inspected by all the interested parties, such as operators, developers, QA, or business.
+想要考虑的日志堆栈的最后一部分是日志可视化。便于对日志进行查询和分析。它以一种可访问的方式显示数据，以便所有相关方(如运营商、开发人员、QA或业务人员)都可以检查数据。
 
-Log visualization tools allow us to create dashboards that make it even easier to read the data we are interested in. With that, we are able to explore the events, search for correlations, and find outlying data from a simple user interface.
+日志可视化工具允许创建仪表板，更容易读取感兴趣的数据。这样，就能够探索事件，搜索相关性，并从一个简单的用户界面中找到离群的数据。
 
-There are two major products dedicated to log visualization.
+有两个主要的产品专门用于日志可视化。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Kibana}
 
-Kibana is the final element of the ELK Stack. It provides a simpler query language on top of Elasticsearch. Even though you can query and visualize different types of data with Kibana, it is mostly focused on logs.
+Kibana是ELK Stack的最后一个元素。它在Elasticsearch之上提供了一种更简单的查询语言。尽管可以使用Kibana查询和可视化不同类型的数据，但它主要集中在日志上。
 
-Like the rest of the ELK Stack, it is currently the de facto standard when it comes to visualizing logs.
+与ELK Stack的其他部分一样，它目前是可视化日志的实际标准。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Grafana}
 
-Grafana is another data visualization tool. Until recently, it was mostly focused on timeseries data from performance metrics. However, with the introduction of Loki, it may now also be used for logs.
+Grafana是另一个数据可视化工具。最近，它还主要关注性能指标的时间序列数据。然而，随着Loki的引入，也可以用于日志。
 
-One of its strengths is that it’s built with pluggable backends in mind, so it’s easy to switch the storage to fit your needs.
+它的优点是，它在构建时考虑到了可插拔后端，因此很容易切换存储以满足需求。
 
-\subsubsubsection{13.4.2\hspace{0.2cm}Monitoring}
+\subsubsubsection{13.4.2\hspace{0.2cm}监控}
 
-Monitoring is the process of collecting performance-related metrics from the system. When paired with alerting, monitoring helps us understand when our system behaves as expected and when an incident happens.
+监视是从系统中收集与性能相关的指标的过程。当与警报结合使用时，监视可以帮助我们了解系统何时按预期运行以及何时发生事件。
 
-The three types of metrics that would interest us the most are as follows:
+最感兴趣的三种参数类型如下:
 
 \begin{itemize}
 \item 
-Availability, which lets us know which of our resources are up and running, and which of them have crashed or became unresponsive.
+可用性，知道哪些资源已经启动并运行，以及哪些资源已经崩溃或失去响应。
 
 \item 
-Resource utilization gives us insight into how the workload fits into the system.
+资源利用率，了解工作负载如何适应系统。
 
 \item 
-Performance, which shows us where and how to improve service quality.
+性能，告诉我们在哪里以及如何提高服务质量。
 \end{itemize}
 
-The two models of monitoring are push and pull. In the former, each monitored object (a machine, an application, and a network device) pushes data to the central point periodically. In the latter, the objects present the data at the configured endpoints and the monitoring agent scrapes the data regularly.
+监测的两种模型是推和拉。在前者中，每个监视对象(一台机器、一个应用程序和一个网络设备)周期性地将数据推送到中心点。在后一种情况下，对象在配置的端点上显示数据，监视代理定期抓取数据。
 
-The pull model makes it easier to scale. This way, multiple objects won't be clogging the monitoring agent connection. Instead, multiple agents may  collect the data whenever ready, thus better utilizing the available resources.
+拉模型使它更容易扩展。这样，多个对象就不会阻塞监视代理连接。相反，多个代理可以随时收集数据，从而更好地利用可用资源。
 
-Two monitoring solutions that feature C++ client libraries are Prometheus and InfluxDB. Prometheus is an example of a pull-based model and it focuses on collecting and storing time-series data. InfluxDB by default uses a push model. Besides monitoring, it is also popular for the Internet of Things, sensor networks, and home automation.
+提供C++客户端库特性的两种监控解决方案是Prometheus和InfluxDB。Prometheus是一个基于拉的模型的例子，它专注于收集和存储时间序列数据。默认情况下，fluxdb使用推送模型。除了监控，物联网、传感器网络和家庭自动化也很受欢迎。
 
-Both Prometheus and InfluxDB are typically used with Grafana for visualizing data and managing dashboards. Both have alerting built-in, but they can also integrate with the external alerting system through Grafana.
+Prometheus和InfluxDB通常与Grafana一起用于可视化数据和管理仪表板。两者都有内置警报，也可以通过Grafana与外部警报系统集成。
 
-\subsubsubsection{13.4.3\hspace{0.2cm}Tracing}
+\subsubsubsection{13.4.3\hspace{0.2cm}跟踪}
 
-Traces provide information that is generally lower-level to that of event logs. Another important distinction is that traces store the ID of every single transaction so it is easy to  visualize the entire workflow. This ID is commonly known as the trace ID, transaction ID, or correlation ID.
+跟踪提供的信息通常比事件日志的信息级别低。另一个重要的区别是，跟踪存储每个事务的ID，因此很容易可视化整个工作流。这个ID通常称为跟踪ID、事务ID或关联ID。
 
-Unlike event logs, traces are not meant to be human-readable. They are processed by a tracer. When implementing tracing, it is necessary to use a tracing solution that integrates with all the possible elements of the system: frontend applications, backend applications, and databases. This way, tracing helps to pinpoint the exact cause of lagging performance.
+与事件日志不同，跟踪并不意味着良好的可读性，其由示踪器处理。在实现跟踪时，需要使用与系统的所有可能元素集成的跟踪解决方案:前端应用程序、后端应用程序和数据库。通过这种方式，跟踪有助于查明性能滞后的确切原因。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{OpenTracing}
 
-One of the standards in distributed tracing is OpenTracing. This standard was proposed by the authors of Jaeger, one of the open-source tracers.
+分布式跟踪的标准之一是OpenTracing。这个标准是由开源追踪器之一的Jaeger的作者提出的。
 
-OpenTracing supports many different tracers apart from Jaeger and it supports many different programming languages. The most important ones include the following:
+除了Jaeger之外，OpenTracing还支持许多不同的跟踪器，并且支持许多不同的编程语言。最重要的包括以下几点:
 
 \begin{itemize}
 \item 
@@ -252,27 +252,27 @@ Python
 Ruby
 \end{itemize}
 
-The most important feature of OpenTracing is that it is vendor-neutral. This means that once we instrument our application, we won’t need to modify the entire codebase to switch to a different tracer. This way, it prevents vendor lock-in.
+OpenTracing最重要的特性是它是厂商中立的。这意味着在测试应用程序时，将不需要修改整个代码库来切换到不同的跟踪程序。这就可以防止厂商锁定。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Jaeger}
 
-Jaeger is a tracer that can be used with various backends, including Elasticsearch, Cassandra, and Kafka.
+Jaeger是一个跟踪器，可以用于各种后端，包括Elasticsearch, Cassandra和Kafka。
 
-It is natively compatible with OpenTracing, which shouldn't be a surprise. Since it is a Cloud Native Computing Foundation-graduated project, it has great community support, which also translates to good integration with other services and frameworks.
+它与OpenTracing天生兼容，由于它是一个本地云计算基础毕业的项目，因此它拥有强大的社区支持，这也转化为与其他服务和框架的良好集成。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{OpenZipkin}
 
-OpenZipkin is the main competitor for Jaeger. It has been on the market for a longer time. Although this should mean it is a more mature solution, its popularity is fading when compared to Jaeger. Particularly, the C++ in OpenZipkin isn't actively maintained, which may cause future problems with maintenance.
+OpenZipkin是Jaeger的主要竞争对手，它在市场上已经有很长时间了。虽然这意味着它是一个更成熟的解决方案，但与Jaeger相比，它的受欢迎程度正在下降。特别是由于OpenZipkin中的C++没有积极地维护，这可能会导致未来的维护问题。
 
-\subsubsubsection{13.4.4\hspace{0.2cm}Integrated observability solutions}
+\subsubsubsection{13.4.4\hspace{0.2cm}集成的可观测性解决方案}
 
-If you don't want to build the observability layer on your own, there are some popular commercial solutions that you might consider. They all operate in a software-as-a-service model. We won't go into a detailed comparison here, as their offerings may change drastically after the writing of this book.
+如果不想自己构建可观察层，可以考虑一些流行的商业解决方案。它们都以软件即服务的模式运作，不会在这里进行详细的比较，因为在本书写完之后，相应的东西可能会发生巨大的变化。
 
-These services are as follows:
+这些服务如下:
 
 \begin{itemize}
 \item 
@@ -285,7 +285,7 @@ Splunk
 Honeycomb
 \end{itemize}
 
-In this section, you have seen implementing observability in Microservices. Next, we'll move on to learn how to connect microservices. 
+本节中，了解到了在微服务中实现可观察性。接下来，将继续了解如何连接微服务。
 
 
 
