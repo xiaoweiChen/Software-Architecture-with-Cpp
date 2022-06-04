@@ -1,33 +1,33 @@
 
-Some of the containers' benefits only become apparent when you are using a container orchestrator to manage them. An orchestrator keeps track of all the nodes that will be running your workload, and it also monitors the health and status of the containers spread across these nodes.
+只有在使用容器协调器进行管理时，容器的一些好处才会显现出来。协调器跟踪将运行工作负载的所有节点，它还监视分布在这些节点上的容器的健康状况和状态。
 
-More advanced features, for example, high availability, require the proper setup of the orchestrator, which typically means dedicating at least three machines for the control plane and another three machines for worker nodes. The autoscaling of nodes, in addition to the autoscaling of containers, also requires the orchestrator to have a driver able to control the underlying infrastructure (for example, by using the cloud provider's API).
+更高级的特性，例如高可用性，需要对协调器进行适当的设置，这通常意味着至少为控制平面专用三台机器，另外三台机器用于工作节点。除了容器的自动扩展外，节点的自动扩展还需要协调器拥有能够控制底层基础设施的驱动程序(例如，通过使用云提供商的API)。
 
-Here, we will cover some of the most popular orchestrators that you can choose from to base your system on. You will find more practical information on Kubernetes in the next chapter, Chapter 15, Cloud-Native Design. Here, we give you an overview of the possible choices.
+这里，将介绍一些最主流的协调器，可以选择它们作为系统的基础。在下一章，第15章中可以看到更多关于Kubernetes的实用信息。在此，我们将概述一些可能的选择。
 
-The presented orchestrators operate on similar objects (services, containers, batch jobs) although each may behave differently. The available features and operating principles vary between them. What they have in common is that you typically write a configuration file that declaratively describes the required resources and then you apply this configuration using a dedicated CLI tool. To illustrate the differences between the tools, we provide an example configuration specifying a web application introduced before (the merchant service) and a popular web server, Nginx, to act as a proxy.
+所提供的协调器操作类似的对象(服务、容器、批处理作业)，尽管每个对象的行为可能不同，可用特性和工作原理各不相同。共同点是，通常编写一个配置文件，以声明的方式描述所需的资源，然后使用专用的CLI工具应用此配置。为了说明这两种工具之间的区别，提供了一个配置示例，指定一个之前介绍过的Web应用程序(merchant服务)和一个Web服务器Nginx作为代理。
 
-\subsubsubsection{14.5.1\hspace{0.2cm}Self-hosted solutions}
+\subsubsubsection{14.5.1\hspace{0.2cm}自托管解决方案}
 
-Whether you are running your application on-premises, in a private cloud, or in a public cloud, you may want to have tight control over the orchestrator of your choice. The following is a collection of self-hosted solutions in this space. Keep in mind that most of them are also available as managed services. However, going with self-hosted helps you prevent vendor lock-in, which may be desirable for your organization.
+无论是在本地运行应用程序、在私有云中还是在公共云中运行应用程序，可能希望对所选择的协调器进行严格的控制。以下是该领域的自托管解决方案集合，它们中的大多数也可以作为托管服务使用。然而，使用自托管可以防止供应商锁定，这可能是开发者和其组织所希望的。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Kubernetes}
 
-Kubernetes is probably the best-known orchestrator of all the ones that we mention here. It is prevalent, which means there is a lot of documentation and community support if you decide to implement it.
+Kubernetes可能是在这里提到的最著名的协调器。它很流行，这意味着如果决定使用它，将会有大量的文档和社区支持。
 
-Even though Kubernetes uses the same application container format as Docker, this is basically where all the similarities end. It is impossible to use standard Docker tools to interact with Kubernetes clusters and resources directly. There is a new set of tools and concepts to learn when using Kubernetes.
+尽管Kubernetes使用了与Docker相同的应用程序容器格式，但这基本上是所有相似之处的终结。使用标准的Docker工具直接与Kubernetes集群和资源交互是不可能的。在使用Kubernetes时，有一组新的工具和概念需要学习。
 
-Whereas with Docker, the container is the main object you will operate on, with Kubernetes, the smallest piece of the runtime is called a Pod. A Pod may consist of one or more containers that share mount points and networking resources. Pods in themselves are rarely of interest as Kubernetes also has higher-order concepts such as Replication Controllers, Deployment Controllers, or DaemonSets. Their role is to keep track of the pods and ensure the desired number of replicas is running on the nodes.
+而在Docker中，容器是操作的主要对象，而在Kubernetes中，运行时最小的部分被称为Pod。一个Pod可以由一个或多个共享挂载点和网络资源的容器组成。Pod本身很少引起人们的兴趣，因为Kubernetes也有高阶的概念，如复制控制器、部署控制器或守护进程集。它们的作用是跟踪Pod，并确保在节点上运行所需数量的副本。
 
-The networking model in Kubernetes is also very different from Docker. With Docker, you can forward ports from a container to make it accessible from different machines. With Kubernetes, if you want to access a pod, you typically create a Service resource, which may act as a load balancer to handle the traffic to the pods that form the service's backend. Services may be used for pod-to-pod communication, but they may also be exposed to the internet. Internally, Kubernetes resources perform service discovery using DNS names.
+Kubernetes的网络模型也与Docker有很大的不同。使用Docker，可以从一个容器转发端口，以便从不同的机器访问它。使用Kubernetes，如果想访问Pod，通常会创建一个Service资源，它可以充当负载均衡器来处理到Pod(形成服务的后端)的流量。服务可能用于Pod对Pod的通信，但也可能暴露在互联网上。在内部，Kubernetes资源使用DNS名称执行发现服务。
 
-Kubernetes is declarative and eventually consistent. This means that instead of directly creating and allocating resources, you only have to provide the description of the desired end state and Kubernetes will do the work required to bring the cluster to the desired state. Resources are often described using YAML.
+Kubernetes是说明性的，最终是一致的。这意味着不是直接创建和分配资源，而是只需要提供所需的最终状态的描述，Kubernetes将完成将集群带到所需状态所需的工作。资源通常使用YAML进行描述。
 
-Since Kubernetes is highly extensible, there are a lot of associated projects developed under the Cloud Native Computing Foundation (CNCF), which turn Kubernetes into a provideragnostic cloud development platform. We will present Kubernetes in more detail in the next chapter, Chapter 15, Cloud Native Design.
+由于Kubernetes是高度可扩展的，因此有很多相关的项目是在云本地计算基金会(CNCF)下开发的，这使得Kubernetes成为一个提供不可知的云开发平台。我们将在下一章，第15章中更详细地介绍Kubernetes。
 
-Here's how the resource definition looks for Kubernetes using YAML (merchant.yaml):
+下面是资源定义如何使用YAML(merchant.yaml)查找Kubernetes:
 
 \begin{tcblisting}{commandshell={}}
 apiVersion: apps/v1
@@ -70,6 +70,8 @@ spec:
     app: dominican-front
   type: ClusterIP
 ---
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -112,21 +114,21 @@ spec:
     type: ClusterIP
 \end{tcblisting}
 
-To apply this configuration and orchestrate the containers, use kubectl apply -f merchant.yaml.
+要应用此配置并协调容器，请使用\texttt{kubectl apply -f merchant.yaml}。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Docker Swarm}
 
-Docker Engine, also required to build and run Docker containers, comes pre-installed with its own orchestrator. This orchestrator is Docker Swarm, and its main feature is high compatibility with existing Docker tools by using the Docker API.
+Docker Engine也需要构建和运行Docker容器，自带预安装的协调器。这个协调器就是Docker Swarm，它的主要特点是通过使用Docker API与现有的Docker工具高度兼容。
 
-Docker Swarm uses the concept of Services to manage health checks and autoscaling. It supports rolling upgrades of the services natively. Services are able to publish their ports, which will then be served by Swarm's load balancer. It supports storing configs as objects for runtime customization and has basic secret management built in.
+Docker Swarm使用服务的概念来管理健康检查和自动扩展，它支持本地服务的滚动升级。服务可以发布端口，然后由Swarm的负载均衡器提供服务。它支持将配置存储为用于运行时定制的对象，并内置了基本的机密管理。
 
-Docker Swarm is much simpler and less extensible than Kubernetes. This could be an advantage if you do not want to learn about all the details of Kubernetes. However, the main disadvantage is a lack of popularity, which means it is harder to find relevant material about Docker Swarm.
+Docker Swarm比Kubernetes简单得多，扩展性也差得多。如果不想了解Kubernetes的所有细节，这可能是一个优势。然而，主要的缺点是缺乏知名度，这意味着很难找到有关Docker Swarm的相关资料。
 
-One of the benefits of using Docker Swarm is that you don't have to learn new commands. If you're already used to Docker and Docker Compose, Swarm works with the same resources. It allows specific options that extend Docker to handle deployments.
+使用Docker Swarm的一个好处是不需要学习新的命令。如果已经习惯使用Docker和Docker Compose，那么Swarm将使用相同的资源。它允许特定的选项来扩展Docker来处理部署。
 
-Two services orchestrated with Swarm would look like this (docker-compose.yml):
+与Swarm协调的两个服务是这样的(docker-compose.yml):
 
 \begin{tcblisting}{commandshell={}}
 version: "3.8"
@@ -145,32 +147,32 @@ services:
       - "8000"
 \end{tcblisting}
 
-To apply the configuration, you run docker stack deploy -\,-compose-file dockercompose.yml dominican.
+要应用这个配置，可以运行\texttt{docker stack deploy -\,- composition -file dockercompose.yml dominican}。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Nomad}
 
-Nomad is different from the previous two solutions, as it is not focused solely on containers. It is a general-purpose orchestrator with support for Docker, Podman, Qemu Virtual Machines, isolated fork/exec, and several other task drivers. Nomad is a solution worth learning about if you want to gain some of the advantages of container orchestration without migrating your application to containers.
+Nomad不同于前两种解决方案，因为它不单单关注容器。它是一个通用的协调器，支持Docker、Podman、Qemu虚拟机、隔离的fork/exec和其他一些任务驱动程序。如果希望在不将应用程序迁移到容器的情况下获得容器协调的一些优势，那么Nomad是一个值得去了解的解决方案。
 
-It is relatively easy to set up and integrates well with other HashiCorp products such as Consul for service discovery and Vault for secret management. Like Docker or Kubernetes, Nomad clients can run locally and connect to the server responsible for managing your cluster.
+相对容易设置，并与其他HashiCorp产品集成得很好，比如用于服务发现的Consul和用于机密管理的Vault。和Docker或Kubernetes一样，Nomad客户端可以在本地运行，并连接到负责管理集群的服务器。
 
-There are three job types available in Nomad:
+Nomad有三种工作类型:
 
 \begin{itemize}
 \item 
-Service: A long-lived task that should not exit without manual intervention (for example, a web server or a database).
+服务:一个长生命周期的任务，在没有人工干预的情况下不能退出(例如，Web服务器或数据库)。
 
 \item 
-Batch: A shorter-lived task that can complete within as little as a few minutes. If the batch job returns an exit code indicating an error, it is either restarted or rescheduled according to configuration.
+批处理:短时间的任务，可以在几分钟内完成。如果批处理作业返回指示错误的退出码，则根据配置重新启动或重新调度它。
 
 \item 
-System: A task that it is necessary to run on every node in the cluster (for example, logging agent).
+系统:需要在集群中的每个节点上运行的任务(例如，日志代理)。
 \end{itemize}
 
-Compared to other orchestrators, Nomad is relatively easy to install and maintain. It is also extensible when it comes to task drivers or device plugins (used to access dedicated hardware such as GPUs or FPGAs). It lacks in community support and third-party integrations when compared to Kubernetes. Nomad does not require you to redesign the application's architecture to access the provided benefits, which is often the case with Kubernetes.
+与其他协调器相比，Nomad相对容易安装和维护。当涉及到任务驱动程序或设备插件(用于访问专用硬件，如GPU或FPGA)时，它也是可扩展的。与Kubernetes相比，它缺乏社区支持和第三方集成。Nomad不需要重新设计应用程序的架构来访问所提供的好处，而Kubernetes就是这样。
 
-To configure the two services with Nomad, we need two configuration files. The first one is nginx.nomad:
+要用Nomad配置这两个服务，需要两个配置文件。第一个是nginx.nomad:
 
 \begin{tcblisting}{commandshell={}}
 job "web" {
@@ -198,6 +200,8 @@ job "web" {
         port = "http"
         check {
           type = "tcp"
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
           interval = "10s"
           timeout = "2s"
         }
@@ -207,7 +211,7 @@ job "web" {
 }
 \end{tcblisting}
 
-The second describes the merchant application, so it's called merchant.nomad:
+第二个描述的是商业应用程序，所以称为merchant.nomad:
 
 \begin{tcblisting}{commandshell={}}
 job "merchant" {
@@ -237,6 +241,8 @@ job "merchant" {
         check {
           type = "tcp"
           interval = "10s"
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
           timeout = "2s"
         }
       }
@@ -245,53 +251,53 @@ job "merchant" {
 }
 \end{tcblisting}
 
-To apply the configuration, you run nomad job run merchant.nomad \&\& nomad job run nginx.nomad.
+要应用该配置，可以运行\texttt{nomad job run merchant.Nomad \&\& nomad job run nginx.nomad}。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{OpenShift}
 
-OpenShift is Red Hat's commercial container platform built on Kubernetes. It includes a lot of additional components that are useful in the everyday operations of Kubernetes clusters. You get a container registry, a build tool similar to Jenkins, Prometheus for monitoring, Istio for service mesh, and Jaeger for tracing. It is not fully compatible with Kubernetes so it shouldn't be thought of as a drop-in replacement.
+OpenShift是红帽公司基于Kubernetes开发的商业容器平台，包括许多在Kubernetes集群的日常操作中很有用的附加组件。其中包括获得一个容器注册表、一个类似Jenkins的构建工具、用于监视的Prometheus、用于服务网格的Istio和用于跟踪的Jaeger。它不能与Kubernetes完全兼容，所以不能视为一个临时替代品。
 
-It is built on top of existing Red Hat technology such as CoreOS and Red Hat Enterprise Linux. You can use it on-premises, within Red Hat Cloud, on one of the supported public cloud providers (including AWS, GCP, IBM, and Microsoft Azure), or as a hybrid cloud. 
+它是建立在现有的红帽技术，如CoreOS和红帽企业Linux之上。可以在Red Hat云内部使用它，也可以在受支持的公共云提供商(包括AWS、GCP、IBM和Microsoft Azure)上使用它，或者作为混合云使用。
 
-There is also an open source community-supported project called OKD, which forms the basis of Red Hat's OpenShift. If you do not require commercial support and other benefits of OpenShift, you may still use OKD for your Kubernetes workflow.
+还有一个开源社区支持的项目OKD，它是红帽OpenShift的基础。如果不需要OpenShift的商业支持和其他好处，可以在Kubernetes工作流中使用OKD。
 
-\subsubsubsection{14.5.2\hspace{0.2cm}Managed services}
+\subsubsubsection{14.5.2\hspace{0.2cm}管理服务}
 
-As previously mentioned, some of the aforementioned orchestrators are also available as managed services. Kubernetes, for instance, is available as a managed solution in multiple public cloud providers. This section will show you some of the different approaches to container orchestration, which are not based on any of the solutions mentioned above.
+如前所述，其中一些协调器也可以作为托管服务使用。例如，Kubernetes是多个公共云提供商提供的托管解决方案。本节将向展示容器协调的一些不同方法，它们不基于上面提到的解决方案。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{AWS ECS}
 
-Before Kubernetes released its 1.0 version, Amazon Web Services proposed its own container orchestration technology called Elastic Container Service (ECS). ECS provides an orchestrator that monitors, scales, and restarts your services when needed.
+在Kubernetes发布1.0版本之前，Amazon Web服务就提出了自己的容器协调技术，称为弹性容器服务(ECS)。ECS提供了一个协调器，可以在需要时监视、扩展和重新启动服务。
 
-To run containers in ECS, you need to provide the EC2 instances on which the workload will run. You are not billed for the orchestrator's use, but you are billed for all the AWS services that you typically use (the underlying EC2 instances, for example, or an RDS database).
+要在ECS中运行容器，需要提供工作负载将在其上运行的EC2实例。不需要为协调器的使用付费，但是需要为您常使用的所有AWS服务(例如，底层EC2实例或RDS数据库)付费。
 
-One of the significant benefits of ECS is its excellent integration with the rest of the AWS ecosystem. If you are already familiar with AWS services and invested in the platform, you will have less trouble understanding and managing ECS.
+ECS的好处是与AWS生态系统的其他部分完美集成。如果熟悉AWS服务，并投资于该平台，那么理解和管理ECS将会更容易。
 
-If you do not require many of the Kubernetes advanced features and its extensions, ECS may be a better choice as it's more straightforward and more comfortable to learn.
+如果不需要Kubernetes的许多高级特性及其扩展，ECS可能是一个更好的选择，因为它更直接，更容易学习。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{AWS Fargate}
 
-Another managed orchestrator offered by AWS is Fargate. Unlike ECS, it does not require you to provision and pay for the underlying EC2 instances. The only components you are focused on are the containers, the network interfaces attached to them, and IAM permissions.
+AWS提供的另一个托管协调器是Fargate。与ECS不同的是，它不要求准备底层EC2实例并为其付费。关注的唯一组件是容器、与它们相连的网络接口和IAM权限。
 
-Fargate requires the least amount of maintenance compared to other solutions and is the easiest to learn. Autoscaling and load-balancing are available out of the box thanks to the existing AWS products in this space.
+与其他解决方案相比，Fargate需要最少的维护，而且最容易学习。由于该领域现有的AWS产品，自动扩展和负载平衡可以开箱即用。
 
-The main downside here is the premium that you pay for hosting your services when compared to ECS. A straight comparison is not possible as ECS requires paying for the EC2 instances, while Fargate requires paying for the memory and CPU usage independently. This lack of direct control over your cluster may easily lead to high costs once your services start to autoscale.
+其主要缺点是，与ECS相比，需要为托管服务而支付的额外费用。直接比较是不可能的，因为ECS需要为EC2实例付费，而Fargate需要单独为内存和CPU使用付费。当服务开始自动扩展，这种对集群直接控制的缺乏，很容易导致非常高的成本。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Azure Service Fabric}
+\textbf{Azure服务结构}
 
-The problem with all of the preceding solutions is that they mostly target Docker containers, which are first and foremost Linux-centric. Azure Service Fabric, on the other hand, is a Windows-first product backed by Microsoft. It enables running legacy Windows apps without modifications, which may help you migrate your application if it relies on such services.
+上述所有解决方案的问题在于，它们主要针对Docker容器，而Docker容器首先是以Linux为中心的。另一方面，Azure服务结构是Microsoft支持windows的优先产品。它支持不需要修改就可以运行遗留的Windows应用程序，如果应用程序依赖于这些服务，这可能会有助于迁移应用程序。
 
-As with Kubernetes, Azure Service Fabric is not so much a container orchestrator in itself, but rather a platform on top of which you can build your applications. One of the building blocks happens to be containers, so it works fine as an orchestrator.
+与Kubernetes一样，Azure服务结构本身并不是一个容器协调器，而是一个可以在其上构建应用程序的平台。其中一个构建块恰好是容器，因此可以作为协调器使用。
 
-With the recent introduction of Azure Kubernetes Service, the managed Kubernetes platform in the Azure cloud, there is less need for using Service Fabric.
+随着Azure Kubernetes服务(Azure云中的托管Kubernetes平台)的引入，使用Service Fabric的需求逐渐变少了。
 
 
 

@@ -1,99 +1,99 @@
 
 
-Containers are making a lot of buzz recently. One might think they are a brand new technology that was not available before. However, that is not the case. Before the rise of Docker and Kubernetes, the dominating players in the industry at the moment, there were already solutions such as LXC, which offered a lot of similar features.
+容器最近引起了很多关注。有人可能会认为它们是一种全新的技术，以前没有。然而，事实并非如此。在Docker和Kubernetes崛起之前，已经有像LXC这样的解决方案，它提供了很多类似的功能。
 
-We can trace the origins of separating one execution environment from another with the chroot mechanism available in UNIX systems since 1979. Similar concepts were also used in FreeBSD jails and Solaris Zones.
+可以通过自1979年以来在UNIX系统中使用的chroot机制，来追溯将一个执行环境与另一个执行环境分离的起源。类似的概念也在FreeBSD jails和Solaris专区中使用。
 
-The main task of the container is to isolate one execution environment from another. This isolated environment can have its own configuration, different applications, and even different user accounts than the host environment.
+容器的主要任务是隔离一个执行环境与另一个执行环境。这个隔离的环境可以拥有自己的配置、不同的应用程序，甚至与主机环境不同的用户帐户。
 
-Even though the containers are isolated from the host, they usually share the same operating system kernel. This is the main differentiator from virtualized environments. Virtual machines have dedicated virtual resources, which means they are separated at the hardware level. Containers are separated at the process level, which means there is less overhead to run them.
+尽管容器与主机是隔离的，但通常共享相同的操作系统内核。这是与虚拟化环境的主要区别。虚拟机有专用的虚拟资源，这意味着在硬件级别的分离。容器在流程级别上是分开的，这意味着运行它们的开销更少。
 
-The ability to package and run another operating system that is already optimized and configured for running your application is a strong advantage of containers. Without containers, the build and deploy process usually consists of several steps:
+能够打包并运行已经为运行应用程序进行了优化和配置的另一个操作系统，这是容器的一个强大优势。如果没有容器，构建和部署过程通常包括以下几个步骤:
 
 \begin{enumerate}
 \item 
-The application is built.
+构建应用程序。
 
 \item 
-The example configuration files are provided.
+提供配置文件示例。
 
 \item 
-Installation scripts and associated documentation is prepared.
+准备已安装脚本和相关文档。
 
 \item 
-The application is packaged for a target operating system (such as Debian or Red Hat).
+该应用程序是针对目标操作系统(如Debian或Red Hat)打包的。
 
 \item 
-The packages are deployed to the target platform.
+这些包部署到目标平台。
 
 \item 
-Installation scripts prepare the basis for the application to run.
+安装脚本为应用程序的运行准备了基础。
 
 \item 
-The configuration has to be tweaked to fit the existing system.
+必须调整配置以适应现有的系统。
 \end{enumerate}
 
-When you switch to containers, there is less of a need for a robust installation script. The application will only target a single well-known operating system – the one present in the container. The same goes for configuration: instead of preparing many configurable options, the application is pre-configured for the target operating system and distributed alongside it. The deployment process consists only of unpacking the container image and running the application process inside it.
+当切换到容器时，不太需要健壮的安装脚本。应用程序将只针对一个已知的操作系统——容器中存在的操作系统。配置也是如此:与准备许多可配置选项不同，应用程序是为目标操作系统预先配置的，并与之一起分发。部署流程只包括解包容器映像并在其中运行应用程序流程。
 
-While containers and microservices are often thought to be the same thing, they are not. Moreover, containers may mean application containers or operating system containers, and only application containers fit well with microservices. The following sections will tell you why. We'll describe the different container types that you can encounter, show you how they relate to microservices, and explain when it's best to use them (and when to avoid them).
+虽然集装箱和微型服务通常是一回事，但它们并非如此。此外，容器可能意味着应用程序容器或操作系统容器，只有应用程序容器适合微服务。将描述可能遇到的不同容器类型，展示与微服务的关系，并解释何时使用(以及何时不使用)。
 
-\subsubsubsection{14.2.1\hspace{0.2cm}Exploring the container types}
+\subsubsubsection{14.2.1\hspace{0.2cm}容器类型}
 
-Of the containers described so far, operating system containers are fundamentally different from the current container trend led by Docker, Kubernetes, and LXD. Instead of focusing on recreating an entire operating system with services such as syslog and cron, application containers focus on running a single process within a container – just the application.
+目前所描述的容器中，操作系统容器与目前由Docker、Kubernetes和LXD所引领的容器趋势不同。应用程序容器关注的是在容器中运行单个进程——仅是应用程序，而不是使用syslog和cron等服务重新创建整个操作系统。
 
-Proprietary solutions replace all the usual OS-level services. These solutions provide a unified way to manage the applications within a container. For example, instead of using syslog to handle logs, the standard output of the process with PID 1 is considered as application logs. Instead of using a mechanism such as init.d or systemd, the application container's lifecycle is handled by the runtime application.
+专有解决方案取代了所有常见的操作系统级服务，这些解决方案提供了统一的方法来管理容器内的应用程序。例如，不使用syslog来处理日志，而将PID为1的进程的标准输出视为应用程序日志。而不是使用init.d等机制或systemd，应用程序容器的生命周期由运行时应用程序处理。
 
-Since Docker is at the moment the dominant solution for application containers, we will mostly use it as an example throughout this book. To make the picture complete, we will present viable alternatives, as they may be better suited to your needs. Since the project and specification are open source, these alternatives are compatible with Docker and can be used as replacements.
+由于Docker目前是应用程序容器的主要解决方案，将在本书中主要使用它作为例子。为了使情况更完整，将提供可行的替代方案，因为它们可能更适合某些需要。由于项目和规范是开源的，这些替代方案与Docker兼容，可以作为替代品使用。
 
-Later in this chapter, we will explain how to use Docker to build, deploy, run, and manage application containers.
+本章的后面，将解释如何使用Docker来构建、部署、运行和管理应用程序容器。
 
-\subsubsubsection{14.2.2\hspace{0.2cm}The rise of microservices}
+\subsubsubsection{14.2.2\hspace{0.2cm}微服务的兴起}
 
-The success of Docker coincided with the rise of the adoption of microservices. It is no surprise since microservices and application containers fit together naturally.
+Docker的成功恰逢微服务的兴起。这并不奇怪，因为微服务和应用程序容器可以很自然地结合在一起。
 
-Without application containers, there was no easy and unified way to package, deploy, and maintain microservices. Even though individual companies developed some solutions to fix these problems, none was popular enough to approach being an industry standard.
+如果没有应用程序容器，就没有简单而统一的方式来打包、部署和维护微服务。尽管个别公司开发了一些解决方案来解决这些问题，但没有一个受欢迎到可以成为行业标准。
 
-Without microservices, the application containers were pretty limited. The software architecture focused on building entire systems explicitly configured for the given set of services running there. Replacing one service with another required a change of the architecture.
+如果没有微服务，应用程序容器就非常有限。软件体系结构的重点是构建针对运行在那里的给定服务集显式配置的整个系统。用另一个服务替换一个服务需要改变架构。
 
-When brought together, application containers provide a standard way for the distribution of microservices. Each microserver comes with its own configuration embedded, so operations such as autoscaling or self-healing no longer require knowledge about an underlying application.
+当应用程序容器组合在一起时，它为微服务的分发提供了一种标准方式。每个微服务器都自带嵌入式配置，因此自动扩展或自修复等操作不再需要了解底层应用。
 
-You can still use microservices without application containers and you can use application containers without hosting microservices in them. For instance, even though neither PostgreSQL databases nor Nginx web servers were designed as microservices, they are typically used in application containers.
+仍然可以在没有应用程序容器的情况下使用微服务，也可以在没有托管微服务的情况下使用应用程序容器。例如，尽管PostgreSQL数据库和Nginx web服务器都没有设计成微服务，但它们通常会用在应用程序容器中。
 
-\subsubsubsection{14.2.3\hspace{0.2cm}Choosing when to use containers}
+\subsubsubsection{14.2.3\hspace{0.2cm}何时使用容器}
 
-There are several benefits to the container approach. OS containers and application containers also have some different use cases in which their strengths lie.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{The benefits of containers}
-
-When compared to virtual machines, the other popular way of isolating environments, containers require less overhead during runtime. Unlike virtual machines, there is no need to run a separate version of an operating system kernel and use the hardware or software virtualization techniques. Application containers also do not run other operating system services that are typically found in virtual machines such as syslog, cron, or init. Additionally, application containers offer smaller images as they do not usually have to carry an entire operating system copy. In extreme examples, an application container can consist of a single statically linked binary.
-
-At this point, you may wonder why to bother with containers at all if there is just a single binary inside? There is one particular benefit of having a unified and standardized way to build and run containers. As containers have to follow specific conventions, it is easier to orchestrate them than regular binaries, which can have different expectations regarding logging, configuration, opening ports, and so on.
-
-Another thing is that containers provide a built-in means of isolation. Each container has its own namespace for processes and a namespace for user accounts, among others. This means that the process (or processes) from one container has no notion of the processes on the host or in the other containers. The sandboxing can go even further as you can assign memory and a CPU quota to your containers with the same standard user interface (whether it is Docker, Kubernetes, or something else). 
-
-The standardized runtime also means higher portability. Once a container is built, you can typically run it on different operating systems without modifications. This also means what runs in operations is very close or identical to what runs in development. Issue reproduction is more effortless and so is debugging.
+容器方法有几个好处，操作系统容器和应用程序容器也有它们的优势所在。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{The disadvantages of containers}
+\textbf{容器的好处}
 
-Since there is a lot of pressure nowadays to move workloads to containers, you want to understand all the risks associated with such migration as an architect. The benefits are touted everywhere and you probably already understand them.
+与虚拟机(隔离环境的另一种流行方式)相比，容器在运行时需要的开销更少。与虚拟机不同，不需要运行操作系统内核的单独版本，也不需要使用硬件或软件虚拟化技术。应用程序容器也不运行虚拟机中常见的其他操作系统服务，如syslog、cron或init。此外，应用程序容器提供较小的映像，因为它们通常不需要携带整个操作系统副本。在极端的例子中，应用程序容器可以由单个静态链接的二进制文件组成。
 
-The main obstacle to container adoption is that not all applications can be easily migrated to containers. This is especially true of application containers that are designed with microservices in mind. If your application is not based on microservices architecture, putting it into containers may introduce more problems than it will solve. 
+此时，可能会想，如果容器中只有一个二进制文件，为什么还要费心处理容器呢？有一种统一和标准化的方式来构建和运行容器有一个特别的好处。由于容器必须遵循特定的约定，因此它比常规的二进制文件更容易进行编排，后者在日志记录、配置、开放端口等方面可能有不同的期望。
 
-If your application already scales well, uses TCP/IP-based IPC, and is mostly stateless, the move to containers should not be challenging. Otherwise, each of these aspects would pose a challenge and prompt a rethink of the existing design.
+另外，容器提供了一种内置的隔离方法。每个容器都有自己的进程名称空间和用户帐户名称空间。这意味着来自一个容器的进程(或多个进程)没有主机上或其他容器中的进程的概念。沙箱甚至可以更进一步，可以用相同的标准用户界面(无论是Docker、Kubernetes还是其他东西)为容器分配内存和CPU配额。
 
-Another problem associated with containers is persistent storage. Ideally, containers should have no persistent storage of their own. This makes it possible to take advantage of fast startups, easy scaling, and flexible scheduling. The problem is that applications providing business value cannot exist without persistent storage.
+标准化的运行时还意味着更高的可移植性。构建容器之后，通常可以在不同的操作系统上运行，而无需进行修改。这也意味着在操作中运行的内容，与在开发中运行的内容非常接近或相同。问题复现更加轻松，调试也是。
 
-This drawback is usually mitigated by making most containers stateless and relying on an external non-containerized component to store the data and the state. Such an external component can be either a traditional self-hosted database or a managed database from a cloud provider. Going in either direction requires you to reconsider the architecture and modify it accordingly.
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{容器的缺点}
 
-Since application containers follow specific conventions, the application has to be modified to follow these conventions. For some applications, it will be a low-effort task. For others, such as multiprocess components using in-memory Inter-Process Communication (IPC), it will be complicated.
+由于现在将工作负载迁移到容器的压力很大，作为架构师，希望了解与这种迁移相关的所有风险，并到处都在吹捧它的好处。
 
-One point often omitted is that application containers work great as long as the applications inside them are native Linux applications. While Windows containers are supported, they are neither convenient nor as supported as their Linux counterparts. They also require licensed Windows machines running as hosts.
+采用容器的主要问题是，并不是所有的应用程序都可以轻松地迁移到容器。对于在设计时考虑到微服务的应用程序容器尤其如此。如果应用程序不是基于微服务体系结构的，那么将其放入容器可能会带来比它能解决的更多的问题。 
 
-It is easier to enjoy the application containers' benefits if you are building a new application from scratch and can base your design on this technology. Moving an existing application to application containers, especially if it is complicated, will require a lot more work and possibly also a revamp of the entire architecture. In such a case, we advise you to consider all the benefits and disadvantages extra carefully. Making a wrong decision may harm your product's lead time, availability, and budget.
+如果应用程序已经可以很好地扩展，使用基于TCP/IP的IPC，并且大多数情况下是无状态的，那么迁移到容器应该不会很困难。否则，这些方面中的每一个都将带来挑战，并需要对现有设计进行重新思考。
+
+与容器相关的另一个问题是持久存储。理想情况下，容器应该没有自己的持久存储。这使得快速创建、易于扩展和灵活调度成为可能。问题在于，如果没有持久存储，提供业务价值的应用程序就不可能存在。
+
+通过使大多数容器无状态，并依赖外部非容器化组件来存储数据和状态，这一缺陷通常可以得到缓解。这样的外部组件可以是传统的自托管数据库，也可以是来自云提供商的托管数据库。无论选择哪个方向，都需要重新考虑架构并进行相应地修改。
+
+由于应用程序容器遵循特定的约定，因此必须修改应用程序以遵循这些约定。对于某些应用程序来说，这将是一项简单的任务。对于其他组件，例如使用内存内进程间通信(IPC)的多进程组件，这将很复杂。
+
+经常忽略的是，只要应用程序容器中的应用程序是本机Linux应用程序，应用程序容器就可以工作得很好。虽然支持Windows容器，但它们既不方便，也不像Linux容器那样受支持，还需要作为主机运行授权的Windows机器。
+
+如果从头构建一个新的应用程序，并且可以基于这种技术进行设计，那么就更容易享受应用程序容器的好处。将现有的应用程序移动到应用程序容器，特别是在复杂的情况下，将需要大量的工作，而且可能还需要修改整个体系结构。这种情况下，建议格外考虑所有的好处和坏处。做出错误的决定可能会影响产品的交付时间、可用性和预算。
 
 
 

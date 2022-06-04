@@ -1,36 +1,36 @@
 
-Containers fit very well with CI/CD pipelines. Since they mostly require no further dependencies other than the container runtime itself, they can be easily tested. Worker machines don't have to be provisioned to fulfill the testing needs, so adding more nodes is much easier. What is more, all of them are general-purpose so that they may act both as builders, test runners, and even deployment executors without any prior configuration.
+容器非常适合CI/CD流水。因为除了容器运行时本身之外，大多不需要其他依赖项，所以很容易测试。不需要配置工作机器来满足测试需求，因此添加更多节点要容易得多。更重要的是，它们都是通用的，因此可以充当构建器、测试运行器，甚至部署执行器，而不需要事先进行配置。
 
-Another great benefit of using containers in CI/CD is the fact that they are isolated from one another. This means multiple copies running on the same machine should not interfere. That is true unless the tests require some resources from the host operating system, such as port forwarding or volume mounting. Therefore it's best to design tests so that such resources are not necessary (or at least they don't clash). Port randomization is a helpful technique to avoid clashes, for example.
+在CI/CD中使用容器的另一个好处是它们彼此隔离。这意味着在同一台机器上运行的多个副本不应互有干扰。除非测试需要来自主机操作系统的一些资源，例如端口转发或卷挂载。因此，最好设计测试，使这些资源不是必需的(或至少它们不冲突)。例如，端口随机化是避免冲突的一种技术。
 
-\subsubsubsection{14.4.1\hspace{0.2cm}Runtime libraries inside containers}
+\subsubsubsection{14.4.1\hspace{0.2cm}容器内的运行时库}
 
-The choice of containers may influence the choice of a toolchain and, therefore, C++ language features available to the application. Since containers are typically Linux-based, the system compiler available is usually GNU GCC with glibc as a standard library. However, some Linux distributions popular with containers, such as Alpine Linux, are based on a different standard library, musl.
+容器的选择可能会影响工具链的选择，从而影响应用程序可用的C++语言特性。因为容器通常是基于linux的，所以可用的系统编译器通常是GNU GCC，并将glibc作为标准库。然而，一些流行于容器的Linux发行版，如Alpine Linux，是基于不同的标准库musl的。
 
-If you are targeting such a distribution, make sure the code you'll be using, whether developed in-house or from third-party providers, is compatible with musl. The main advantage of both musl and Alpine Linux is that it results in much smaller container images. For example, a Python image built for Debian Buster is around 330 MB, the slimmed-down Debian version is around 40 MB, while the Alpine version is only around 16 MB. Smaller images mean less wasted bandwidth (for uploads and downloads) and quicker updates.
+如果目标是这样一个发行版，请确保使用的代码(无论是内部开发的还是来自第三方提供商的)与musl兼容。musl和Alpine Linux的主要优点是它可以产生更小的容器映像。例如，为Debian Buster构建的Python镜像大约是330MB，精简版Debian大约是40MB，而Alpine版只有16MB。更小的镜像意味着更少的带宽浪费(用于上传和下载)和更快的更新。
 
-Alpine may also introduce some unwanted traits, such as longer build times, obscure bugs, or reduced performance. If you want to use it to reduce the size, run proper tests to make sure the application behaves without problems.
+Alpine还可能引入一些不必要的特性，比如更长的构建时间、晦涩的bug或性能下降。如果想使用它来减小大小，请运行适当的测试以确保应用程序的行为没有问题。
 
-To reduce your images' size even more, you may consider ditching the underlying operating system altogether. What we mean by operating system here is all the userland tools ordinarily present in a container, such as a shell, package manager, and shared libraries. After all, if your application is the only thing that's going to be running, everything else is unnecessary.
+为了进一步缩小镜像大小，可以考虑完全放弃底层操作系统。这里的操作系统指的是通常出现在容器中的所有用户域工具，例如shell、包管理器和动态库。毕竟，如果应用程序是惟一要运行的东西，那么其他一切都是不必要的。
 
-It is typical for Go or Rust applications to provide a static build that is self-sufficient and can form a container image. While this might not be as straightforward in C++, it is worth considering.
+Go或Rust应用程序通常可以提供自给自足的静态构建，并可以形成一个容器镜像。虽然这在C++中可能不那么简单，但它值得考虑。
 
-There are a few drawbacks related to decreasing the image size as well. First of all, if you decide to go with Alpine Linux, keep in mind it is not as popular as, say, Ubuntu, Debian, or CentOS. Although it is often a platform of choice for container developers, it's very unusual for any other purpose.
+减小镜像大小也有一些缺点。首先，如果决定使用Alpine Linux，请记住它不像Ubuntu、Debian或CentOS那样流行。尽管它通常是容器开发人员的首选平台，但很少用于其他用途。
 
-This means that there might be new compatibility problems, mostly stemming from the fact it's not based on the de facto standard glibc implementation. If you rely on third-party components, the provider may not offer support for this platform.
+这意味着可能会出现新的兼容性问题，主要是因为它不是基于事实上的标准glibc实现。如果依赖于第三方组件，提供商可能不提供此平台的支持。
 
-If you decide to go down the single statically linked binary inside the container image route, there are also some challenges to consider. First of all, you are discouraged from statically linking glibc as it makes internal use of dlopen to handle Name Service Switch (NSS) and iconv. If your software relies on DNS resolving or character set conversion, you'll have to provide a copy of glibc and the relevant libraries anyway.
+如果决定在容器镜像路由中使用单个静态链接的二进制文件，那么还需要考虑一些挑战。首先，不建议静态链接glibc，因为它会在内部使用dlopen来处理名称服务开关(NSS)和iconv。如果软件依赖于DNS解析或字符集转换，那么必须提供glibc和相关库的副本。
 
-Another point to consider is that shell and package managers are often used for debugging containers that misbehave. When one of your containers is acting strangely, you may start another process inside the container and figure out what is happening inside by using standard UNIX tools such as ps, ls, or cat. To run such an application inside the container, it has to be present in the container image first. Some workarounds allow the operator to inject debugging binaries inside the running container, but none of them are well-supported at the moment.
+需要考虑的是，shell和包管理器通常用于调试行为不正常的容器。当某个容器运行异常时，可以启动容器内的另一个进程，并通过使用标准的UNIX工具(如ps、ls或cat)来了解容器内发生了什么。要在容器内运行这样的应用程序，必须首先出现在容器镜像中。一些变通方法允许操作符在运行的容器中注入调试二进制文件，但目前都没有得到很好的支持。
 
-\subsubsubsection{14.4.2\hspace{0.2cm}Alternative container runtimes}
+\subsubsubsection{14.4.2\hspace{0.2cm}选择容器的运行时}
 
-Docker is the most popular way to build and run containers, but since the container standard is open, there are also alternative runtimes that you may use. The main replacement for Docker that offers a similar user experience is Podman. Together with Buildah, described in the previous section, they are tools aimed to replace Docker altogether.
+Docker是最流行的构建和运行容器的方式，但由于容器标准是开放的，可以使用其他的运行时。提供类似用户体验的Docker的主要替代品是Podman。和上一节描述的Buildah一起，是旨在完全取代Docker的工具。
 
-The added benefit is that they don't require an additional daemon running on a host machine, as Docker does. Both also have support (although it is not yet mature) for rootless operations, which makes them a better fit for security-critical operations. Podman accepts all the commands you would expect the Docker CLI to take, so you can simply use it as an alias this way.
+好处是它们不需要像Docker那样在主机上运行额外的守护进程。还支持(尽管还不成熟)无根操作，这使它们更适合安全性关键的操作。Podman接受所有希望Docker CLI接受的命令，所以可以简单地用它作为别名。
 
-Another approach to containers that aims to provide better security is the Kata Containers initiative. Kata Containers uses lightweight virtual machines to leverage the hardware virtualization required for an additional level of isolation between the containers and the host operating system.
+另一种旨在提供更好安全性的容器方法是Kata容器倡议。Kata容器使用轻量级虚拟机来利用容器和主机操作系统之间额外隔离级别所需的硬件虚拟化。
 
-Cri-O and containerd are also popular runtimes used by Kubernetes.
+Cri-O和containerd也是Kubernetes使用的主流运行时。
 
 
