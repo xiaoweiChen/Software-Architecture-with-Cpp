@@ -25,7 +25,7 @@ The declarative configuration
 
 There are different ways to run Kubernetes in your organization. Choosing one over the other requires you to analyze additional costs and benefits related to them.
 
-\subsubsubsection{15.3.1\hspace{0.2cm}Kubernetes structure}
+\subsubsubsection{15.3.1\hspace{0.2cm}Kubernetes的结构}
 
 While it is possible to run Kubernetes on a single machine (for example, using minikube, k3s, or k3d), it is not recommended to do so in production. Single-machine clusters have limited functionality and no failover mechanisms. A typical size for a Kubernetes cluster is six machines or more. Three of the machines then form the control plane. The other three are worker nodes.
 
@@ -33,7 +33,7 @@ The minimum requirement of three machines comes from the fact that this is the m
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Control plane}
+\textbf{控制面板}
 
 In Kubernetes, you rarely interact with individual worker nodes. Instead, all the API requests go to the control plane. The control plane then decides on the actions to take based on the requests, and then it communicates with the worker nodes.
 
@@ -54,7 +54,7 @@ Control plane nodes usually run the API server, scheduler, a configuration store
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Worker nodes}
+\textbf{工作节点}
 
 The nodes that form the control plane and the worker pool are the actual machines the workload will run on. They may be physical servers that you host on-premises, VMs hosted privately, or VMs from your cloud provider.
 
@@ -71,7 +71,7 @@ A kubelet, which is responsible for receiving requests from the control plane an
 A kube-proxy, which is responsible for networking and load balancing on the node level
 \end{itemize}
 
-\subsubsubsection{15.3.2\hspace{0.2cm}Possible approaches to deploying Kubernetes}
+\subsubsubsection{15.3.2\hspace{0.2cm}部署Kubernetes的方法}
 
 As you may have realized from reading the previous section, there are different possible ways to deploy Kubernetes.
 
@@ -85,7 +85,7 @@ Finally, there are the managed services available from the major cloud players. 
 
 Why would you choose self-hosted Kubernetes over the managed services when operating in a public cloud? One of the reasons may be a specific version of Kubernetes that you require. Cloud providers are typically a bit slow when it comes to introducing updates.
 
-\subsubsubsection{15.3.3\hspace{0.2cm}Understanding the Kubernetes concepts}
+\subsubsubsection{15.3.3\hspace{0.2cm}理解Kubernetes的概念}
 
 Kubernetes introduces some concepts that may sound unfamiliar or be confusing if you hear them for the first time. When you learn their purpose, it should be easier to grasp what makes Kubernetes special. Here are some of the most common Kubernetes objects:
 
@@ -114,7 +114,7 @@ Services represent a particular function performed within a cluster. They have a
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Declarative approach}
+\textbf{声明式方法}
 
 We've covered the differences between declarative and imperative approaches earlier in Chapter 9, Continuous Integration/Continuous Deployment. Kubernetes takes the  declarative approach. Instead of giving instructions regarding the steps that need to be taken, you provide the resources that describe your cluster's desired state. It is up to the control plane to allocate internal resources so that they fulfill your needs.
 
@@ -147,35 +147,35 @@ A name is mandatory in metadata as this is the way to distinguish one resource f
 
 The specification is also the mandatory part as it describes the actual content of the resource. In our example, we list all the containers that are running inside the pod. To be precise, one container named webserver using an image, nginx, from Docker Hub. Since we want to connect to the Nginx web server from the outside, we also expose the container port 80 on which the server is listening. The name in the port description is optional.
 
-\subsubsubsection{15.3.4\hspace{0.2cm}Kubernetes networking}
+\subsubsubsection{15.3.4\hspace{0.2cm}Kubernetes网络}
 
 Kubernetes allows for pluggable network architectures. Several drivers exist that may be used depending on requirements. Whichever driver you select, some concepts are universal. The following are the typical networking scenarios.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Container-to-container communication}
+\textbf{容器对容器的交流}
 
 A single pod may host several different containers. Since the network interface is tied to the pod and not to the containers, each container operates in the same networking namespace. This means various containers may address one another using localhost networking.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Pod-to-pod communication}
+\textbf{Pod对Pod的交流}
 
 Each pod has an internal cluster-local IP address assigned. The address does not persist once the pod has been deleted. One pod can connect to another's exposed ports when it knows the other's address as they share the same flat network. You can think of pods as VMs hosting containers with regard to this communication model. This is rarely used as the preferred method is pod-to-service communication.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Pod-to-service communication}
+\textbf{Pod对服务的交流}
 
 Pod-to-service communication is the most popular use case for communication within the cluster. Each service has an individual IP address and a DNS name assigned to it. When a pod connects to a service, the connection is proxied to one of the pods in the group selected by the service. Proxying is a task of the kube-proxy tool described earlier.
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{External-to-internal communication}
+\textbf{外部对内部的交流}
 
 External traffic typically comes to the cluster via the means of load balancers. These are either tied to or handled by specific services or ingress controllers. When the externally exposed services handle the traffic, it behaves like pod-to-service communication. With the ingress controller, you have additional features available that allow for routing, observability, or advanced load balancing.
 
-\subsubsubsection{15.3.5\hspace{0.2cm}When is using Kubernetes a good idea?}
+\subsubsubsection{15.3.5\hspace{0.2cm}什么时候使用Kubernetes是一个好主意？}
 
 Introducing Kubernetes within an organization requires some investment. There are many benefits provided by Kubernetes, such as autoscalability, automation, or deployment scenarios. However, these benefits may not justify the necessary investment.
 
