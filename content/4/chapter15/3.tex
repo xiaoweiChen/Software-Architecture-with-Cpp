@@ -1,126 +1,126 @@
 
-Kubernetes is an extensible open source platform for automating and managing container applications. It is sometimes referred to as k8s since it starts with 'k,' ends with 's,' and there are eight letters in the middle.
+Kubernetes是一个可扩展的开源平台，用于自动化和管理容器应用程序。它有时称为k8s，因为它以“k”开头，以“s”结尾，中间有八个字母。
 
-Its design is based on Borg, a system used internally by Google. Some of the features present in Kubernetes are as follows:
+设计基于Google内部使用的Borg系统。Kubernetes的一些特征如下:
 
 \begin{itemize}
 \item 
-Autoscaling of applications
+自动扩展的应用程序
 
 \item 
-Configurable networking
+可配置的网络
 
 \item 
-Batch job execution
+批处理执行
 
 \item 
-Unified upgrading of applications
+应用统一升级
 
 \item 
-The ability to run highly available applications on top of it
+具有运行高可用性应用程序的能力
 
 \item 
-The declarative configuration
+声明式配置
 \end{itemize}
 
-There are different ways to run Kubernetes in your organization. Choosing one over the other requires you to analyze additional costs and benefits related to them.
+在团队中有不同的方式来管理Kubernetes，选择其中一种需要分析与之相关的成本和收益。
 
 \subsubsubsection{15.3.1\hspace{0.2cm}Kubernetes的结构}
 
-While it is possible to run Kubernetes on a single machine (for example, using minikube, k3s, or k3d), it is not recommended to do so in production. Single-machine clusters have limited functionality and no failover mechanisms. A typical size for a Kubernetes cluster is six machines or more. Three of the machines then form the control plane. The other three are worker nodes.
+虽然可以在一台机器上运行Kubernetes(例如，使用minikube、k3s或k3d)，但不建议在生产环境中这样做。单机集群的功能有限，而且没有故障转移机制。Kubernetes集群通常的大小是六台或更多机器。然后，三个机器组成控制台。其他三个是工作节点。
 
-The minimum requirement of three machines comes from the fact that this is the minimal number to provide high availability. It is possible to have the control plane nodes also available as worker nodes, although this is not encouraged.
+3台机器的最低要求来自于这样一个事实，这是提供高可用性的最低数量。控制台节点也可以作为工作节点使用，但不推荐这样做。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{控制面板}
+\textbf{控制台}
 
-In Kubernetes, you rarely interact with individual worker nodes. Instead, all the API requests go to the control plane. The control plane then decides on the actions to take based on the requests, and then it communicates with the worker nodes.
+在Kubernetes中，很少与单个工作节点交互。相反，所有API请求都进入控制台。然后控制台根据请求决定采取的操作，然后它与工作节点通信。
 
-The interaction with the control plane can take several forms:
+与控制台的交互可以采取几种形式:
 
 \begin{itemize}
 \item 
-Using the kubectl CLI
+通过kubectl命令行
 
 \item 
-Using a web dashboard
+使用Web仪表盘
 
 \item 
-Using the Kubernetes API from inside an application other than kubectl
+在kubectl之外的应用程序中使用Kubernetes API
 \end{itemize}
 
-Control plane nodes usually run the API server, scheduler, a configuration store (etcd), and possibly some additional processes to handle the specific needs. For example, Kubernetes clusters deployed in a public cloud such as Google Cloud Platform have cloud controllers running on control plane nodes. The cloud controller interacts with the cloud provider's API to replace the failed machines, provision load balancers, or assign external IP addresses.
+控制台节点通常运行API服务器、调度器、配置存储(etcd)，可能还会运行一些进程来处理特定的需求。例如，Kubernetes集群部署在公有云(如谷歌云平台)上，在控制平面节点上运行云控制器。云控制器与云提供商的API交互，以替换故障机器、提供负载平衡器或分配外部IP地址。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{工作节点}
 
-The nodes that form the control plane and the worker pool are the actual machines the workload will run on. They may be physical servers that you host on-premises, VMs hosted privately, or VMs from your cloud provider.
+构成控制台和工作池的节点是工作负载将在其上运行的实际机器，可能是您本地托管的物理服务器、私有托管的虚拟机或来自云提供商的虚拟机。
 
-Every node in a cluster runs at least the three programs as listed follows:
+集群中的每个节点至少运行下面三个程序:
 
 \begin{itemize}
 \item 
-A container runtime (for example, Docker Engine or cri-o) that allows the machine to handle the application containers
+容器运行时(例如，Docker引擎或cri-o)，允许机器处理应用程序容器
 
 \item 
-A kubelet, which is responsible for receiving requests from the control plane and manages the individual containers based on those requests
+kubelet，负责接收来自控制台的请求，并基于这些请求管理各个容器
 
 \item 
-A kube-proxy, which is responsible for networking and load balancing on the node level
+kube-proxy，负责节点级的网络和负载平衡
 \end{itemize}
 
 \subsubsubsection{15.3.2\hspace{0.2cm}部署Kubernetes的方法}
 
-As you may have realized from reading the previous section, there are different possible ways to deploy Kubernetes.
+正如上一节中了解到的，部署Kubernetes有多种不同的方法。
 
-One of them is to deploy it to bare-metal servers hosted on-premises. One of the benefits is that this may be cheaper for large-scale applications than what the cloud providers offer. This approach has one major drawback—you will require an operator to provide the additional nodes whenever necessary.
+其中之一是将其部署到本地托管的裸服务器上。这样做的好处是，对于大型应用程序来说，这可能比云提供商提供的服务更便宜。这种方法有一个主要缺点——需要在必要时提供额外的节点。
 
-To mitigate this issue, you can run a virtualization appliance on top of your bare-metal servers. This makes it possible to use the Kubernetes built-in cloud controller to provision the necessary resources automatically. You still have the same control over the costs, but there's less manual work. Virtualization adds some overhead, but in most cases, this should be a fair trade-off.
+为了缓解这个问题，可以在裸服务器上运行一个虚拟化设备。这使得使用Kubernetes内置的云控制器自动提供必要的资源成为可能。仍可以对成本进行相同的控制，但手工工作减少了。虚拟化会增加一些开销，但在大多数情况下，这是一种权衡。
 
-If you are not interested in hosting the servers yourself, you can deploy Kubernetes to run on top of VMs from a cloud provider. By choosing this route, you can use some of the existing templates for optimal setup. There are Terraform and Ansible modules available to build a cluster on popular cloud platforms.
+如果对自托管服务器不感兴趣，可以将Kubernetes部署在云提供商提供的虚拟机上运行。通过选择这种方式，可以使用一些现有模板进行最佳设置。有terrform和Ansible模块可以在流行的云平台上构建集群。
 
-Finally, there are the managed services available from the major cloud players. You only have to pay for the worker nodes in some of them, while the control plane is free of charge.
+最后，还有来自主要云计算参与者的托管服务。只需要支付其中一些工作节点的费用，而控制台是免费的。
 
-Why would you choose self-hosted Kubernetes over the managed services when operating in a public cloud? One of the reasons may be a specific version of Kubernetes that you require. Cloud providers are typically a bit slow when it comes to introducing updates.
+当在公共云中运行时，为什么要选择自托管的Kubernetes，而不是托管的服务呢？其中一个原因是需要一个特定版本的Kubernetes。云提供商在引入更新时通常会有延迟。
 
 \subsubsubsection{15.3.3\hspace{0.2cm}理解Kubernetes的概念}
 
-Kubernetes introduces some concepts that may sound unfamiliar or be confusing if you hear them for the first time. When you learn their purpose, it should be easier to grasp what makes Kubernetes special. Here are some of the most common Kubernetes objects:
+Kubernetes介绍了一些概念，如果第一次听到它们，可能会感到陌生或困惑。当了解他们的目的时，应该更容易理解Kubernetes的特别之处。以下是Kubernetes最常见的一些概念:
 
 \begin{itemize}
 \item 
-A container, specifically, an application container, is a method of distributing and running a single application. It contains the code and configuration necessary to run the unmodified application anywhere.
+容器，特别是应用程序容器，是分发和运行单个应用程序的一种方法。它可以运行未修改的应用程序所需的代码和配置。
 
 \item 
-A Pod is a basic Kubernetes building block. It is atomic and consists of one or more containers. All the containers inside the pod share the same network interfaces, volumes (such as persistent storage or secrets), and resources (CPU and memory).
+Pod是Kubernetes的基本构件。它是原子的，由一个或多个容器组成。Pod中的所有容器共享相同的网络接口、卷(如持久存储或机密)和资源(CPU和内存)。
 
 \item 
-A deployment is a higher-level object that describes the workload and its life cycle features. It typically manages a set of pod replicas, allows for rolling upgrades, and manages the rollbacks in case of failure. This is what makes it easy to scale and manage the life cycle of Kubernetes applications.
+部署是描述工作负载，及其生命周期特性的高级对象。通常管理一组Pod副本，允许滚动升级，并在失败时管理回滚。这使得扩展和管理Kubernetes应用程序的生命周期变得很容易。
 
 \item 
-A DaemonSet is a controller similar to a deployment in that it manages where the pods are distributed. While deployments are concerned with keeping a given number of replicas, DaemonSets spreads the pods across all worker nodes. The primary use case is to run a system-level service, such as a monitoring or logging agent on each node.
+DaemonSet是一个类似于部署的控制器，它管理Pod分布的位置。虽然部署关注的是保持给定数量的副本，但daemonset将Pod分散到所有工作节点。主要用在每个节点上运行系统级服务，例如监视或日志记录代理。
 
 \item 
-Jobs are designed for one-off tasks. Pods in deployments restart automatically when the containers inside them terminate. They are suitable for all the alwayson services that listen on network ports for requests. However, deployments are unsuited for batch jobs, such as thumbnail generation, which you want to run only when required. Jobs create one or more pods and watch them until they complete a given task. When a specific number of successful pods terminate, the job is considered complete.
+作业是为一次性任务而设计的。部署中的Pod在容器终止时自动重启。它们适用于所有在网络端口上监听请求的alwayson服务。但是，部署不适合批处理作业，例如缩略图生成，通常只希望在需要时运行这些作业。作业创造一个或多个Pod，并观察他们，直到他们完成指定的任务。当成功终止特定数量的Pod时，作业认定为完成。
 
 \item 
-CronJobs, as the name suggests, are the jobs that are run periodically within the cluster.
+CronJobs，顾名思义，是指在集群中周期性运行的作业。
 
 \item 
-Services represent a particular function performed within a cluster. They have a network endpoint associated with them (which is usually load balanced). Services may be performed by one or more pods. The life cycle of services is independent of the life cycles of the many pods. Since pods are transient, they may be created and destroyed at any time. Services abstract the individual pods to allow for high availability. Services have their own IP addresses and DNS names for ease of use.
+服务表示在集群中执行的特定功能，有一个与它们相关联的网络端点(通常是负载均衡的)。服务可以由一个或多个Pod执行，服务的生命周期独立于许多Pod的生命周期。由于Pod是短暂的，可能在任何时候创建和销毁。服务将各个Pod抽象出来，以实现高可用性。为了方便使用，服务有自己的IP地址和DNS名称。
 \end{itemize}
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{声明式方法}
 
-We've covered the differences between declarative and imperative approaches earlier in Chapter 9, Continuous Integration/Continuous Deployment. Kubernetes takes the  declarative approach. Instead of giving instructions regarding the steps that need to be taken, you provide the resources that describe your cluster's desired state. It is up to the control plane to allocate internal resources so that they fulfill your needs.
+已经在第9章中讨论了声明式方法和命令式方法之间的区别。Kubernetes采用声明式方法。提供描述集群所需状态的资源，而不是给出关于需要采取的步骤的指示。由控制平面来分配内部资源，以满足需求。
 
-It is possible to add the resources using the command line directly. This can be quick for testing, but you want to have a trail of the resources you created most of the time. Thus, most people work with manifest files, which provide a coded description of the resources required. Manifests are typically YAML files, but it is also possible to use JSON.
+可以直接使用命令行添加资源。这可以快速进行测试，可能希望在大多数情况下都能跟踪创建的资源。因此，大多数人使用清单文件，它提供所需资源的编码描述。清单通常是YAML文件，但也可以使用JSON。
 
-Here's an example YAML manifest with a single Pod:
+下面是一个带有单个Pod的YAML清单示例:
 
 \begin{tcblisting}{commandshell={}}
 apiVersion: v1
@@ -129,6 +129,8 @@ metadata:
   name: simple-server
   labels:
     app: dominican-front
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
 spec:
   containers:
     - name: webserver
@@ -139,71 +141,71 @@ spec:
           protocol: TCP
 \end{tcblisting}
 
-The first line is mandatory, and it tells which API version will be used in the manifest. Some resources are only available in extensions, so this is the information for the parser on how to behave. 
+第一行是强制性的，在清单中将使用哪个API版本。有些资源仅在扩展中可用，因此这是解析器关于如何操作的信息。 
 
-The second line describes what resource we are creating. Next, there is metadata and the specification of the resource.
+第二行描述创建的资源。接下来是元数据和资源规范。
 
-A name is mandatory in metadata as this is the way to distinguish one resource from another. If we wanted to create another pod with the same name, we would get an error stating that such a resource already exists. The label is optional and useful when writing selectors. For example, if we wanted to create a service that allows connection to the pod, we would use a selector matching label app with a value equal to dominican-front.
+名称在元数据中是必需的，因为这是区分一个资源与另一个资源的方法。如果想创建另一个具有相同名称的Pod，将得到一个错误，说明这样的资源已经存在。标签是可选的，在编写选择器时很有用。例如，如果想创建一个允许连接到Pod的服务，将使用一个值等于dominican-front的标签匹配应用的选择器。
 
-The specification is also the mandatory part as it describes the actual content of the resource. In our example, we list all the containers that are running inside the pod. To be precise, one container named webserver using an image, nginx, from Docker Hub. Since we want to connect to the Nginx web server from the outside, we also expose the container port 80 on which the server is listening. The name in the port description is optional.
+规范也是必需的部分，因为它描述了资源的实际内容。在示例中，列出了在Pod中运行的所有容器。准确地说，一个名为webserver的容器使用了一个来自Docker Hub的nginx镜像。因为想从外部连接到Nginx web服务器，所以也公开了服务器正在监听的容器端口80。端口描述中的名称为可选参数。
 
 \subsubsubsection{15.3.4\hspace{0.2cm}Kubernetes网络}
 
-Kubernetes allows for pluggable network architectures. Several drivers exist that may be used depending on requirements. Whichever driver you select, some concepts are universal. The following are the typical networking scenarios.
+Kubernetes支持可插拔网络架构，有几种驱动程序可以根据需求使用。无论选择哪种驱动程序，有些概念是通用的。以下是常规的组网场景。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{容器对容器的交流}
+\textbf{容器对容器的通信}
 
-A single pod may host several different containers. Since the network interface is tied to the pod and not to the containers, each container operates in the same networking namespace. This means various containers may address one another using localhost networking.
-
-\hspace*{\fill} \\ %插入空行
-\noindent
-\textbf{Pod对Pod的交流}
-
-Each pod has an internal cluster-local IP address assigned. The address does not persist once the pod has been deleted. One pod can connect to another's exposed ports when it knows the other's address as they share the same flat network. You can think of pods as VMs hosting containers with regard to this communication model. This is rarely used as the preferred method is pod-to-service communication.
+一个Pod可以容纳几个不同的容器。由于网络接口绑定到Pod，而不是容器，因此每个容器都在相同的网络名称空间中操作。这意味着各种容器可以使用本地主机网络彼此寻址。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Pod对服务的交流}
+\textbf{Pod对Pod的通信}
 
-Pod-to-service communication is the most popular use case for communication within the cluster. Each service has an individual IP address and a DNS name assigned to it. When a pod connects to a service, the connection is proxied to one of the pods in the group selected by the service. Proxying is a task of the kube-proxy tool described earlier.
+每个Pod都分配一个内部集群本地IP地址。当Pod删除了，地址就不存在了。当一个Pod知道另一个的地址时，可以连接到另一个暴露的端口，因为它们共享相同的网络。对于这个通信模型，可以将Pod看作是托管容器的VM。这种方法很少使用，因为首选的方法是Pod到服务的通信。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{外部对内部的交流}
+\textbf{Pod对服务的通信}
 
-External traffic typically comes to the cluster via the means of load balancers. These are either tied to or handled by specific services or ingress controllers. When the externally exposed services handle the traffic, it behaves like pod-to-service communication. With the ingress controller, you have additional features available that allow for routing, observability, or advanced load balancing.
+Pod对服务通信是集群内最流行的通信用例。每个服务都有一个单独的IP地址和分配给它的DNS名称。当一个Pod连接到服务时，该连接被代理到由服务选择的组中的一个Pod。代理是前面描述的kube-proxy工具的任务。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{外部对内部的通信}
+
+外部流量通常通过负载均衡器到达集群。它们要么定到特定的服务或入口控制器，要么使用特定的服务或入口控制器处理。当外部公开的服务处理通信时，行为类似于Pod到服务的通信。有了入口控制器，就有了其他可用的特性，允许路由、可观察性或高级负载平衡。
 
 \subsubsubsection{15.3.5\hspace{0.2cm}什么时候使用Kubernetes是一个好主意？}
 
-Introducing Kubernetes within an organization requires some investment. There are many benefits provided by Kubernetes, such as autoscalability, automation, or deployment scenarios. However, these benefits may not justify the necessary investment.
+在组织中引入Kubernetes需要一些成本。Kubernetes提供了许多好处，例如自动可扩展性、自动化或部署场景。然而，这些好处可能不足以证明必要的成本是合理的。
 
-This investment concerns several areas:
+这项投资成本涉及几个领域:
 
 \begin{itemize}
 \item 
-Infrastructure costs: The costs associated with running the control plane and the worker nodes may be relatively high. Additionally, the costs may rise if you want to use various Kubernetes expansions, such as GitOps or a service mesh (described later). They also require additional resources to run and provide more overhead on top of your application's regular services. Apart from the nodes themselves, you should also factor in other costs. Some of the Kubernetes features work best when deployed to a supported cloud provider. This means that in order to benefit from those features, you'd have to go down one of the following routes:
+基础设施成本:与运行控制台和工作节点相关的成本可能相对较高。此外，如果希望使用各种Kubernetes扩展，例如GitOps或服务网格(稍后将介绍)，那么成本可能会增加。还需要额外的资源来运行，并在应用程序的常规服务之上提供更多的开销。除了节点本身，还应该考虑其他成本。Kubernetes的一些特性在部署到受支持的云提供商时工作得最好。这意味着为了从这些功能中受益，必须遵循以下方式:
 
 \begin{enumerate}[label=\alph*]
 \item 
-Move your workload to the specifically supported cloud
+将工作负载转移到特定支持的云上
 
 \item
-Implement your own drivers for a cloud provider of your choice
+为选择的云提供商，实现自己的驱动程序
 
 \item
-Migrate your on-premises infrastructure to a virtualized API-enabled environment such as VMware vSphere or OpenStack.
+将基础设施迁移到一个虚拟化的支持API的环境，如VMware vSphere或OpenStack。
 \end{enumerate}
 
 \item 
-Operations costs: The Kubernetes cluster and associated services require maintenance. Even though you get less maintenance for your applications, this benefit is slightly offset by the cost of keeping the cluster running.
+运营成本:Kubernetes集群和相关服务需要维护。尽管应用程序的维护减少了，但保持集群运行的成本略微抵消了这一好处。
 
 \item 
-Education costs: Your entire product team has to learn new concepts. Even if you have a dedicated platform team that will provide developers with easy-to-use tools, developers would still require a basic understanding of how the work they do influences the entire system and which API they should use.
+学习成本:整个产品团队必须学习新的概念。即使有一个专业的平台团队，为开发人员提供易于使用的工具，开发人员仍然需要基本了解所做的工作如何影响整个系统，以及应该使用哪些API。
 \end{itemize}
 
-Before you decide on introducing Kubernetes, consider first whether you can afford the initial investment it requires.
+在引入Kubernetes之前，首先考虑是否能够负担它所需的初始成本。
 
 
 

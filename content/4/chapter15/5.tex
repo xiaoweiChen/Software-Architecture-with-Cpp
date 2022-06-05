@@ -1,69 +1,69 @@
 
-Microservices and cloud-native design come with their own set of problems. Communication between different services, observability, debugging, rate limiting, authentication, access control, and A/B testing may be challenging even with a limited number of services. When the number of services rises, so does the complexity of the aforementioned requirements.
+微服务和原生云设计也有自己的问题。即使服务数量有限，不同服务之间的通信、可观察性、调试、速率限制、认证、访问控制和A/B测试也可能具有挑战性。当服务的数量增加时，上述需求的复杂性也会增加。
 
-That's where a service mesh enters the fray. In short, a service mesh trades off some resources (necessary to run the control plane and sidecars) for an automated and centrally controlled solution to the aforementioned challenges.
+这就是服务网格进入的地方。简而言之，服务网格权衡了一些资源(运行控制平面和sidecars所必需的)，以实现对上述挑战的自动化和集中控制的解决方案。
 
-\subsubsubsection{15.5.1\hspace{0.2cm}Introducing a service mesh}
+\subsubsubsection{15.5.1\hspace{0.2cm}引入服务网格}
 
-All the requirements we mentioned in the introduction to this chapter used to be coded within the application itself. As it turns out, many may be abstracted as they are shared across many different applications. When your application consists of many services, adding new features to all of them starts to be costly. With a service mesh, you may control these features from a single point instead.
+本章的介绍中，提到的所有需求过去都是在应用程序本身中编码的。事实证明，许多可能可以抽象，因为它们在许多不同的应用程序之间共享。当应用程序包含许多服务时，为所有服务添加新特性的成本将会很高。使用服务网格，可以控制这些特性。
 
-Since a containerized workflow already abstracts some of the runtime and some networking, a service mesh takes the abstraction to another level. This way, the application within a container is only aware of what happens at the application level of the OSI networking model. The service mesh handles lower levels.
+因为容器化的工作流已经对一些运行时和网络进行了抽象，服务网格将这种抽象提升到了另一个层次。这样，容器中的应用程序只知道OSI网络模型的应用程序级别发生了什么，而服务网格处理的任务较为底层。
 
-Setting up a service mesh allows you to control all network traffic in a new way and gives you better insights into this traffic. The dependencies become visible, as does the flow, shape, and amount of traffic.
+设置服务网格可以以一种新的方式控制所有的网络流量，并更好地了解这些流量。依赖关系变得可见，流量、形状和流量也变得可见。
 
-Not only is the flow of traffic handled by the service mesh. Other popular patterns, such as circuit breaking, rate limiting, or retries, don't have to be implemented by each application and configured separately. This is also a feature that can be outsourced to the service mesh. Similarly, A/B testing or canary deployments are the use cases that a service mesh is able to fulfill.
+不仅是由服务网格处理的流量。其他流行的模式，如电路断路、速率限制或重试，不必由每个应用程序实现并单独配置，这也是一个可以外包给服务网格的特性。类似地，A/B测试或金丝雀部署是服务网格能够实现的用例。
 
-One of the benefits of the service mesh, as previously mentioned, is greater control. Its architecture typically consists of a manageable edge proxy for external traffic and internal proxies usually deployed as sidecars along each microservice. This way, the networking policies can be written as code and stored alongside all the other configuration in a single place. Rather than having to switch on mutual TLS encryption for two of the services you want to connect, you only have to enable the feature once in our service mesh configuration.
+如前所述，服务网格的好处之一是更好的控制。架构通常由外部流量的可管理边缘代理和内部代理组成，这些代理通常部署在每个微服务上。通过这种方式，可以将网络策略编写为代码，并与所有其他配置一起存储在一个位置。只需在服务网格配置中启用该功能一次，而不必为想要连接的两个服务开启相互TLS加密。
 
-Next, we'll cover some of the service mesh solutions.
+接下来，将介绍一些服务网格解决方案。
 
-\subsubsubsection{15.5.2\hspace{0.2cm}Service mesh solutions}
+\subsubsubsection{15.5.2\hspace{0.2cm}网格服务解决方案}
 
-All of the solutions described here are self-hosted.
+这里描述的所有解决方案都是自托管的。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Istio}
 
-Istio is a powerful collection of service mesh tools. It allows you to connect microservices through the deployment of Envoy proxies as sidecar containers. Because Envoy is programmable, the Istio control plane's configuration changes are communicated to all the proxies, which then reconfigure themselves accordingly.
+Istio是一个强大的服务网格工具集合，可以通过将Envoy代理部署为sidecar容器来连接微服务。因为Envoy是可编程的，所以Istio控制平面的配置更改会与所有代理通信，然后这些代理会相应地重新配置自己.
 
-The Envoy proxies are, among other things, responsible for handing encryption and authentication. With Istio, enabling mutual TLS between your services requires a single switch in the configuration for the majority of the time. If you don't want mTLS between all your services, you may also select those that demand this additional protection while allowing unencrypted traffic between everything else.
+特使代理除其他外，还负责提供加密和身份验证。使用Istio，在务之间启用相互TLS在大多数时间需要在配置中添加一个交换机。如果不希望在所有服务之间使用mTLS，也可以选择那些需要这种额外保护的服务，同时允许在其他所有服务之间使用未加密的通信。
 
-Istio also helps with observability. First of all, the Envoy proxies export proxy-level metrics compatible with Prometheus. There are also service-level metrics and control plane metrics exported by Istio. Next, there are distributed traces that describe the traffic flow within the mesh. Istio can serve the traces to different backends: Zipkin, Jaeger, Lightstep, and Datadog. Finally, there are Envoy access logs, which show every call in a format similar to Nginx.
+Istio还可以提供可观察性。首先，Envoy代理导出与Prometheus兼容的代理级指标。Istio还导出了服务级别指标和控制台指标。接下来，有描述网格内流量的分布式轨迹。Istio可以为不同的后端提供跟踪:Zipkin，Jaeger，Lightstep和Datadog。最后，还有Envoy访问日志，类似于Nginx的格式显示每个调用。
 
-It's possible to visualize your mesh using Kiali, an interactive web interface. This way, you can see a graph of your services, including information such as whether the encryption is enabled, what the size of the flow between different services is, or what's the health check status of each of them is.
+这是可能的可视化网格使用Kiali，一个交互式的网络界面。通过这种方式，可以看到服务的图表，包括加密是否启用、不同服务之间的流大小或每个服务的健康检查状态等信息。
 
-The authors of Istio claim that this service mesh should be compatible with different technologies. At the time of writing, the best documented, best integrated, and best tested is the integration with Kubernetes. Other supported environments are on-premises, generalpurpose clouds, Mesos, and Nomad with Consul.
+Istio的作者声称这个服务网格应该与不同的技术兼容。在撰写本文时，最好的文档、最好的集成和最好的测试是与Kubernetes的集成。其他受支持的环境有on-premises、通用云、Mesos和Nomad with Consul。
 
-If you work in an industry concerned with compliance (such as financial institutions), then Istio can help in these aspects.
+如果在与合规相关的行业(如金融机构)工作，那么Istio可以在这些方面提供帮助。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Envoy}
 
-While Envoy is not a service mesh in itself, it is worth mentioning in this section due to its use in Istio.
+Envoy本身并不是一个服务网格，但由于它在Istio中使用，所以在本节进行介绍。
 
-Envoy is a service proxy that acts much like Nginx or HAProxy. The main difference is that it can be reconfigured on the fly. This happens programmatically via an API and does not require the configuration file to be changed and the daemon to then be reloaded.
+Envoy是一个服务代理，作用很像Nginx或HAProxy，主要的区别在于可以动态地重新配置。这是通过API以编程方式实现的，不需要更改配置文件，也不需要重新加载守护进程。
 
-Interesting facts regarding Envoy are its performance and popularity. According to tests performed by SolarWinds, Envoy beats the competition when it comes to performance as a service proxy. This competition includes HAProxy, Nginx, Traefik, and AWS Application Load Balancer. Envoy is much younger than the established leaders in this space, such as Nginx, HAProxy, Apache, and Microsoft IIS, but this didn't stop Envoy from entering the top 10 list of most-used web servers, according to Netcraft.
+关于特使有趣的事实是它的性能和知名度。根据SolarWinds的测试，Envoy在作为服务代理的性能方面优于其他竞争对手，这包括HAProxy，Nginx，Traefik和AWS应用负载均衡器。Envoy比Nginx、HAProxy、Apache和Microsoft IIS等已经建立的领导者要年轻得多，但根据Netcraft的数据，这并不妨碍Envoy进入最常用Web服务器的前10名。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{Linkerd}
 
-Before Istio became synonymous with a service mesh, this field was represented by Linkerd. There is some confusion regarding the naming, as the original Linkerd project was designed to be platform-agnostic and targeted the Java VM. This meant that it was resource-heavy and often sluggish. The newer version, called Linkerd2, has been rewritten to address these issues. Linkerd2, as opposed to the original Linkerd, is only focused on Kubernetes.
+在Istio成为服务网格的代名词之前，这个领域的代表是Linkerd。在命名方面有一些混淆，因为最初的Linkerd项目设计为平台无关的，并且以Java VM为目标。这意味着它的重资源，而且经常行动迟缓，新版本Linkerd2已经重写以解决这些问题。与最初的Linkerd不同，Linkerd2只关注Kubernetes。
 
-Both Linkerd and Linkerd2 use their own proxy solution instead of relying on an existing project such as Envoy. The rationale for that is that a dedicated proxy (versus a generalpurpose Envoy) offers better security and performance. An interesting feature of Linkerd2 is that the company that developed it also offers paid support.
+Linkerd和Linkerd2都使用自己的代理解决方案，而不是依赖于像Envoy这样的现有项目。这样做的理由是专用代理(与通用特使相比)提供更好的安全性和性能。Linkerd2的一个有趣特性是，开发它的公司还提供付费支持版本。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
-\textbf{Consul service mesh}
+\textbf{领事服务网格}
 
-A recent addition to the service mesh space is the Consul service mesh. This is a product from HashiCorp, a well-established cloud company known for such tools as Terraform, Vault, Packer, Nomad, and Consul.
+服务网格空间最近增加了Consul服务网格。这是HashiCorp的产品，HashiCorp是一家知名的云计算公司，以terrform、Vault、Packer、Nomad和Consul等工具而闻名。
 
-Just like the other solutions, it features mTLS and traffic management. It's advertised as a multi-cloud, multi-data center, and multi-region mesh. It integrates with different platforms, data plane products, and observability providers. At the time of writing, the reality is a bit more modest as the main supported platforms are Nomad and Kubernetes, while the supported proxies are either the built-in proxy or Envoy.
+就像其他解决方案一样，具有mTLS和流量管理功能。宣传为多云、多数据中心和多区域网格。集成了不同的平台、数据平面产品和可观察性提供商。在撰写本文时，实际情况要好一些，因为主要支持的平台是Nomad和Kubernetes，而支持的代理要么是内置代理，要么是Envoy。
 
-If you are considering using Nomad for your application, then the Consul service mesh may be a great choice and a good fit as both are HashiCorp products.
+如果考虑在应用程序中使用Nomad，那么Consul服务网格可能是一个很好的选择，因为它们都是HashiCorp的产品。
 
 
 
