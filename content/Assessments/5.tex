@@ -1,44 +1,50 @@
 \begin{enumerate}
 \item
-How should you ensure each file of our code that's open, will be closed when no longer in use?
+如何确保打开的每个代码文件在不再使用时都是关闭的？
 \begin{itemize}
 \item 
-By using the RAII idiom; for instance, by using std::unique\_ptr, which will close it in its destructor.
+通过使用RAII习语;例如，通过使用\texttt{std::unique\_ptr}，将在析构函数中关闭。
 \end{itemize}
 
-\item When should you use "naked" pointers in C++ code?
+\item 
+什么时候应该在C++代码中使用“裸”指针？
 \begin{itemize}
 \item 
-Only to pass optional (nullable) references
+只传递\texttt{optional}(可空的)引用
 \end{itemize}
 
-\item What is a deduction guide?
+\item 
+什么是推演指引？
 \begin{itemize}
 \item 
-A way of telling the compiler what parameters it should deduce for a template. They can be implicit or user-defined.
+一种告诉编译器应该为模板推导哪些参数的方法。可以是隐式的，也可以是用户定义的。
 \end{itemize}
 
-\item When should you use std::optional and gsl::not\_null?
+\item 
+什么时候应该使用\texttt{std::optional}和\texttt{gsl::not\_null}？
 \begin{itemize}
 \item 
-The former is for cases where we want to pass the contained value around. The latter just passes the pointer to it. Also, the former can be empty, while the latter will always point to an object.
+前者用于传递所包含的值的情况，后者只是将指针传递给它。另外，前者可以是空的，而后者将始终指向一个对象。
 \end{itemize}
 
-\item How are range algorithms different than views?
+\item 
+范围算法与视图有何不同？
 \begin{itemize}
 \item 
-Algorithms are eager, while views are lazy. Algorithms also allow the use of projections.
+算法是直接的，而视图是懒惰的。算法也允许使用投影。
 \end{itemize}
 
-\item How can you constrain your type by doing more than just specifying the concept's name when you're defining a function?
+\item 
+定义函数时，除了指定概念名之外，如何约束类型？
 \begin{itemize}
 \item 
-By using a requires clause.
+通过使用\texttt{require}子句。
 \end{itemize}
 
-\item How is import X different than import <X>?
+\item 
+\texttt{import X}与\texttt{import <X>}有何不同?
 \begin{itemize}
 \item 
-The latter allows macros from the imported X header to be visible.
+后者允许从导入的\texttt{X}头文件中看到宏。
 \end{itemize}
 \end{enumerate}

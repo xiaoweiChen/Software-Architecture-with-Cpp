@@ -1,56 +1,56 @@
 \begin{enumerate}
 \item
-What is event sourcing?
+什么是事件源？
 \begin{itemize}
 \item 
-This is an architectural pattern that relies on keeping track of events that change the state of the system instead of keeping track of the state per se. It brings benefits such as lower latency, free audit logs, and debugability.
+这是一种架构模式，它依赖于跟踪改变系统状态的事件，而不是跟踪状态本身。它带来的好处包括较低的延迟、免费的审计日志和可调试性。
 \end{itemize}
 
 \item 
-What are the practical consequences of the CAP theorem?
+CAP定理的实际结果是什么？
 \begin{itemize}
 \item 
-As network partitions happen, if you want a distributed system, you'll need to choose between consistency and availability. In cases of partitions, you can either return stale data, an error, or risk timeouts.
+随着网络分区的发生，如果想要一个分布式系统，需要在一致性和可用性之间做出选择。对于分区，可以返回旧的数据、错误或冒超时的风险。
 \end{itemize}
 
 \item 
-What can you use Netflix's Chaos Monkey for?
+Netflix的Chaos Monkey能做什么？
 \begin{itemize}
 \item 
-It can help you prepare for unexpected downtime of your services.
+可以为服务意外停机做好准备。
 \end{itemize}
 
 \item 
-Where can caching be applied?
+缓存可以应用在哪里？
 \begin{itemize}
 \item 
-Either on your client's side, in front of web servers, databases, or applications, or on a host near your potential client, depending on your needs.
+在客户端，在Web服务器、数据库或应用程序的前面，或者在潜在客户附近的主机上，这取决于需求。
 \end{itemize}
 
 \item 
-How do you prevent your app from going down when a whole data center does?
-
+当整个数据中心宕机时，如何防止应用程序宕机？
 \begin{itemize}
 \item 
-By using geodes.
+使用geodes。
 \end{itemize}
 
 \item 
-Why use an API Gateway?
+为什么使用API网关？
 \begin{itemize}
 \item 
-To simplify client code, as it doesn't need to hardcode the addresses of your service instances.
+为了简化客户机代码，不需要硬编码服务实例的地址。
 \end{itemize}
 
-\item How can Envoy help you to achieve various architectural goals?	
+\item 
+Envoy如何实现各种架构目标？
 \begin{itemize}
 \item 
-It aids your system's fault tolerance by providing backpressure, circuit breaking, automatic retries, and outlier detection.
+它通过提供反压、断路、自动重试和异常值来检测系统的容错。
 
 \item 
-It aids deployability by allowing canary releases and blue-green deployments.
+它通过允许金丝雀版本和蓝绿色部署来帮助可部署性。
 
 \item 
-It also offers load balancing, tracing, monitoring, and metrics.
+它提供负载平衡、跟踪、监视和指标。
 \end{itemize}
 \end{enumerate}

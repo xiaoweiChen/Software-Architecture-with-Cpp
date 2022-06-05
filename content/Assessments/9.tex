@@ -1,50 +1,50 @@
 \begin{enumerate}
 \item
-In what ways does CI save time during development?
+CI在开发过程中如何节省时间？
 \begin{itemize}
 \item 
-It allows you to catch bugs earlier and fix them before they enter production.
+更早地捕获bug，并在它们进入生产环境之前修复它们。
 \end{itemize}
 
 \item
-Do you require separate tools to implement CI and CD?
+是否需要单独的工具来实现CI和CD？
 \begin{itemize}
 \item 
-The pipelines are usually written using a single tool; multiple tools are used for actual testing and deployment.
+流水通常使用单一工具编写，实际的测试和部署使用了多种工具。
 \end{itemize}
 
 \item
-When does it make sense to perform a code review in a meeting?
+什么时候在会议上进行代码审查才有意义？
 \begin{itemize}
 \item 
-When an asynchronous code review is taking too long.
+当异步代码评审花费太长时间时。
 \end{itemize}
 
 \item
-What tools can you use to assess the quality of your code during CI?
+在CI期间，可以使用什么工具来评估代码的质量？
 \begin{itemize}
 \item 
-Tests, static analysis.
+测试，静态分析。
 \end{itemize}
 
 \item
-Who participates in specifying the BDD scenarios?
+谁参与指定BDD的场景？
 \begin{itemize}
 \item 
-Developers, QA, the business.
+开发人员，QA人员，业务人员。
 \end{itemize}
 
 \item
-When would you consider using immutable infrastructure? When would you rule it out?
+什么时候会考虑使用不可变的基础设施？什么时候不用？
 \begin{itemize}
 \item 
-It is best used with stateless services or services that can outsource storage using a database or a network storage. It is not suitable for stateful services.
+最适合用于无状态服务，或可以使用数据库或网络存储外包存储的服务。它不适合有状态的服务。
 \end{itemize}
 
 \item
-How would you characterize the differences between Ansible, Packer, and Terraform?
+Ansible、Packer和Terraform之间有什么区别?
 \begin{itemize}
 \item 
-Ansible is designed for the configuration management of existing VMs, Packer is for building cloud VM images, and Terraform is for building the cloud infrastructure (such as networks, VMs, and load balancers).
+Ansible用于现有虚拟机的配置管理，Packer用于构建云虚拟机镜像，terrform用于构建云基础设施(如网络、虚拟机和负载均衡器)。
 \end{itemize}
 \end{enumerate}

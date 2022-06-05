@@ -1,58 +1,58 @@
 \begin{enumerate}
 \item
-What are quality attributes?
+什么是质量属性？
 
 \begin{itemize}
 \item 
-A mediator "mediates" between services, so it needs to know how to process each request. A broker only knows where to send each request, so it's a lightweight component. It can be used to create a publishersubscriber (pub-sub) architecture.
+系统可能具有的特征或品质通常称为“能力”，因为它们中的许多名字中都有这个后缀，例如：可移植性。
 \end{itemize}
 
 \item
-What sources should be used when gathering requirements?
+收集需求时应该使用哪些资源？
 
 \begin{itemize}
 \item 
-The context of your system, existing documentation, and the system's stakeholders.
+系统的上下文、现有的文档和系统的相关方。
 \end{itemize}
 
 \item
-How can you tell whether a requirement is architecturally significant?
+如何判断某个需求在架构上是否重要？
 
 \begin{itemize}
 \item 
-Architecturally significant requirements (ASRs) often require a separate software component, impact a large part of the system, are hard to achieve, and/or force you to make trade-offs.
+架构上的重要需求(ASR)通常需要一个单独的软件组件，影响系统的大部分，很难实现，并且/或迫使开发者做出权衡。
 \end{itemize}
 
 \item
-How should you document graphically the functional requirements various parties may have regarding your system?
+应该如何以图形化的方式记录各方对系统的功能性需求？
 
 \begin{itemize}
 \item 
-Prepare a use case diagram.
+准备一个用例图。
 \end{itemize}
 
 \item
-When is development view documentation useful?
+何时开发视图文档？
 
 \begin{itemize}
 \item 
-In cases where you're developing a large system with many modules and need to communicate global constraints and common design choices to all the software teams.
+如果正在开发一个带有许多模块的大型系统，并且需要与所有软件团队沟通全局约束和通用设计选择。
 \end{itemize}
 
 \item
-How should you automatically check whether your code's API documentation is out of date?
+如何自动检查代码的API文档是否过期？
 
 \begin{itemize}
 \item 
-Doxygen has built-in checks, like the one that warns you about mismatches between the function signatures and their parameters in comments
+Doxygen有内置的检查，比如在注释中警告函数签名和参数不匹配
 \end{itemize}
 
 \item
-How should you show on a diagram that a given operation is handled by different components of the system?
+如何在图中显示，特定的操作由系统的不同组件处理？
 
 \begin{itemize}
 \item 
-Use one of the UML interaction diagrams for this purpose. Sequence diagrams are a good choice, although communication diagrams can be fine in certain scenarios, too.
+为此目的使用UML交互图之一。序列图是一个很好的选择，尽管通信图在某些场景中也可以很好工作。
 \end{itemize}
 
 \end{enumerate}

@@ -1,63 +1,66 @@
 \begin{enumerate}
 \item
-What are the traits of a RESTful service?
+REST式服务的特点是什么？
 
 \begin{itemize}
 \item 
-Obviously, the use of REST APIs.
+显然，有REST API的使用。
 
 \item 
-Statelessness – Each request contains all the data required for its processing. Remember, this doesn't mean that RESTful services cannot use databases, quite the opposite.
+无状态——每个请求包含其处理所需的所有数据。请记住，这并不意味着REST式服务不能使用数据库。
 
 \item 
-Using cookies instead of keeping sessions
+使用cookie，而不是保持会话
 \end{itemize}
 
 \item
-What toolkit can you use to aid you in creating a resilient distributed architecture?
+可以使用什么工具包来创建自愈分布式体系结构？
 
 \begin{itemize}
 \item 
-Simian Army by Netflix.
+Netflix猿猴军团
 \end{itemize}
 
 \item
-Should you use centralized storage for your microservices? Why/why not?
+微服务应该使用集中存储吗？原因？
 
 \begin{itemize}
 \item 
-Microservices should use decentralized storage. Each microservice should choose the storage type that suits it best, as this leads to increased efficiency and scalability.
+微服务应该使用去中心化存储。每个微服务都应该选择最适合自己的存储类型，因为这样可以提高效率和可扩展性。
 \end{itemize}
 
 \item
-When should you write a stateful service instead of a stateless one?
+什么时候应该编写有状态服务，而不是无状态服务？
 
 \begin{itemize}
 \item 
-Only when it's not reasonable to have a stateless one and you won't need to scale. For instance, when the client and service have to keep their state in sync or when the state to send would be enormous.
+无状态不合理，且不需要扩展的时候。例如，当客户端和服务必须保持它们的状态同步时，或者当要发送的状态非常大时。
 \end{itemize}
 
 \item
-How does a broker differ from a mediator?
+代理与中介拓扑有什么不同？
 
 \begin{itemize}
 \item 
-A mediator "mediates" between services, so it needs to know how to process each request. A broker only knows where to send each request, so it's a lightweight component. It can be used to create a publishersubscriber (pub-sub) architecture.
+中介者在服务之间进行“调解”，因此需要知道如何处理每个请求。代理只知道将每个请求发送到哪里，因此它是一个轻量级组件，可用于创建发布-订阅(发布-订阅)架构。
 \end{itemize}
 
 \item
-What is the difference between an N-tier and an N-layer architecture?
+N-tier架构和N-layer架构有什么区别？
 
 \begin{itemize}
 \item 
-Layers are logical and specify how you organize your code. Tiers are physical and specify how you run your code. Each tier has to be separated by others, either by being run in a different process, or even on a different machine.
+在英文里面有两个不同的概念N-Tier和N-Layer，N-Tier指不同系统（一般为不同物理系统）互相协作的架构。而N-Layer指一个系统内部不同模块的结构。N-Tier为物理分层概念，而N-Layer为逻辑分层概念。
+
+\item 
+层(Layer)是逻辑的，并指定如何组织代码。层(Tier)是物理的，它指定如何运行代码。每一层都必须由其他层隔开，要么在不同的进程中运行，要么甚至在不同的机器上运行。
 \end{itemize}
 
 \item
-How should you approach replacing a monolith with a microservice-based architecture?
+如何使用基于微服务的架构来取代整体架构？
 
 \begin{itemize}
 \item 
-Incrementally. Carve small microservices out of the monolith. You can use the strangler pattern described in Chapter 4, Architectural and System Design, to help you with this.
+增量，在大公司中开辟小型微服务。可以使用在第4章中描述的扼杀器模式。
 \end{itemize}
 \end{enumerate}

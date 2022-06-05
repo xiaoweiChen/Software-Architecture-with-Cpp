@@ -1,12 +1,12 @@
-While related to cloud-native design, serverless architecture is a popular topic on its own. It gained a lot of popularity since the introduction of FaaS or CaaS products, such as AWS Lambda, AWS Fargate, Google Cloud Run, and Azure Functions.
+虽然与云原生设计有关，但无服务器架构本身就是一个热门话题。自从引入了AWS Lambda、AWS Fargate、Google Cloud Run和Azure Functions等FaaS或CaaS产品后，就变得非常受欢迎。
 
-Serverless is mostly an evolution of PaaS products such as Heroku. It abstracts the underlying infrastructure so that developers can focus on the application and not on infrastructural choices.
+无服务主要是像Heroku这样的PaaS产品的发展。它抽象了底层基础设施，这样开发人员就可以专注于应用程序，而不是基础设施的选择。
 
-An additional benefit of serverless over older PaaS solutions is that you don't have to pay for what you don't use. Rather than paying for a given service level, you typically pay for the actual execution time of the deployed workload with serverless. If you only want to run a given piece of code once a day, you don't need to pay a monthly fee for an underlying server.
+与旧的PaaS解决方案相比，无服务器的另一个好处是不必为不使用的东西付费。通常不是为给定的服务水平付费，而是为部署的无服务器工作负载的实际执行时间付费。如果只想每天运行一段特定的代码，则不需要每月为底层服务器支付费用。
 
-While we didn't get into too much detail about serverless, it is rarely used with C++. When it comes to FaaS, only AWS Lambda currently supports C++ as a possible language. Since containers are language-agnostic, you can use C++ applications and functions with CaaS products such as AWS Fargate, Azure Container Instances, or Google Cloud Run.
+虽然没有详细介绍关于无服务器的内容，但它很少与C++一起使用。谈到FaaS，目前只有AWS Lambda可能支持C++。由于容器是语言无关的，所以可以使用C++应用程序和函数与CaaS产品(如AWS Fargate、Azure容器实例或Google Cloud Run)一起使用。
 
-Serverless functions may still be relevant to you if you want to run non-C++ auxiliary code  used along with your C++ application. Maintenance tasks and scheduled jobs are an excellent fit for serverless and they usually don't require the performance or efficiency of C++ binaries.
+若想运行与C++应用程序一起使用的非c++的辅助代码，那么无服务器函数可能是一个不错的选择。维护任务和计划作业非常适合无服务器环境，它们通常不依赖C++二进制的性能或效率。
 
 
 

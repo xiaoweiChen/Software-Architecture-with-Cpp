@@ -1,32 +1,32 @@
 \begin{enumerate}
 \item
-What can we learn from the performance results from this chapter's microbenchmarks?
+可以从本章的微基准测试的性能结果中学到什么？
 \begin{itemize}
 \item 
-The fact that a binary search is a lot faster than a linear search, even if the number of elements to check is not that high. This means that computational complexity (aka the Big O) matters. Probably on your machine, even the longest search on the biggest dataset for a binary search was still faster than the shortest one for a linear search!
+二分搜索比线性搜索要快得多，即使要检查的元素数量没有那么多。这意味着计算复杂度(又名大O)很重要。可能在你的机器上，即使在最大的数据集上进行最长的二分搜索，仍然比线性搜索的最短搜索要快!
 
 \item 
-Depending on your cache sizes, you may have also noticed how increasing the required memory caused slowdowns when the data could no longer fit in specific cache levels.
+根据缓存大小的不同，可能还会注意到，当数据不再适合特定的缓存级别时，增加所需的内存会导致速度变慢。
 \end{itemize}
 
 \item
-Is how we traverse a multi-dimensional array important for performance? Why/why not?
+如何遍历多维数组对性能重要吗？为什么重要，或为什么不重要？
 \begin{itemize}
 \item 
-It's crucial, as we may access the data linearly in memory, which the CPU prefetcher would like and reward us with better performance, or jump through the memory, hindering thereby our performance.
+这是至关重要的，因为可能会在内存中线性访问数据，这是CPU预取器希望并奖励我们更好的性能，或跳过内存，从而阻碍性能。
 \end{itemize}
 
 \item
-In our coroutines example, why can't we create our thread pool inside the do\_routine\_work function?
+在的协程例子中，为什么不能在\texttt{do\_routine\_work}函数中创建自己的线程池？
 \begin{itemize}
 \item 
-Because of lifetime issues.
+因为生命周期的问题。
 \end{itemize}
 
 \item
-How can we rework our coroutine example so it uses a generator instead of just tasks?
+如何重新编写协程示例，使其使用生成器，而不仅仅使用任务？
 \begin{itemize}
 \item 
-The body of the generator would need to co\_yield. Also, the threads from our pool would need to synchronize, probably using an atomic.
+生成器的主体将需要\texttt{co\_yield}。此外，池中的线程也需要同步，可能需要使用原子线程。
 \end{itemize}
 \end{enumerate}

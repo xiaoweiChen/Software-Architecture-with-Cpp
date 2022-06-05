@@ -1,43 +1,43 @@
 \begin{enumerate}
 \item
-What are the rules of three, five, and zero?
+3、5、0的规则是什么？
 \begin{itemize}
 \item 
-Best practices to follow for writing types with unsurprising semantics and fewer bugs.
+编写具有普通语义和更少bug的类型的最佳实践。
 \end{itemize}
 
 \item
-When do we use niebloids versus hidden friends?
+什么时候使用niebloids，而不是隐藏友元？
 \begin{itemize}
 \item 
-Niebloids "disable" ADL, while hidden friends rely on it to be found. The former can therefore speed up compilation (fewer overloads to consider), while the latter can help you implement customization points.
+niebloids“禁用”ADL，而隐藏友元依靠它被发现。因此，前者可以加快编译速度(需要考虑的重载更少)，而后者可以实现定制化。
 \end{itemize}
 
 \item
-How can Arrays interfaces be improved to be more production-ready?
+如何改进阵列接口，使其更适合生产？
 \begin{itemize}
 \item 
-begin, end, and their constant and reverse equivalents should be added so it can be used like a proper container. Traits such as value\_type, pointer, and iterator can be useful to reuse it in generic code. Sprinkling the members with constexpr and noexcept could aid safety and performance. The const overload for operator[] is also missing.
+应该添加begin、end以及它们的常量和反向等价函数，以便将其用作合适的容器。诸如value\_type、指针和迭代器等特征对于在泛型代码中重用它很有用。向成员标记constexpr和noexcept有助于安全和性能。操作符[]的const重载也没有。
 \end{itemize}
 
 \item
-What are fold expressions?
+什么是折叠表达式？
 \begin{itemize}
 \item 
-Expressions that fold, or reduce, a parameter pack over a binary functor. In other words, statements that apply a given operation to all the passed variadic template arguments so that a single value (or void) is produced.
+折叠或缩减参数的表达式在二进制函子上打包。换句话说，这些语句将给定的操作应用于所有传递的可变参数模板参数，从而生成单个值(或void)。
 \end{itemize}
 
 \item
-When shouldn't you use static polymorphism?
+什么时候不使用静态多态？
 \begin{itemize}
 \item 
-When you need to provide the consumers of your code with a way to add more types at runtime.
+当需要为代码的使用者提供一种在运行时添加更多类型的方法时。
 \end{itemize}
 
 \item
-How can we save on one more allocation in the winking out example?
+可以在闪烁清理的示例中再省一个分配吗？
 \begin{itemize}
 \item 
-By avoiding the resizing of the vector when adding elements.
+通过避免在添加元素时调整数组的大小。
 \end{itemize}
 \end{enumerate}
