@@ -29,14 +29,12 @@ CMake中安装和导出目标有什么区别？
 
 \item
 如何使用CMake强制指定C++标准？
-\begin{itemize}
-\item 
+
 \begin{lstlisting}[style=styleCMake]
 set_target_properties(our_target PROPERTIES
   CXX_STANDARD our_required_cxx_standard
   CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO).
 \end{lstlisting}
-\end{itemize}
 
 \item
 如何在CMake中构建文档，并随RPM包一起发布？
