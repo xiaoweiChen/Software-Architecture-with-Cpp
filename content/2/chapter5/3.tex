@@ -29,9 +29,9 @@ if (it != std::end(temperatures))
 return std::nullopt);
 \end{lstlisting}
 
-两个代码段都返回温度相对稳定的最后一天，你更愿意喜欢哪个本版？哪一个更容易理解？即使现在对C++算法不是很熟悉，但在代码中多次看到这些算法后，肯定会觉得它们比手工编写的循环更简单、更安全、更干净。
+两个代码段都返回温度相对稳定的最后一天，更愿意喜欢哪个本版？哪一个更容易理解？即使现在对C++算法不是很熟悉，但在代码中多次看到这些算法后，肯定会觉得它们比手工编写的循环更简单、更安全、更干净。
 
-用C++编写声明性代码的第二种方式在前面的代码段中已经有所体现。通常会更偏向使用声明性API，比如ranges库中的API。尽管在代码段中没有使用范围视图，也可以产生很大的不同。看看下面的代码段:
+用C++编写声明性代码的第二种方式在前面的代码段中已经有所体现，通常会更偏向使用声明性API，比如ranges库中的API。尽管在代码段中没有使用范围视图，也可以产生很大的不同。看看下面的代码段:
 
 \begin{lstlisting}[style=styleCXX]
 using namespace std::ranges;
@@ -45,13 +45,13 @@ auto my_range = views::iota(1)
 std::cout << std::accumulate(begin(my_range), end(my_range), ""s) << '\n';
 \end{lstlisting}
 
-这是一个很好的声明性编码示例:只指定应该发生什么，而不是如何发生。前面的代码取前两个偶数，将它们的顺序颠倒，并将它们打印为字符串，从而打印出生命、宇宙和一切的著名答案:42。所有这些都是以一种直观且容易修改的方式完成。
+这是一个很好的声明性编码示例:只指定应该发生什么，而不是如何发生。前面的代码取前两个偶数，将它们的顺序颠倒，并将它们打印为字符串，从而打印出生命、宇宙和一切的答案:42。所有这些都是以一种直观且容易修改的方式完成。
 
 \subsubsubsection{5.3.1\hspace{0.2cm}展示特色商品}
 
-不过，简单例子到此为止。还记得在第3章提到的Dominican Fair应用程序吗？现在编写一个组件，选择并显示客户保存为其收藏夹的商店中的一些特色商品。例如，当编写移动应用程序时，这中功能非常方便。
+不过，简单例子到此为止。还记得在第3章的多米尼加集市应用程序吗？现在编写一个组件，选择并显示客户保存为其收藏夹的商店中的一些特色商品。例如，当编写移动应用程序时，这种功能非常方便。
 
-先从一个主要是C++17的实现开始，在本章中将其更新到C++20。这包括添加对range的支持。
+先从一个C++17的实现开始，在本章中将其更新到C++20。这包括添加对range的支持。
 
 首先，从获取当前用户信息的代码开始:
 
@@ -112,9 +112,9 @@ std::ostream &operator<<(std::ostream &os, const Item &item) {
 }
 \end{lstlisting}
 
-首先，创建了一个helper lambda将可选项转换为字符串。因为只想在\texttt{<<}操作符中使用它，所以在\texttt{<<}操作符中进行了定义。
+首先，创建了一个辅助lambda将可选项转换为字符串。因为只想在\texttt{<<}操作符中使用它，所以在\texttt{<<}操作符中进行了定义。
 
-注意我们如何使用C++14的泛型lambdas(auto参数)，以及C++17的\texttt{constexpr}和\texttt{is\_same\_v}类型特征，以便在处理可选的<string>和其他情况时，我们有不同的实现。实现同样的功能，使用C++17前需要编写带有重载的模板，从而出现更复杂的代码:
+注意如何使用C++14的泛型lambdas(auto参数)，以及C++17的\texttt{constexpr}和\texttt{is\_same\_v}类型特征，以便在处理\texttt{std::optional<string>}和其他情况时，我们有不同的实现。实现同样的功能，使用C++17前需要编写带有重载的模板，从而出现更复杂的代码:
 
 \begin{lstlisting}[style=styleCXX]
 enum class Category {
@@ -138,7 +138,7 @@ struct Store {
 };
 \end{lstlisting}
 
-这里值得注意的是使用\texttt{gsl::not\_null}模板，它表示所有者总是设置。为什么不使用一个普通的引用呢？这是因为可能希望商店是可移动和可复制的。使用引用会有所阻碍。
+这里值得注意的是使用\texttt{gsl::not\_null}模板，表示所有者总是设置。为什么不使用一个普通的引用呢？这是因为希望商店是可移动和可复制的，使用引用可能会有麻烦。
 
 现在，有了这些构建模块，来定义如何获得客户最喜欢的商店。简单起见，假设处理的是硬编码的商店和商家，而不是创建代码来处理外部数据存储。
 
@@ -149,12 +149,13 @@ using Stores = std::vector<gsl::not_null<const Store *>>;
 Stores get_favorite_stores_for(const CustomerId &customer_id) {
 \end{lstlisting}
 
-接下来，对一些商家进行硬编码，如下:
+接下来，对一些商家进行硬编码:
 
 \begin{lstlisting}[style=styleCXX]
 	static const auto merchants = std::vector<Merchant>{{17}, {29}};
 \end{lstlisting}
 
+现在，让添加一个带有商品的商店:
 
 \begin{lstlisting}[style=styleCXX]
 	static const auto stores = std::vector<Store>{
@@ -180,19 +181,19 @@ Stores get_favorite_stores_for(const CustomerId &customer_id) {
 		};
 \end{lstlisting}
 
-这里，介绍了的第一个用到的C++20特性。你可能不熟悉\texttt{.field = value;}语法，除非使用C99或更高标准的代码。从C++20开始，可以使用这种表示法(正式称为指定初始化器)来初始化聚合类型。它比C99的限制更加严格，因为顺序很重要。如果没有这些初始化器，就很难理解哪个值初始化哪个字段。使用时，代码会更冗长，但更容易理解，即使对不熟悉编程的人也是如此。
+这里用到了的第一个C++20的特性。可能不熟悉\texttt{.field = value;}语法，除非用过C99或更高标准的代码。从C++20开始，可以使用这种表示法(正式称为指定初始化器)来初始化聚合类型。它比C99的限制更加严格，因为顺序很重要。如果没有这些初始化器，就很难理解哪个值初始化哪个字段。使用时，代码会更冗长，但更容易理解，即使对不熟悉编程的人也是如此。
 
-当已经定义了商店，就可以完成函数的最后一部分，执行实际的查找:
+当定义了商店，就可以完成函数的最后一部分，进行查找:
 
 \begin{lstlisting}[style=styleCXX]
-static auto favorite_stores_by_customer =
-std::unordered_map<CustomerId, Stores>{{42, {&stores[0],
-			&stores[1]}}};
-return favorite_stores_by_customer[customer_id];
+	static auto favorite_stores_by_customer =
+	std::unordered_map<CustomerId, Stores>{{42, {&stores[0],
+				&stores[1]}}};
+	return favorite_stores_by_customer[customer_id];
 }
 \end{lstlisting}
 
-现在有了自己的商店，可以编写一些代码来获取这些商店的特色商品:
+现在有了商店，可以编写一些代码来获取这些商店的特色商品:
 
 \begin{lstlisting}[style=styleCXX]
 using Items = std::vector<gsl::not_null<const Item *>>;
@@ -225,7 +226,7 @@ Items get_all_featured_items(const Stores &stores) {
 
 上面的代码使用\texttt{std::copy}将元素插入到\texttt{vector}中，内存由\texttt{reserve}预先分配。
 
-现在，有了一种获得特殊物品的方法，让我们按“新鲜度”对它们进行排序，这样最近添加的物品就会首先出现:
+现在，有了一种获得特殊物品的方法，先按“新鲜度”对它们进行排序，这样最近添加的物品就会首先出现:
 
 \begin{lstlisting}[style=styleCXX]
 void order_items_by_date_added(Items &items) {
@@ -236,7 +237,7 @@ void order_items_by_date_added(Items &items) {
 }
 \end{lstlisting}
 
-使用自定义比较器来使用\texttt{std::sort}。如果愿意，还可以强制左对齐和右对齐使用相同的类型。为了以通用方式做到这一点，这里使用另一个C++20特性:模板lambda。这里，把它们应用到前面的代码中:
+使用自定义比较器来使用\texttt{std::sort}，还可以强制左对齐和右对齐使用相同的类型。为了以通用方式做到这一点，这里使用另一个C++20特性:模板lambda。这里，把它们应用到前面的代码中:
 
 \begin{lstlisting}[style=styleCXX]
 void order_items_by_date_added(Items &items) {
@@ -247,7 +248,7 @@ void order_items_by_date_added(Items &items) {
 }
 \end{lstlisting}
 
-T的类型可以推导出来，就像其他模板一样。最后缺少的两个部分是实际的呈现代码和将它们粘合在一起的主要功能。例子中，呈现部分将像打印到\texttt{ostream}一样简单:
+\texttt{T}的类型可以推导出来，就像其他模板一样。最后缺少的两个部分是实际的呈现代码和将它们粘合在一起的主要功能。例子中，呈现部分将像打印到\texttt{ostream}一样简单:
 
 \begin{lstlisting}[style=styleCXX]
 void render_item_gallery(const Items &items) {
@@ -257,9 +258,9 @@ void render_item_gallery(const Items &items) {
 }
 \end{lstlisting}
 
-本例中，只是将每个元素复制到标准输出中，并在元素之间插入一个换行符。使用\texttt{copy}和\texttt{ostream\_iterator}处理元素的分隔符。这在某些情况下是很方便的;例如，如果不希望最后一个元素后面有逗号(或换行符，在例子中)。
+本例中，将每个元素复制到标准输出中，并在元素之间插入一个换行符。使用\texttt{copy}和\texttt{ostream\_iterator}处理元素的分隔符。这在某些情况下是很方便的;例如，如果不希望最后一个元素后面有逗号(或换行符，在例子中)。
 
-最后，main函数看起来就像这样:
+最后，\texttt{main}函数就像这样:
 
 \begin{lstlisting}[style=styleCXX]
 int main() {
@@ -273,7 +274,7 @@ int main() {
 }
 \end{lstlisting}
 
-瞧!随意运行代码，看看它是如何打印特色商品的:
+运行代码，看看打印出的特色商品:
 
 \begin{tcblisting}{commandshell={}}
 name: Handmade painted ceramic bowls, photo_url:
@@ -285,11 +286,11 @@ the Tatra mountains, price: 1.230000, date_added: Sun Jan 3 12:06:38 2021
 CET, featured: 1
 \end{tcblisting}
 
-现在已经完成了基本实现，继续了解如何使用C++20的一些新语言特性来改进它。
+现在已经完成了基本实现，继续了解如何使用C++20的新语言特性来改进它。
 
 \subsubsubsection{5.3.2\hspace{0.2cm}标准中的range}
 
-我们首先添加的是ranges库，它可以帮助我们实现优雅、简单和声明性的代码。为简洁起见，首先引入ranges命名空间:
+首先添加的是\texttt{ranges}库，它可以实现优雅、简单和声明性的代码。简洁起见，首先引入\texttt{ranges}命名空间:
 
 \begin{lstlisting}[style=styleCXX]
 #include <ranges>
@@ -297,7 +298,7 @@ CET, featured: 1
 using namespace std::ranges;
 \end{lstlisting}
 
-将保留定义商家、商品和商店的代码。这里，使用\texttt{get\_featured\_items\_for\_store}函数进行修改:
+将保留定义商家、商品和商店的代码，使用\texttt{get\_featured\_items\_for\_store}函数进行修改:
 
 \begin{lstlisting}[style=styleCXX]
 Items get_featured_items_for_store(const Store &store) {
@@ -309,11 +310,11 @@ Items get_featured_items_for_store(const Store &store) {
 }
 \end{lstlisting}
 
-在容器中创建一个range很简单:只需将其传递给管道操作符。可以使用\texttt{views::filter}表达式，将成员指针作为谓词传递给它。由于\texttt{std::invoke}的魔力，它将正确地过滤掉所有布尔数据成员设置为false的项。
+在容器中创建range很简单:只需将其传递给管道操作符。可以使用\texttt{views::filter}表达式，将成员指针作为谓词传递给它。由于\texttt{std::invoke}的魔力，它将正确地过滤掉所有布尔数据成员设置为\texttt{false}的项。
 
 接下来，需要将每个项目转换为一个\texttt{gsl::not\_null}指针，这样就可以避免不必要的复制。最后，与基本代码一样，返回此类指针的\texttt{vector}。
 
-现在，来看看如何使用前面的函数从所有商店获得所有的特色商品:
+现在，来看看如何使用前面的函数从所有商店获得所有特色商品:
 
 \begin{lstlisting}[style=styleCXX]
 Items get_all_featured_items(const Stores &stores) {
@@ -329,11 +330,11 @@ Items get_all_featured_items(const Stores &stores) {
 }
 \end{lstlisting}
 
-这里，从所有存储中创建了一个range，并使用在前面步骤中创建的函数对它们进行了转换。因为需要先对每个元素解引用，所以使用了helper lambda。视图进行惰性求值，因此每个转换只有在即将使用时才会执行。这有时可以为节省大量的时间和计算:假设只需要前N个项目，可以跳过对\texttt{get\_featured\_items\_for\_store}不必要的调用。
+从所有存储中创建了一个range，并使用在前面步骤中创建的函数对它们进行了转换。因为需要对每个元素解引用，所以使用了辅助lambda。视图进行惰性求值，因此每个转换只有在即将使用时才会执行。这有时可以为节省大量的时间和计算:假设只需要前N个项目，可以跳过对\texttt{get\_featured\_items\_for\_store}不必要的调用。
 
 有了惰性视图后，类似于现有的基实现，可以在\texttt{vector}中保留空间，并从\texttt{all\_featured}视图中的每个嵌套\texttt{vector}中复制项。如果使用容器，range算法使用起来会更简洁。看看\texttt{copy}是如何不要求使用\texttt{std::begin(elem)}和\texttt{std::end(elem)}。
 
-现在有了商品，让我们简化排序代码，使用范围来处理它们:
+现在有了商品，简化排序代码，使用range来处理它们:
 
 \begin{lstlisting}[style=styleCXX]
 void order_items_by_date_added(Items &items) {
@@ -341,9 +342,9 @@ void order_items_by_date_added(Items &items) {
 }
 \end{lstlisting}
 
-同样，可以看到使用range如何编写更简洁的代码。前面的复制和排序都是与视图相反的range算法。这里使用投影可能会更合适。在例子中，只是传递了item类的另一个成员，以便在排序时使用它进行比较。实际上，每个项目将投影为它的\texttt{date\_added}，然后使用更大的\texttt{\{\}}对其进行比较。
+同样，可以看到使用range如何编写更简洁的代码。前面的复制和排序都是与视图相反的range算法。这里使用投影可能会更合适。在例子中，只是传递了\texttt{item}类的另一个成员，以便在排序时使用它进行比较。实际上，每个项目将投影为它的\texttt{date\_added}，然后使用\texttt{greater\{\}}对其进行比较。
 
-等等——项目实际上是指向项目的\texttt{gsl::not\_null}指针。这是如何运作的呢？因为\texttt{std::invoke}很聪明，所以投影将首先解引用\texttt{gsl::not\_null}指针。完美!
+等等——项目实际上是指向项目的\texttt{gsl::not\_null}指针，这是如何运作的呢？因为\texttt{std::invoke}很聪明，所以投影将首先解引用\texttt{gsl::not\_null}指针。完美!
 
 可以做的最后一个改变是在“呈现”代码中:
 
@@ -373,9 +374,9 @@ auto get_featured_items_for_store(const Store &store) {
 }
 \end{lstlisting}
 
-注意，函数不再返回商品，而是依赖于C++14的自动返回类型推断。在例子中，代码将返回一个惰性视图，而不是\texttt{vector}。
+注意，函数不再返回商品，而是依赖于C++14的自动返回类型推断。例子中，代码将返回一个惰性视图，而不是\texttt{vector}。
 
-让了解如何为所有商店使用这段代码:
+如何为所有商店使用这段代码:
 
 \begin{lstlisting}[style=styleCXX]
 Items get_all_featured_items(const Stores &stores) {
@@ -390,11 +391,11 @@ Items get_all_featured_items(const Stores &stores) {
 }
 \end{lstlisting}
 
-现在，因为前面的函数返回的是一个视图而不是\texttt{vector}，在调用\texttt{transform}之后，最终会得到了一个视图的视图。这意味着可以使用另一个\texttt{join}的标准视图，将嵌套视图连接到一个统一的视图中。
+因为前面的函数返回的是一个视图而不是\texttt{vector}，在调用\texttt{transform}之后，最终会得到了一个视图的视图。这意味着可以使用另一个\texttt{join}的标准视图，将嵌套视图连接到一个统一的视图中。
 
-接下来，使用\texttt{std::ranges::distance}来预分配目标\texttt{vector}中的空间，然后再进行复制。有些range是有限制，在这种情况下，可以调用\texttt{std::ranges::size}来代替。最后的代码只有一个对\texttt{reserve}的调用，这应该会带来很好的性能提升。
+接下来，使用\texttt{std::ranges::distance}来预分配目标\texttt{vector}中的空间，然后再进行复制。有些range有限制，在这种情况下，可以调用\texttt{std::ranges::size}来代替。最后的代码只有一个对\texttt{reserve}的调用，这应该会带来很好的性能提升。
 
-这就结束了对代码range的介绍。这里，以一个与性能相关的注释结束了本节。接下来，再讨论一个对C++编程的这方面很重要的另一个主题。
+这就结束了对代码range的介绍。接下来，再讨论一个对C++编程很重要的另一个话题。
 
 
 
