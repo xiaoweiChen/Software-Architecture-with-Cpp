@@ -1,9 +1,9 @@
 
-编译器是每个开发者工作中最重要的工具之一，这就是为什么了解他们非常重要。本节中，将介绍一些有用的技巧。这只是冰山一角，因为关于这些工具及其各种可用标志、优化、功能和其他细节汇总起来就是可以成书的量级，GCC还有有一个专门的Wiki页面，里面有关于编译器的书籍列表!可以在本章末尾的扩展阅读中找到它。
+编译器是每个开发者工作中最重要的工具之一。本节中，将介绍一些有用的技巧。这只是冰山一角，因为关于这些工具及其各种可用标志、优化、功能和其他细节汇总起来就是可以成书的量级，GCC还有有一个专门的Wiki页面，里面有关于编译器的书籍列表!可以在本章末尾的扩展阅读中找到它。
 
 \subsubsubsection{7.2.1\hspace{0.2cm}多编译器}
 
-构建过程中，需要考虑使用多个编译器，而非一个，原因是它们可以检测代码中的不同问题。例如，MSVC默认启用签名检查。使用多个编译器可以提前发现可能遇到的可移植性问题，特别是决定在不同的操作系统上编译代码时，例如：从Linux迁移到Windows或其他。要无痛完成这些工作，需要编写可移植的、符合ISO C++的代码。Clang是一个比较好的选择，它力求比GCC更符合C++标准。如果正在使用MSVC，可以试着添加\texttt{/permissive-}选项(在Visual Studio 17加入，对于使用15.5+版本创建的项目默认启用)。对于GCC，在为代码选择C++标准时尽量不要使用GNU扩展(例如，使用\texttt{-std=c++17}而不是\texttt{-std=gnu++17})。如果目标是性能，那么使用各种编译器来构建也可以为特定的用例，选择运行最快的二进制文件。
+构建过程中，需要考虑使用多个编译器(而非一个)，原因是它们可以检测代码中的不同问题。例如，MSVC默认启用签名检查。使用多个编译器可以提前发现可能遇到的可移植性问题，特别是决定在不同的操作系统上编译代码时，例如：从Linux迁移到Windows或其他操作系统。要无痛完成这些工作，需要编写可移植的、符合ISO C++的代码。Clang是一个比较好的选择，其力求比GCC更符合C++标准。如果正在使用MSVC，可以试着添加\texttt{/permissive-}选项(在Visual Studio 17加入，对于使用15.5+版本创建的项目默认启用)。对于GCC，在为代码选择C++标准时尽量不要使用GNU扩展(例如，使用\texttt{-std=c++17}而不是\texttt{-std=gnu++17})。如果目标是性能，那么使用各种编译器来构建也可以为特定的用例，选择运行最快的二进制文件。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
 \hspace*{0.7cm}无论为发布版本选择哪种编译器，都可以考虑使用Clang进行开发。它可以在macOS、Linux和Windows上运行，支持与GCC相同的标志集，旨在提供最快的构建时间和简明的编译错误。
@@ -18,27 +18,27 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/gcc \
   -DCMAKE_CXX_COMPILER=/usr/bin/g++
 \end{tcblisting}
 
-也可以在调用CMake之前设置\texttt{CC}和\texttt{CXX}，但这些环境变量在不同的平台(如macOS)上有所不同。
+也可以在调用CMake之前设置\texttt{CC}和\texttt{CXX}，但这些环境变量在不同的平台(如macOS)上会有所不同。
 
-另一种方法是使用工具链文件。如果只是需要使用不同的编译器，这可能没必要，但若想要交叉编译时，这是首选的解决方案。要使用一个工具链文件，应该作为一个参数传递给CMake:\texttt{-DCMAKE\_TOOLCHAIN\_FILE=toolchain.cmake}。
+另一种方法是使用工具链文件。如果只使用不同的编译器，这可能没必要，但若想要交叉编译时，这是首选的解决方案。要使用一个工具链文件，应该作为一个参数传递给CMake:\texttt{-DCMAKE\_TOOLCHAIN\_FILE=toolchain.cmake}。
 
 \subsubsubsection{7.2.2\hspace{0.2cm}减少构建时间}
 
-每年，程序员都要花费无数个小时等待他们的构建完成。减少构建时间是提高整个团队生产力的一种简单方法，所以这里讨论一些实现它的方法。
+程序员每年都要花费无数个小时等待他们的构建完成。减少构建时间是提高整个团队生产力的一种简单方法，所以这里讨论一些实现它的方法。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{快速编译器}
 
-提高构建速度的最简单方法之一就是升级编译器。例如，通过将Clang升级到7.0.0，可以使用预编译头(PCH)文件节省多达30\%的构建时间。从Clang 9开始，就有了了\texttt{-ftime-trace}选项，该选项可以提供有关它处理的所有文件的编译时间的信息。其他编译器也有类似的开关:查看GCC的\texttt{-ftime}报告或MSVC的/Bt和\texttt{/d2cgsummary}。通常可以通过切换编译器来获得更快的编译速度，这在开发机器上特别有用，例如：Clang编译代码的速度通常比GCC快。
+提高构建速度的最简单方法之一就是升级编译器。例如，通过将Clang升级到7.0.0，可以使用预编译头(PCH)文件节省多达30\%的构建时间。从Clang 9开始，就有了\texttt{-ftime-trace}选项，该选项可以提供有关它处理的所有文件的编译时间的信息。其他编译器也有类似的开关:查看GCC的\texttt{-ftime}报告或MSVC的/Bt和\texttt{/d2cgsummary}。通常可以通过切换编译器来获得更快的编译速度，这在开发机器上特别有用，例如：Clang编译代码的速度通常比GCC快。
 
-当有了一个快速的编译器后，再来看看它需要编译什么。
+当有了一个快速的编译器后，再来看看需要编译什么。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{反思模板}
 
-编译过程的不同部分需要不同的时间来完成，这对于编译时构造尤其重要。Odin Holmes的实习生之一Chiel Douwes在对各种模板操作的编译时成本进行基准测试的基础上创建了所谓的Chiel规则。这一点，以及其他基于类型的模板元编程技巧，可以在Odin Holmes的《基于类型的模板元编程并未消亡》讲座中看到。从最快到最慢，排列如下:
+编译过程的不同部分需要不的时间来完成，这对于编译时构造尤其重要。Odin Holmes的实习生之一Chiel Douwes在对各种模板操作的编译时成本进行基准测试的基础上创建了Chiel规则。其他基于类型的模板元编程技巧，可以在Odin Holmes的《基于类型的模板元编程并未消亡》讲座中看到。从最快到最慢，排列如下:
 
 \begin{itemize}
 \item 
@@ -82,7 +82,7 @@ template<bool B, typename T, typename F>
 using conditional_t = conditional<B>::template type<T, F>;
 \end{lstlisting}
 
-定义了一个条件模板别名，该别名存储一个类型，如果条件B为真，则解析为T，否则解析为F。编写这样一个实用程序的传统方法如下:
+代码定义条件模板别名，该别名存储一个类型，如果条件B为真，则解析为T，否则解析为F。编写这样一个实用程序的传统方法如下:
 
 \begin{lstlisting}[style=styleCXX]
 template<bool B, class T, class F>
@@ -99,7 +99,7 @@ template<bool B, class T, class F>
 using conditional_t = conditional<B,T,F>::type;
 \end{lstlisting}
 
-但第二种方法的编译速度比第一种方法慢，因为它依赖于创建模板实例，而不是类型别名。
+第二种方法的编译速度比第一种方法慢，因为它依赖于创建模板实例，而不是类型别名。
 
 现在，来看看可以使用哪些工具及其特性，可以用来减少编译的时间。
 
@@ -107,15 +107,15 @@ using conditional_t = conditional<B,T,F>::type;
 \noindent
 \textbf{利用工具}
 
-使用单个编译单元构建，或统一构建，可以使构建速度更快。它不会加快每个项目的速度，但若头文件中有大量的代码，可以试一试。统一构建是通过在一个转译单元中包含所有的\texttt{.cpp}文件来构建的。另一个类似的想法是使用预编译头文件。诸如CMake的Cotire插件可以使用这两种技术。CMake 3.16还增加了对统一构建的原生支持，可以为一个目标启用，\texttt{set\_target\_properties(<target> PROPERTIES UNITY\_BUILD ON)}，或者通过设置\texttt{CMAKE\_UNITY\_BUILD}为true来启用全局统一构建。如果只是想要PCH(预编译头文件)，只需要去看看CMake 3.16的\texttt{target\_precompile\_headers}就好。
+使用单个编译单元构建，或统一构建，可以使构建速度更快。它不会加快每个项目的速度，但若头文件中有大量的代码，可以试一试。统一构建是通过在一个转译单元中包含所有的\texttt{.cpp}文件来构建的，另一个类似的想法是使用预编译头文件。诸如CMake的Cotire插件可以使用这两种技术。CMake 3.16还增加了对统一构建的原生支持，可以为一个目标启用，\texttt{set\_target\_properties(<target> PROPERTIES UNITY\_BUILD ON)}，或者通过设置\texttt{CMAKE\_UNITY\_BUILD}为true来启用全局统一构建。如果只是想要PCH(预编译头文件)，只需要去看看CMake 3.16的\texttt{target\_precompile\_headers}就好。
 
 \begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black, title=TIP]
 \hspace*{0.7cm}若在C++文件中包含了太多的内容，可以考虑使用一个名为include-what-you-use的工具进行整理。可以将声明类型和函数放到头文件中，并且可以减少编译时间。
 \end{tcolorbox}
 
-如果项目需要很长时间才能链接，也有一些方法可以解决这个问题。使用不同的链接器，如LLVM的LLD或GNU的Gold，可以有很大的帮助，因为可以使用多线程链接。如果无法使用不同的链接器，可以尝试使用\texttt{-fvisibility-hidden}或\texttt{-fvisibility-inlineshidden}这样的标志，并在源代码中使用适当的注释，只标记希望在动态库中可见的函数。这样，链接器要做的工作就更少了。如果正在对链接时间进行优化，那么可以尝试只对性能关键的构建进行优化:计划分析的构建和那些用于生产的构建。否则，可能会浪费开发人员的时间。
+如果项目需要很长时间才能链接，也有一些方法可以解决这个问题。使用不同的链接器，如LLVM的LLD或GNU的Gold，可以有很大的帮助，因为可以使用多线程链接。如果无法使用不同的链接器，可以尝试使用\texttt{-fvisibility-hidden}或\texttt{-fvisibility-inlineshidden}这样的标志，并在源代码中使用适当的注释，只标记希望在动态库中可见的函数。这样，链接器要做的工作就更少了。如果正在对链接时间进行优化，可以尝试只对性能关键的构建进行优化:计划分析的构建和那些用于生产的构建。
 
-如果正在使用CMake，并且没有绑定到特定的生成器(例如，CLion需要使用Code::Blocks生成器)，可以用更快的生成器替换默认的Make生成器。Ninja是一个很好的开始，它专门为减少构建时间而创建的，只需在调用CMake时传递\texttt{-G Ninja}就可以使用。
+如果正在使用CMake，并且没有绑定到特定的生成器(例如，CLion需要使用Code::Blocks生成器)，可以用更快的生成器替换默认的Make生成器。Ninja是一个很好的开始，它专为减少构建时间而创建的，只需在调用CMake时传递\texttt{-G Ninja}就可以使用。
 
 还有两个很棒的工具，其中一个就是Ccache。它是一个执行C和C++编译输出缓存的工具。如果试图构建相同的内容两次，将从缓存中获得结果，而不是运行编译。它保留统计数据，例如：缓存命中和未命中，可以记住编译特定文件时应该发出的警告，并且有许多配置选项可以存储在\texttt{~/.ccache/ccache.conf}文件中。要获取它的统计信息，只需运行\texttt{ccache -\,-show-stats}即可。
 
@@ -130,17 +130,15 @@ using conditional_t = conditional<B,T,F>::type;
 
 如果在Windows上编译，想使用其他类似的工具，可以选择使用clcache和Incredibuild或其他替代工具。
 
-现在已经了解了如何快速构建，接下来继续讨论另一个重要的话题。
-
 \subsubsubsection{7.2.3\hspace{0.2cm}寻找代码的潜在问题}
 
 如果代码有bug，即使是最快的构建也没有多大价值。有许多标志可以用来警告代码中可能存在的问题。本节将展示应该考虑启用哪些选项。
 
-首先，让从一个稍微不同的问题开始:如何不收到来自其他库的代码问题的警告。对于无法解决的问题上的警告没有任何价值。幸运的是，有一些编译器开关可以禁用此类警告。例如，在GCC中，有两种类型的包含文件:常规文件(使用\texttt{-I}传递)和系统文件(使用\texttt{-system}传递)。如果使用后者指定目录，则不会从相应的头文件中获得警告。MSVC有一个\texttt{-system}的等价选项:\texttt{/external:I}。此外，它还有其他标志来处理外部包含，比如\texttt{/external:anglebrackets}，它告诉编译器将使用尖括号包含的所有文件视为外部文件，从而禁用对它们的警告。可以为外部文件指定警告级别，也可以让警告来自于使用\texttt{/external}进行模板实例化的代码:如果正在寻找一种可移植的方式来将包含路径标记为系统/外部路径，并且正在使用CMake，可以将\texttt{SYSTEM}关键字添加到\texttt{target\_include\_directories}指令的参数中。
+首先，让从一个稍微不同的问题开始:如何不收到来自其他库的代码问题的警告。对于无法解决的问题上的警告没有任何价值。幸运的是，有一些编译器开关可以禁用此类警告。例如，在GCC中有两种类型的包含文件:常规文件(使用\texttt{-I}传递)和系统文件(使用\texttt{-system}传递)。如果使用后者指定目录，则不会从相应的头文件中获得警告。MSVC有一个\texttt{-system}的等价选项:\texttt{/external:I}。此外，它还有其他标志来处理外部包含，比如\texttt{/external:anglebrackets}，它告诉编译器将使用尖括号包含的所有文件视为外部文件，从而禁用对它们的警告。可以为外部文件指定警告级别，也可以让警告来自于使用\texttt{/external}进行模板实例化的代码:如果正在寻找一种可移植的方式来将包含路径标记为系统/外部路径，并且正在使用CMake，可以将\texttt{SYSTEM}关键字添加到\texttt{target\_include\_directories}指令的参数中。
 
 说到可移植性，如果想要符合C++标准，考虑在GCC或Clang的编译选项中加入\texttt{-pedantic}，或者在MSVC中加入\texttt{/permissive-}选项。这样，就会了解每个可能使用非标准扩展的模块。如果正在使用CMake，为每个目标添加设置相应的属性，\texttt{set\_target\_properties(<target> PROPERTIES CXX\_EXTENSIONS OFF)}以禁用特定于编译器的扩展。
 
-如果正在使用MSVC，请尝试使用\texttt{/W4}来编译代码，因为它启用了大多数重要的警告。对于GCC和Clang，尝试使用\texttt{-Wall -Wextra -Wconversion -Wsign-conversion}。第一个，尽管它的名字，只启用一些常见的警告。然而，第二个又增加了一堆警告。第三个是基于Scott Meyers的著作《Effective C++》中的提示(这是一组很好的警告，但是要确保是否符合需求)。后两个是关于类型转换和签名转换的。所有这些标志创建了一个完整的安全网，当然可以启用更多的标志。Clang有一个\texttt{-Weverything}标志，尝试使用它运行构建，可以发现新的警告。虽然启用一些警告标志可能没这么麻烦，但是开发者可能会对使用此标志获得的消息数量感到惊讶。MSVC的一个替代方案命名为\texttt{/Wall}。看看下面的表格，了解一下其他没有启用的有趣选项:
+如果正在使用MSVC，可以尝试使用\texttt{/W4}来编译代码，因为它启用了大多数重要的警告。对于GCC和Clang，尝试使用\texttt{-Wall -Wextra -Wconversion -Wsign-conversion}。第一个，只启用一些常见的警告。然而，第二个又增加了一堆警告。第三个是基于Scott Meyers的著作《Effective C++》中的提示(这是一组很好的警告，但是要确保是否符合需求)。后两个是关于类型转换和签名转换的。所有这些标志创建了一个完整的安全网，当然可以启用更多的标志。Clang有一个\texttt{-Weverything}标志，尝试使用它运行构建，可以发现新的警告。虽然启用一些警告标志可能没这么麻烦，但是开发者可能会对使用此标志获得的消息数量感到惊讶。MSVC的一个替代方案命名为\texttt{/Wall}。看看下面的表格，了解一下其他没有启用的有趣选项:
 
 GCC/Clang:
 \begin{table}[H]
@@ -153,7 +151,7 @@ GCC/Clang:
 		-Wnon-virtual-dtor    & \begin{tabular}[c]{@{}l@{}}当类有虚函数，但没有虚析构函数时发出警告。\end{tabular}                                     \\ \hline
 		-Wnull-dereference    & \begin{tabular}[c]{@{}l@{}}警告空解引用。在未优化的构建中，此检查可能是不开启的。\end{tabular}                           \\ \hline
 		-Wuseless-cast        & 转换为相同类型时发出警告。                                                                                                                 \\ \hline
-		-Wshadow              & \begin{tabular}[c]{@{}l@{}}A 所有关于覆盖了之前声明的警告。\end{tabular}                   \\ \hline
+		-Wshadow              & \begin{tabular}[c]{@{}l@{}}所有关于覆盖了之前声明的警告。\end{tabular}                   \\ \hline
 	\end{tabular}
 \end{table}
 
@@ -167,15 +165,15 @@ MSVC:
 	\end{tabular}
 \end{table}
 
-最后一个问题:何时使用\texttt{-Werror}(或/WX在MSVC)或不使用\texttt{-Werror}？这实际上取决于个人偏好，因为发出错误而不是警告有其优点和缺点。从积极的方面来说，不会让警告溜走。CI构建将失败，代码将无法编译。在运行多线程构建时，不会在快速传递的编译消息中丢失警告。然而，也有一些缺点。如果编译器启用了新的警告或只是检测到更多问题，那么就无法升级编译器。依赖关系也是如此，依赖关系会使一些函数不受欢迎。如果代码中的内容在项目的其他部分使用，就不能弃用它。幸运的是，可以使用混合解决方案:使用\texttt{-Werror}进行编译，但在需要时禁用它。这就需要有纪律，如果有新的警告出现，可能很难消除。
+最后一个问题:何时使用\texttt{-Werror}(或在MSVC是\texttt{/WX})或不使用\texttt{-Werror}？这实际上取决于个人偏好，因为发出错误而不是警告有其优缺点。从积极的方面来说，不会让警告溜走。CI构建将失败，代码将无法编译。在运行多线程构建时，不会在快速传递的编译消息中丢失警告。然而，也有一些缺点。如果编译器启用了新的警告或只是检测到更多问题，那么就无法升级编译器。依赖关系也是如此，依赖关系会使一些函数不受欢迎。如果代码中的内容在项目的其他部分使用，就不能弃用它。幸运的是，可以使用混合解决方案:使用\texttt{-Werror}进行编译，但在需要时禁用它。这就需要代码的编写很有纪律性，如果有新的警告出现，可能很难消除。
 
-\subsubsubsection{7.2.4\hspace{0.2cm}使用以编译器为中心的工具}
+\subsubsubsection{7.2.4\hspace{0.2cm}以编译器为中心的工具}
 
 与几年前相比，编译器可以做更多的事情，这是由于LLVM和Clang的引入。通过提供API和重用的模块化架构，使消毒工具、自动重构或代码完成引擎等工具蓬勃发展，并可以利用这个编译器基础设施提供的优势。使用clang-format来确保代码库中的所有代码都符合给定的标准。考虑添加预提交钩子，使用预提交工具在提交之前重新格式化新代码。也可以添加Python和CMake格式器。使用clang-tidy静态分析代码——这个工具能够理解代码，而不仅仅是对代码进行推演。这个工具可以执行不同的检查，所以一定要根据特定需求定制列表和选项。还可以在启用杀毒软件的情况下，每晚或每周运行软件测试。通过这种方式，可以检测线程问题、未定义的行为、内存访问、管理问题等等。如果发布版本禁用了断言，那么使用调试版本运行测试也可以。
 
-如果认为还可以做得更多，可以考虑使用Clang的基础架构编写自己的代码重构。如果想了解如何创建自己的基于llvm的工具，那么已经有一个clang-rename工具。对clang-tidy进行额外的检查和修复也不是那么难，这个工具可以节省几个小时的体力劳动。
+如果认为还可以做得更多，可以考虑使用Clang的基础架构编写自己的代码重构。如果想了解如何创建自己的基于llvm的工具，那么可以参考clang-rename工具。对clang-tidy进行额外的检查和修复也不是那么难，这个工具可以节省几个小时的体力劳动。
 
-可以将许多工具集成到构建过程中。现在让就讨论这个过程的核心:构建系统。
+可以将许多工具集成到构建过程中。现在就讨论这个过程的核心:构建系统。
 
 
 

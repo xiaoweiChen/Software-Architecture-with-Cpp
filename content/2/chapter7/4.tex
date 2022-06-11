@@ -37,9 +37,9 @@ endif()
 message(STATUS "GTest binaries are present at ${googletest_BINARY_DIR}")
 \end{lstlisting}
 
-首先，包含内置的\texttt{FetchContent}模块。加载模块后，使用\texttt{FetchContent\_Declare}声明该依赖。现在，命名依赖项，并指定CMake克隆的存储库，以及相应的提交版本。
+首先，包含内置的\texttt{FetchContent}模块。加载模块后，使用\texttt{FetchContent\_Declare}声明该依赖，命名依赖项，并指定CMake克隆的存储库，以及相应的提交版本。
 
-现在，可以读取外部库的属性并填充(如果还没有完成的话)。当有了源码，就可以使用\texttt{add\_subdirectory}进行处理。在运行make all等命令时，如果其他目标不需要这些目标，那么\texttt{EXCLUDE\_FROM\_ALL}选项会告诉CMake不要构建这些目标。在成功处理目录之后，脚本将打印一条消息，指出构建后GTests库将在其中放置的目录。
+现在，读取外部库的属性并填充(如果还没有完成的话)。当有了源码，就可以使用\texttt{add\_subdirectory}进行处理。在运行make all等命令时，如果其他目标不需要这些目标，那么\texttt{EXCLUDE\_FROM\_ALL}选项会告诉CMake不要构建这些目标。在成功处理目录之后，脚本将打印一条消息，指出构建后GTests库将在其中放置的目录。
 
 若不喜欢将依赖关系与项目一起构建，也许下一种集成依赖关系的方法将更适合。
 
@@ -49,7 +49,7 @@ message(STATUS "GTest binaries are present at ${googletest_BINARY_DIR}")
 
 要创建上述文件，依赖项将需要使用CMake，但并非总是如此。如何处理那些不使用CMake的库？如果该库很受欢迎，那么很可能已经有人创建了find脚本供他人使用。1.70以上版本的Boost库就是这种方法的一个常见示例。CMake附带了一个FindBoost模块，可以通过\texttt{find\_package(Boost)}来执行。
 
-要使用前面的模块找到Boost，首先需要在系统上安装它。之后，在CMake列表中，应该设置合理的选项。例如，要使用动态和多线程Boost库，而不是静态链接到C++运行时，请参考以下代码:
+要使用前面的模块找到Boost，首先需要在系统上安装它。之后，在CMake列表中，应该设置合理的选项。例如使用动态和多线程Boost库，而不是静态链接到C++运行时，参考以下代码:
 
 \begin{lstlisting}[style=styleCMake]
 set(Boost_USE_STATIC_LIBS OFF)
@@ -57,7 +57,7 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 \end{lstlisting}
 
-然后，需要搜索库，如下所示:
+然后，搜索库，如下所示:
 
 \begin{lstlisting}[style=styleCMake]
 find_package(Boost 1.69 EXACT REQUIRED COMPONENTS Beast)
@@ -77,7 +77,7 @@ target_link_libraries(MyTarget PUBLIC Boost::Beast)
 
 这应该不会是经常要做的事情，所以本小节如果不需要可以略过。要获得更多的描述，也应该阅读CMake官方文档中的指南(链接在扩展阅读部分)或只看一些安装了CMake的模块(通常在Unix系统上的目录如\texttt{/usr/share/cmake-3.17/Modules})。简单起见，假设只需要找到一个依赖项的配置，但是可以分别找到Release和Debug二进制文件。这将使设置不同的目标，关联不同的变量。
 
-脚本名决定了你将传递给\texttt{find\_package}。例如，如果希望以\texttt{find\_package(Foo)}结束，那么脚本应该命名为\texttt{FindFoo.cmake}。
+脚本名决定了你将传递给\texttt{find\_package}，如果希望以\texttt{find\_package(Foo)}结束，脚本应该命名为\texttt{FindFoo.cmake}。
 
 一个好的方式是用reStructuredText部分开始脚本，描述脚本实际将做什么，将设置哪些变量等。这种描述的个例子如下所示:
 
@@ -118,7 +118,7 @@ target_link_libraries(MyTarget PUBLIC Boost::Beast)
 find_package(Boost REQUIRED)
 \end{lstlisting}
 
-现在可以开始搜索库了。一种常见的方法是使用\texttt{pkg-config}:
+现在可以开始搜索库了。常见的方法是使用\texttt{pkg-config}:
 
 \begin{lstlisting}[style=styleCMake]
 find_package(PkgConfig)
@@ -163,7 +163,7 @@ find_package_handle_standard_args(MyDep
 	)
 \end{lstlisting}
 
-当决定提供一个目标而不仅仅是一堆变量时，现在是时候定义它了:
+当决定提供一个目标而不仅仅是一堆变量时，是时候定义了:
 
 \begin{lstlisting}[style=styleCMake]
 if(MyDep_FOUND AND NOT TARGET MyDep::MyDep)
@@ -196,22 +196,22 @@ target_link_libraries(MyTarget PRIVATE MyDep::MyDep)
 这就是自己编写find模块的方式。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}不要为拥有的包创建Find\*.cmake模块。这些是为不支持CMake的包准备的。不过，可以创建一个Config\*.cmake模块(本章后面内容)。
+\hspace*{0.7cm}不要为拥有的包创建Find$ \ast $.cmake模块。这些是为不支持CMake的包准备的。不过，可以创建一个Config$ \ast $.cmake模块(本章后面内容)。
 \end{tcolorbox}
 
 现在，来展示如何使用合适的包管理器，而不是手动进行下载依赖。
 
 \subsubsubsection{7.4.4\hspace{0.2cm}使用Conan包管理器}
 
-Conan是一个开源的、分散的原生包管理器。它支持多种平台和编译器，还可以与多个构建系统集成。
+Conan是一个开源的、分散的原生包管理器。它支持多种平台和编译器，可以与多个构建系统集成。
 
-如果有包还没有为环境所构建，Conan将在机器上构建它，而不是下载已经构建的版本。在构建完成时，可以将它上传到公共存储库、私有的\texttt{conan\_server}实例或Artifactory服务器。
+如果有包还没有为环境所构建，Conan将在机器上构建它，而不是下载已经构建的版本。构建完成时，可以将它上传到公共存储库、私有的\texttt{conan\_server}实例或Artifactory服务器。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
 \textbf{准备使用Conan}
 
-如果第一次运行Conan，它将根据环境创建一个默认配置文件。可以通过创建一个新的配置文件或更新默认配置文件来修改它的一些设置。假设正在使用Linux，并且希望使用GCC 9.x编译所有东西。则可以使用如下代码:
+如果第一次运行Conan，它将根据环境创建一个默认配置文件。可以通过创建一个新的配置文件，或更新默认配置文件来修改它的一些设置。假设正在使用Linux，并且希望使用GCC 9.x编译所有东西。则可以使用如下代码:
 
 \begin{tcblisting}{commandshell={}}
 conan profile new hosacpp
@@ -264,9 +264,9 @@ conan install path/to/directory/containing/conanfile.txt --build=missing -s
 build_type=Release -pr=hosacpp
 \end{tcblisting}
 
-默认情况下，Conan希望将所有依赖项下载为预构建的二进制文件。如果服务器没有预先构建，Conan将进行构建，而不是在传递\texttt{-\,-build=missing}时退出。这会告诉Conan获取使用与概要文件中相同的编译器和环境构建的发布版本。通过简单地调用\texttt{build\_type}设置为其他CMake构建类型的另一个命令，这里可以为多个构建类型安装包。如果需要的话，这还可以在富哦个版本间快速的切换。如果使用默认配置文件(Conan可以自动检测的配置文件)，就不要使用\texttt{-pr}。
+默认情况下，Conan希望将所有依赖项下载为预构建的二进制文件。如果服务器没有预先构建，Conan将进行构建，而不是在传递\texttt{-\,-build=missing}时退出。这会告诉Conan获取使用与概要文件中相同的编译器和环境构建的发布版本。通过简单地调用\texttt{build\_type}设置为其他CMake构建类型的另一个命令，这里可以为多个构建类型安装包。如果需要的话，这还可以在多个版本间快速的切换。如果使用默认配置文件(Conan可以自动检测的配置文件)，就不要使用\texttt{-pr}。
 
-如果计划使用的CMake生成器没有在conanfile.txt中指定，可以将它添加到前面的命令中。例如，要使用\texttt{compiler\_args}生成器，应该添加\texttt{-\,-generator compiler\_args}。之后，可以使用它传递\texttt{@conanbuildinfo.args}生成的内容到编译器端。
+若计划使用的CMake生成器没有在conanfile.txt中指定，可以将它添加到前面的命令中。例如，要使用\texttt{compiler\_args}生成器，应该添加\texttt{-\,-generator compiler\_args}。之后，可以使用它传递\texttt{@conanbuildinfo.args}生成的内容到编译器端。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -277,8 +277,7 @@ build_type=Release -pr=hosacpp
 如果使用Conan与CMakeDeps生成器，一定要为\texttt{CMAKE\_BUILD\_TYPE}指定一个值。其他情况下，CMake将无法使用由Conan配置的包。调用(来自运行Conan的同一个目录)方法可以如下所示:
 
 \begin{tcblisting}{commandshell={}}
-cmake path/to/directory/containing/CMakeLists.txt -
-DCMAKE_BUILD_TYPE=Release
+cmake path/to/directory/containing/CMakeLists.txt -DCMAKE_BUILD_TYPE=Release
 \end{tcblisting}
 
 这样，就可以在发布模式中构建项目，从而必须使用Conan安装的一个类型。要找到依赖项，可以使用CMake的\texttt{find\_package}:
@@ -288,7 +287,7 @@ list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
 find_package(cpprestsdk CONFIG REQUIRED)
 \end{lstlisting}
 
-首先，将根构建目录添加到CMake试图找到包配置文件的路径。然后，找到Conan生成的包配置文件。
+首先，将根构建目录添加到CMake找到包配置文件的路径。然后，找到Conan生成的包配置文件。
 
 要将Conan定义的目标作为目标的依赖项，最好使用有命名空间的目标名:
 
@@ -296,9 +295,9 @@ find_package(cpprestsdk CONFIG REQUIRED)
 target_link_libraries(libcustomer PUBLIC cpprestsdk::cpprest)
 \end{lstlisting}
 
-在CMake的配置过程中，当没有找到包时，会得到一个错误。如果没有别名，将在尝试链接时得到一个错误。
+在CMake的配置过程中没有找到包时，会得到一个错误。如果没有别名，将在尝试链接时得到一个错误。
 
-现在已经按照想要的方式编译并链接了目标，是时候对它们进行测试了。
+现在已经按照想要的方式编译并链接了目标，是时候对进行测试了。
 
 \subsubsubsection{7.4.5\hspace{0.2cm}添加测试}
 
@@ -321,7 +320,7 @@ endif()
 
 所有这些缓存变量都存储在构建目录中名为CMakeCache.txt的文本文件中。随意修改变量，改变CMake所做的。其不会覆盖文本中的设置，除非删除文件。可以使用ccmake、cmake-gui或手工完成。
 
-如果\texttt{BUILD\_TESTING}为true，只需处理测试目录中的CMakeLists.txt文件即可。它可以是这样的:
+如果\texttt{BUILD\_TESTING}为true，只需处理测试目录中的CMakeLists.txt文件即可。可以是这样的:
 
 \begin{lstlisting}[style=styleCMake]
 include(FetchGTest)
@@ -330,7 +329,7 @@ include(GoogleTest)
 add_subdirectory(customer)
 \end{lstlisting}
 
-第一个包含调用前面描述的GTest的脚本。在获取GTest后，当前的CMakeLists.txt通过\texttt{include(GoogleTest)}，加载GoogleTest模块中定义的一些帮助函数。这能够更容易地将测试集成到CTest中。最后，通过\texttt{add\_subdirectory(customer)}来告诉CMake包含一些测试目录。
+第一个包含调用前面描述的GTest的脚本。获取GTest后，当前的CMakeLists.txt通过\texttt{include(GoogleTest)}，加载GoogleTest模块中定义的一些帮助函数。这能够更容易地将测试集成到CTest中。最后，通过\texttt{add\_subdirectory(customer)}来告诉CMake包含一些测试目录。
 
 \texttt{test/customer/CMakeLists.txt}文件将添加一个带有测试的可执行文件，该可执行文件是用预定义的标志集和测试模块和GTest的链接编译的。然后，调用CTest助手函数来发现定义的测试。所有这些只是四行CMake代码:
 
