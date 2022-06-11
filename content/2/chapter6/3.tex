@@ -1,17 +1,17 @@
 
-尽管名称中有模式，模板递归模式(CRTP)是C++中的一种习惯用法。可以用来实现其他的习惯用法和设计模式，并应用静态多态性。
+尽管名称中有模式，但模板递归模式(CRTP)是C++中的一种习惯性用法。可以用来实现其他的习惯性用法和设计模式，以及使用静态多态性。
 
-\subsubsubsection{6.3.1\hspace{0.2cm}何时使用动态多态性，何时使用静态多态性}
+\subsubsubsection{6.3.1\hspace{0.2cm}动态多态性和静态多态性}
 
-提到多态性，许多程序员会想到动态多态性，即在运行时收集执行函数调用所需的信息。与此相反，静态多态性是关于在编译时确定调用。前者的一个优点是可以在运行时修改类型列表，允许通过插件和库扩展类的层次结构。第二种方法的最大优点是，若事先知道类型，可以获得非常好的性能。当然，第一种情况下，有时可以期望编译器对调用进行反虚拟化，但不能总是期望它会这样做。但在第二种情况下，编译时间可能会更长。
+提到多态性，许多程序员会想到动态多态性，即在运行时收集执行函数调用所需的信息，而静态多态性是关于在编译时确定调用。前者的优点是可以在运行时修改类型列表，允许使用插件和库扩展类的层结构。第二种方法的最大优点是，若事先知道类型，可以获得非常好的性能。当然，第一种情况下，有时可以期望编译器对调用进行反虚拟化，但不能总期望会这样做。在第二种情况下，编译时间可能会更长。
 
-不可能在所有情况下达到双赢。尽管如此，为类型选择正确的多态性类型仍有很长的路要走。如果性能受到威胁，强烈建议考虑静态多态性。CRTP是一个使用静态多态性的习惯用法。
+不可能在所有情况下达到双赢，为类型选择正确的多态性类型仍有很长的路要走。如果性能受到威胁，强烈建议考虑静态多态性。CRTP是一个使用静态多态性的习惯性用法。
 
-许多设计模式都可以以各种方式实现。由于动态多态性的代价并不总合适，四人帮设计模式通常不是C++中的最佳解决方案。如果类型层次结构需要在运行时进行扩展，或者编译时间是一个比性能重要的问题(并且不打算很快使用模块)，那么四人帮模式的经典实现可能是一个很好的选择。否则，可以尝试使用静态多态或以更简单的C++为中心的解决方案来实现，其中一些将在本章中描述。关键在于选择最适合的工具完成这项工作。
+许多设计模式都可以以各种方式实现。由于动态多态性的代价并不总合适，四人帮设计模式通常不是C++中的最佳解决方案。如果类型层结构需要在运行时进行扩展，或者编译时间是一个比性能重要的问题(并且不打算很快使用模块)，那么四人帮模式的经典实现可能是一个很好的选择。否则，可以尝试使用静态多态或以更简单的C++为中心的解决方案来实现，其中一些将在本章中描述。关键在于，选择最适合的工具完成这项工作。
 
 \subsubsubsection{6.3.2\hspace{0.2cm}实现静态多态性}
 
-现在来实现静态多态类层次结构。目前需要一个基模板类:
+实现静态多态类层结构。需要一个基模板类:
 
 \begin{lstlisting}[style=styleCXX]
 template <typename ConcreteItem> class GlamorousItem {
@@ -22,7 +22,7 @@ template <typename ConcreteItem> class GlamorousItem {
 };
 \end{lstlisting}
 
-基类的模板形参是派生类。这可能看起来很奇怪，但它可以静态地将接口函数转换为正确的类型。在本例中，命名为\texttt{appear\_in\_full\_glory}。然后在派生类中调用该函数的实现。派生类可以像这样实现:
+基类的模板形参是派生类。这看起来可能很奇怪，但可以静态地将接口函数转换为正确的类型。本例中，名为\texttt{appear\_in\_full\_glory}。然后在派生类中调用该函数的实现，派生类可以这样实现:
 
 \begin{lstlisting}[style=styleCXX]
 class PinkHeels : public GlamorousItem<PinkHeels> {
@@ -40,9 +40,9 @@ class GoldenWatch : public GlamorousItem<GoldenWatch> {
 };
 \end{lstlisting}
 
-这些类都使用自身作为模板参数派生自基类\texttt{GlamorousItem}。它们还实现了所需的功能。
+这些类都使用自身作为模板参数派生自基类\texttt{GlamorousItem}，还实现了所需的功能。
 
-请注意，与动态多态性不同，CRTP中的基类是一个模板，因此每个派生类将获得不同的基类型。这意味着很难创建GlamorousItem基类的容器。不过，还可以做以下几件事:
+请注意，与动态多态性不同，CRTP中的基类是一个模板，因此每个派生类将获得不同的基类型。从而，很难创建\texttt{GlamorousItem}基类的容器。不过，还可以做以下几件事:
 
 \begin{itemize}
 \item 
@@ -52,7 +52,7 @@ class GoldenWatch : public GlamorousItem<GoldenWatch> {
 创建派生类的\texttt{std::variant}。
 
 \item 
-添加一个公共类来包装Base的所有实例化，也可以为这个版本使用变体。
+添加一个公共类来包装Base的所有实例化，可以为这个版本使用\texttt{variant}。
 \end{itemize}
 
 第一种情况下，可以像下面这样使用这个类。首先，创建基类的实例元组:
@@ -64,7 +64,7 @@ using PreciousItems = std::tuple<GlamorousItem<Args>...>;
 auto glamorous_items = PreciousItems<PinkHeels, GoldenWatch>{};
 \end{lstlisting}
 
-类型别名元组将能够存储GlamorousItem。现在，需要做的就是调用这个函数:
+类型别名元组将能够存储\texttt{GlamorousItem}。现在，需要做的就是调用这个函数:
 
 \begin{lstlisting}[style=styleCXX]
 std::apply(
@@ -73,7 +73,7 @@ std::apply(
 	glamorous_items);
 \end{lstlisting}
 
-这里试图迭代一个元组，所以最简单的方法是使用\texttt{std::apply}，在给定元组的元素上调用给定的可调用对象。在例子中，可调用对象是一个只接受GlamorousItem基类的lambda。这里使用了C++17中引入的折叠表达式，以确保所有元素都能调用这个函数。
+这里试图迭代一个元组，所以最简单的方法是使用\texttt{std::apply}，在给定元组的元素上调用给定的可调用对象。例子中，可调用对象是一个只接受GlamorousItem基类的lambda。这里使用了C++17中引入的折叠表达式，以确保所有元素都能调用这个函数。
 
 如果需要使用一个变量来代替元组，可以使用\texttt{std::visit}，就像这样:
 
@@ -87,9 +87,9 @@ std::apply(
 }
 \end{lstlisting}
 
-\texttt{std::visit}函数基本上接受\texttt{std::variant}，并在其中存储的对象上调用传入的lambda。这里，创建了一个\texttt{GlamorousVariant}数组，因此可以像对其他容器一样对其进行迭代，使用适当的lambda访问每个变量。
+\texttt{std::visit}函数基本上接受\texttt{std::variant}，并在其中存储的对象上调用传入的lambda。这里，创建了一个\texttt{GlamorousVariant}数组，可以像对其他容器一样对其进行迭代，使用适当的lambda访问每个变量。
 
-如果从用户使用接口的角度编写不是很直观，考虑下一个方法，将\texttt{variant}包装到另一个类中，在例子中称为\texttt{CommonGlamorousItem}:
+如果从用户接口的角度编写不是很直观，考虑下一个方法，将\texttt{variant}包装到另一个类中，在例子中称为\texttt{CommonGlamorousItem}:
 
 \begin{lstlisting}[style=styleCXX]
 class CommonGlamorousItem {
@@ -115,7 +115,7 @@ void appear_in_full_glory() {
 }
 \end{lstlisting}
 
-这次，\texttt{std::visit}的使用是一个实现的技巧。用户可以按以下方式使用这个包装器类:
+这次，是使用\texttt{std::visit}的一个技巧。用户可以按以下方式使用这个包装器类:
 
 \begin{lstlisting}[style=styleCXX]
 auto glamorous_items = std::array{CommonGlamorousItem{PinkHeels{}},
@@ -125,19 +125,19 @@ auto glamorous_items = std::array{CommonGlamorousItem{PinkHeels{}},
 	}
 \end{lstlisting}
 
-这种方法可以让类的用户编写易于理解的代码，但仍然保持静态多态性的性能。
+这种方法可以让类的用户编写易于理解的代码，并依旧保持静态多态性的性能。
 
-为了提供类似的用户体验，尽管性能较差，还可以使用一种称为类型擦除的技术，将在下文中讨论。
+为了提供类似的用户体验，尽管性能较差，还可以使用\textbf{类型擦除}。
 
 \subsubsubsection{6.3.3\hspace{0.2cm}使用类型擦除}
 
-尽管类型擦除与CRTP无关，但它与当前的示例非常适配，这也是在这里展示它的原因。
+尽管类型擦除与CRTP无关，但与当前的示例非常适配，也是在这里展示它的原因。
 
-类型擦除习惯用法是关于在多态接口下隐藏具体类型。Sean Parent在GoingNative 2013大会上的演讲《Inheritance Is The Base Class of Evil》就是一个很好的例子。强烈推荐在业余时间观看，可以在扩展阅读部分找到链接。在标准库中，可以在\texttt{std::function}，\texttt{std::shared\_ptr}的删除器或\texttt{std::any}中找到它。
+类型擦除习惯性用法是关于在多态接口下隐藏具体类型。Sean Parent在GoingNative 2013大会上的演讲《Inheritance Is The Base Class of Evil》就是一个很好的例子。强烈推荐在业余时间观看，可以在扩展阅读部分找到链接。在标准库中，可以在\texttt{std::function}，\texttt{std::shared\_ptr}的删除器或\texttt{std::any}中找到它。
 
-方便性和灵活性是有代价的——需要使用指针和虚拟调度，这使得标准库中提到的实用程序在面向性能的用例中不适合使用。要多加小心。
+方便性和灵活性需要付出代价——需要使用指针和虚拟调度，这使得标准库中提到的实用程序在面向性能的用例中不适合使用。
 
-为了在示例中引入类型擦除，不再需要CRTP。这一次，\texttt{GlamorousItem}类将把动态多态对象包装在一个智能指针中:
+为了在示例中引入类型擦除，不再需要CRTP，\texttt{GlamorousItem}类将把动态多态对象包装在一个智能指针中:
 
 \begin{lstlisting}[style=styleCXX]
 class GlamorousItem {
@@ -153,7 +153,7 @@ private:
 };
 \end{lstlisting}
 
-这次，存储一个指向基类(\texttt{TypeErasedItemBase})的指针，指向派生包装(\texttt{TypeErasedItem<T>})。基类可以定义如下:
+这次，存储一个指向基类(\texttt{TypeErasedItemBase})的指针，指向派生包装(\texttt{TypeErasedItem<T>})。基类可以有如下定义:
 
 \begin{lstlisting}[style=styleCXX]
 struct TypeErasedItemBase {
@@ -177,7 +177,7 @@ private:
 };
 \end{lstlisting}
 
-基类的接口是通过从包装对象调用函数来实现的。注意，这个习惯称为“类型擦除”，因为\texttt{GlamorousItem}类并不知道实际包装的是什么\texttt{T}。信息类型在项构造时删除，但它仍然工作，因为\texttt{T}实现了所需的方法。
+基类的接口通过从包装对象调用函数来实现。注意，这种方式称为“类型擦除”，因为\texttt{GlamorousItem}类并不知道实际包装的是什么\texttt{T}。信息类型在项构造时删除，但它仍然可以工作，因为\texttt{T}实现了所需的方法。
 
 具体项目可以以更简单的方式实现，如下所示:
 
@@ -197,9 +197,9 @@ public:
 };
 \end{lstlisting}
 
-这次，不需要从任何基类继承。需要的只是鸭子类型——如果它叫得像鸭子，那很可能就是鸭子。
+不需要从任何基类继承，只需要鸭子类型——如果它叫得像鸭子，那很可能就是鸭子。
 
-类型擦除API可以这样使用:
+类型擦除API可以这样用:
 
 \begin{lstlisting}[style=styleCXX]
 auto glamorous_items =
@@ -209,9 +209,9 @@ for (auto &item : glamorous_items) {
 }
 \end{lstlisting}
 
-只创建一个包装器数组并对其进行迭代，所有这些都使用基于值的语义。这里使用它是令人愉快的，因为多态性作为实现细节对调用者是隐藏的。
+只创建一个包装器数组并对其进行迭代，所有这些都使用基于值的语义。因为多态性作为实现细节对调用者是隐藏的，所以使用它没什么难度。
 
-然而，正如前面提到的，这种方法的一个大缺点是性能差。类型擦除是有代价的，所以应该谨慎使用，绝对不要在热路径中使用。
+然而，这种方法的一个大缺点是性能差。类型擦除是有代价的，所以应该谨慎使用，绝对不要在热路径中使用。
 
 既然已经描述了如何包装和删除类型，继续来讨论如何创建类型。
 

@@ -1,6 +1,6 @@
 状态是一种设计模式，用于在对象的内部状态发生变化时改变对象的行为。不同状态的行为应该相互独立，这样添加新状态就不会影响当前状态。在有状态对象中实现所有行为的简单方法无法扩展，也不允许扩展。使用状态模式，可以通过引入新的状态类，并定义它们之间的转换来添加新的行为。本节中，将展示一种实现状态的方法，以及使用\texttt{std::variant}和静态多态双重分发模式。换句话说，将以C++的方式连接状态模式和访问者模式，从而构建一个有限的状态机。
 
-首先，定义状态。在示例中，为商店中的产品进行状态建模。如下所示:
+首先，定义状态。示例中，为商店中的产品进行状态建模。如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 namespace state {
@@ -15,14 +15,14 @@ namespace state {
 } // namespace state
 \end{lstlisting}
 
-状态可以拥有自己的属性，例如：剩余物品的数量。而且，与动态多态不同，不需要从公共基类继承。可以都存储在一个变量中，如下所示:
+状态可以拥有自己的属性，例如：剩余物品的数量。而且，与动态多态不同，不需要从公共基类继承。可以存储在一个变量中，如下所示:
 
 \begin{lstlisting}[style=styleCXX]
 using State = std::variant<state::Depleted, state::Available,
 state::Discontinued>;
 \end{lstlisting}
 
-除了状态之外，还需要事件来进行状态转换。看看以下代码:
+除了状态之外，还需要事件来进行状态转换:
 
 \begin{lstlisting}[style=styleCXX]
 namespace event {
@@ -40,7 +40,7 @@ namespace event {
 } // namespace event
 \end{lstlisting}
 
-事件也可以具有属性，而不是继承自公共基。现在，需要实现状态之间的转换。可以这样做:
+事件也可以具有属性，而不是继承自公共基类。现在，需要实现状态之间的转换。可以这样做:
 
 \begin{lstlisting}[style=styleCXX]
 State on_event(state::Available available, event::DeliveryArrived
@@ -57,7 +57,7 @@ State on_event(state::Available available, event::Purchased purchased) {
 }
 \end{lstlisting}
 
-如果进行了购买，状态可以改变，但也可以保持不变。可以使用模板一次处理多个状态:
+如果进行了“购买”，状态可以改变，但也可以保持不变。可以使用模板一次处理多个状态:
 
 \begin{lstlisting}[style=styleCXX]
 template <typename S> State on_event(S, event::Discontinued) {
@@ -65,7 +65,7 @@ template <typename S> State on_event(S, event::Discontinued) {
 }
 \end{lstlisting}
 
-如果商品停产了，处于什么状态并不重要。现在，来实现最后一个受支持的转换:
+如果商品停产了，处于什么状态并不重要。现在，来实现最后一个转换:
 
 \begin{lstlisting}[style=styleCXX]
 State on_event(state::Depleted depleted, event::DeliveryArrived delivered)
@@ -74,14 +74,14 @@ State on_event(state::Depleted depleted, event::DeliveryArrived delivered)
 }
 \end{lstlisting}
 
-需要解决的下一个难题是如何在一个对象中定义多个调用操作符，以便调用最佳匹配的重载。稍后将使用它来调用刚刚定义的转换。助手类可以这样写:
+需要解决的下一个难题是如何在对象中定义多个调用操作符，以便调用最佳匹配的重载。稍后使用它来调用刚刚定义的转换。助手类可以这样写:
 
 \begin{lstlisting}[style=styleCXX]
 template<class... Ts> struct overload : Ts... { using Ts::operator()...; };
 template<class... Ts> overload(Ts...) -> overload<Ts...>;
 \end{lstlisting}
 
-创建一个重载结构，该结构将使用变量模板、折叠表达式和类模板参数推导指南提供在构造过程中传递给它的所有调用操作符。要了解更深入的解释，以及实现访问的另一种方法，请参阅Bartłomiej Filipek在扩展阅读部分的博客文章。
+创建重载结构，该结构将使用变量模板、折叠表达式和类模板参数推导指南提供在构造过程中，传递给所有调用操作符。要了解更深入的解释，以及实现访问的另一种方法，请参阅Bartłomiej Filipek在扩展阅读部分的博客文章。
 
 现在可以开始实现状态机本身了:
 
@@ -106,7 +106,7 @@ private:
 };
 \end{lstlisting}
 
-\texttt{process\_event}函数将接受任何事件。它将使用当前状态和传递的事件调用适当的\texttt{on\_event}函数，并切换到新的状态。如果给定的状态和事件可以找到\texttt{on\_event}重载，将调用第一个lambda。否则，约束将不满足，第二个更通用的重载将调用。这意味着如果存在不受支持的状态转换，则会抛出一个异常。
+\texttt{process\_event}函数将接受任何事件，将使用当前状态和传递的事件调用适当的\texttt{on\_event}函数，并切换到新的状态。如果给定的状态和事件可以找到\texttt{on\_event}重载，将调用第一个lambda。否则，约束将不满足，第二个更通用的重载将调用。这意味着如果存在不受支持的状态转换，则会抛出异常。
 
 现在，提供一种方法来报告当前状态:
 
@@ -127,9 +127,9 @@ std::string report_current_state() {
 }
 \end{lstlisting}
 
-这里，使用重载来传递三个lambdas，每个lambdas都返回一个通过访问状态对象生成的报告字符串。
+这里，使用重载来传递三个lambda，每个lambda都返回一个通过访问状态对象生成的字符串报告。
 
-现在可以应用解决方案:
+应用解决方案:
 
 \begin{lstlisting}[style=styleCXX]
 auto fsm = ItemStateMachine{};
@@ -158,8 +158,8 @@ Item is temporarily out of stock
 Item has been discontinued
 \end{tcblisting}
 
-也就是说，除非用不支持的转换取消最后一行的注释。这种情况下，将在最后抛出异常。
+除非用不支持的转换取消最后一行的注释，否则将在最后抛出异常。
 
-尽管支持的状态和事件列表仅限于编译时提供的状态和事件列表，但与基于动态多态的解决方案相比，解决方案的性能要好得多。更多关于状态、变量和各种访问方式的信息，请参见Mateusz Pusz在2018年CppCon上的讲话，该讲话在扩展阅读部分可以找到。
+尽管支持的状态和事件列表仅限于编译时提供的状态和事件列表，但与基于动态多态的解决方案相比，解决方案性能要好得多。更多关于状态、变量和各种访问方式的信息，请参见Mateusz Pusz在2018年CppCon上的讲话，该讲话在扩展阅读部分可以找到。
 
-在结束这一章之前，最后来了解一下处理内存。
+结束这一章之前，最后了解一下如何处理内存。
