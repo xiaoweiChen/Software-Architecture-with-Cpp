@@ -1,11 +1,11 @@
 
-CMake有内置的实用程序，在分发构建的结果时，这些实用程序可以大有作为。本节将描述安装和导出实用程序，以及它们之间的区别。后面的小节将展示如何使用CPack打包代码，以及如何使用Conan进行打包。
+CMake有内置程序，在分发构建的结果时，这些程序可以大有作为。本节将描述安装和导出实用程序，以及它们之间的区别。后面的小节将展示如何使用CPack打包代码，以及如何使用Conan进行打包。
 
-安装和导出对于微服务本身并不是那么重要，但如果会交付库供他人重用，这就就非常有用了。
+安装和导出对于微服务本身并不是那么重要，但交付库供他人使用，就就有用了。
 
 \subsubsubsection{7.5.1\hspace{0.2cm}安装}
 
-如果编写或使用过Makefile，那么应该用过\texttt{make install}，并看到过项目的可交付成果是如何安装在OS目录或选择的另一个目录中的。如果正在使用make与CMake，使用本节的步骤将可以以相同的方式安装可交付成果。当然，如果没有，仍然可以使用安装目标。除此之外，在这两种情况下，将有一种简单的方法来使用CPack根据安装命令来创建安装包。
+如果编写或使用过Makefile，那么应该用过\texttt{make install}，并看到过项目的可交付成果是如何安装在OS目录或选择的另一个目录中的。如果正在使用make与CMake，使用本节的步骤将可以以相同的方式安装可交付成果。如果没有，仍然可以使用安装目标。除此之外，将有一种简单的方法来使用CPack根据安装命令来创建安装包。
 
 如果在Linux系统上，通过调用下面的命令根据操作系统的惯例预先设置一些安装目录，可能是个不错的方式:
 
@@ -42,7 +42,7 @@ install(TARGETS libcustomer customer
 	RUNTIME DESTINATION Release/bin)
 \end{lstlisting}
 
-可以注意到，这里为可执行文件和库指定了目录，但没有为包含文件指定目录。这需要在另一个命令中提供它们，像这样:
+可以注意到，这里为可执行文件和库指定了目录，但没有为包含文件指定目录。这需要在另一个命令中提供:
 
 \begin{lstlisting}[style=styleCMake]
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
@@ -51,7 +51,7 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
 
 这意味着顶层\texttt{include}目录的内容将安装在安装根目录下的\texttt{include}目录中。第一个路径后的斜杠修复了一些路径问题，所以需要留意一下它。
 
-现在有一系列的目标，需要生成一个文件，让另一个CMake项目可以了解相应的意图。这可以通过以下方式实现:
+现在有一系列的目标，需要生成一个文件，让另一个CMake项目可以了解其意图。这可以通过以下方式实现:
 
 \begin{lstlisting}[style=styleCMake]
 install(
@@ -61,11 +61,11 @@ install(
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Customer)
 \end{lstlisting}
 
-这个命令接受目标集，并创建一个CustomerTargets.cmake文件，将包含关于目标和要求的所有信息。每个目标都有一个名称空间前缀，例如：\texttt{customer}将变成\texttt{domifair::customer}。生成的文件将安装在安装树中的库文件夹子目录中。
+这个命令接受目标集，并创建CustomerTargets.cmake文件，将包含关于目标和要求的信息。每个目标都有一个名称空间前缀，例如：\texttt{customer}将变成\texttt{domifair::customer}。生成的文件将安装在安装树中的库文件夹子目录中。
 
-为了让依赖项目使用CMake的\texttt{find\_package}找到相应的目标，需要提供一个CustomerConfig.cmake文件。如果目标没有依赖项，可以直接将前面的目标导出到该文件，而不是目标文件。否则，应该编写包含上述目标文件的自己的配置文件。
+为了让依赖项目使用CMake的\texttt{find\_package}找到相应的目标，需要提供一个CustomerConfig.cmake文件。如果目标没有依赖项，可以直接将前面的目标导出到该文件，而不是目标文件。否则，应该编写包含上述目标文件的配置文件。
 
-在例子中，想要重用一些CMake变量，所以需要创建一个模板，并使用\texttt{configure\_file}对其进行填充:
+例子中，想要重用一些CMake变量，所以需要创建一个模板，并使用\texttt{configure\_file}对其进行填充:
 
 \begin{lstlisting}[style=styleCMake]
 configure_file(${PROJECT_SOURCE_DIR}/cmake/CustomerConfig.cmake.in
@@ -85,7 +85,7 @@ find_dependency(cpprestsdk 2.10.18 REQUIRED)
 conan install cpprestsdk/2.10.18
 \end{tcblisting}
 
-处理了依赖关系后，的配置文件模板将包括之前创建的目标文件:
+处理了依赖关系后，配置文件模板将包括之前创建的目标文件:
 
 \begin{lstlisting}[style=styleCMake]
 if(NOT TARGET domifair::@PROJECT_NAME@)
@@ -93,9 +93,9 @@ if(NOT TARGET domifair::@PROJECT_NAME@)
 endif()
 \end{lstlisting}
 
-当\texttt{configure\_file}执行时，将用项目中定义的与\texttt{\$\{VARIABLES\}}匹配的内容替换所有的\texttt{@VARIABLES@}。这样，基于CustomerConfig.cmake.in文件模板，将创建一个CustomerConfig.cmake文件。
+\texttt{configure\_file}执行时，将用项目中定义的与\texttt{\$\{VARIABLES\}}匹配的内容替换所有的\texttt{@VARIABLES@}。这样，基于CustomerConfig.cmake.in文件模板，将创建一个CustomerConfig.cmake文件。
 
-当使用\texttt{find\_package}查找依赖项时，通常需要指定要查找的包的版本。为了在包中支持版本信息，必须创建一个CustomerConfigVersion.cmake文件。CMake提供了一个帮助函数，可以创建这个文件。可以这样使用:
+使用\texttt{find\_package}查找依赖项时，通常需要指定要查找的包的版本。为了在包中支持版本信息，必须创建CustomerConfigVersion.cmake文件。CMake提供了一个帮助函数，可以创建这个文件。可以这样使用:
 
 \begin{lstlisting}[style=styleCMake]
 include(CMakePackageConfigHelpers)
@@ -107,7 +107,7 @@ COMPATIBILITY AnyNewerVersion)
 
 \texttt{PACKAGE\_VERSION}将根据在顶层CMakeLists.txt文件顶部调用\texttt{project}时，传递的\texttt{VERSION}参数来对其进行填充。
 
-若是新的或相同的请求版本，\texttt{AnyNewerVersion COMPATIBILITY}表示包接受搜索。其他选项包括\texttt{SameMajorVersion}，\texttt{SameMinorVersion}和\texttt{ExactVersion}。
+若是新的或相同的版本请求，\texttt{AnyNewerVersion COMPATIBILITY}表示包可以兼容。其他选项包括\texttt{SameMajorVersion}，\texttt{SameMinorVersion}和\texttt{ExactVersion}。
 
 在创建了配置文件和配置版本文件后，就可以告诉CMake它们应该与二进制文件和目标文件一起进行安装:
 
@@ -135,7 +135,7 @@ install(
 
 导出是一种将关于本地构建包的信息添加到CMake包注册表的技术。当目标在构建目录中直接可见时，即使没有安装这也很有用的。导出的一个常见的场景是在在本地进行构建，但在开发机器上使用它们。
 
-从CMakeLists.txt文件中添加对这种机制的支持非常容易，可以这样做:
+从CMakeLists.txt文件中添加对这种机制的支持非常容易:
 
 \begin{lstlisting}[style=styleCMake]
 export(
@@ -147,9 +147,9 @@ set(CMAKE_EXPORT_PACKAGE_REGISTRY ON)
 export(PACKAGE domifair)
 \end{lstlisting}
 
-这样，CMake将创建类似于安装部分的目标文件，在提供的命名空间中定义库和可执行目标。自CMake 3.15起，包注册表默认禁用，所以需要通过设置适当的前置变量来启用。然后，可以通过导出包将关于目标的信息直接放入注册表中。
+CMake将创建类似于安装部分的目标文件，在提供的命名空间中定义库和可执行目标。自CMake 3.15起，包注册表默认禁用，所以需要通过设置适当的前置变量来启用。然后，可以通过导出包将关于目标的信息直接放入注册表中。
 
-注意，现在有了一个目标文件，但没有匹配的配置文件。这意味着，若目标依赖于外部库，那么必须在找到包之前找到它们。在我们的例子中，调用必须按以下方式排序:
+注意，现在有了一个目标文件，但没有匹配的配置文件。若目标依赖于外部库，必须在找到包之前找到它们。在我们的例子中，调用必须按以下方式排序:
 
 \begin{lstlisting}[style=styleCMake]
 find_package(cpprestsdk 2.10.18)
@@ -173,14 +173,14 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
 	"Library and app for the Customer microservice")
 \end{lstlisting}
 
-需要手工提供一些信息，但是可以根据定义项目时指定的项目版本填充一些变量。还有更多的CPack变量，可以在本章末尾的扩展阅读部分的CPack链接中进行了解。其中一些是所有包生成器通用的，而一些是特定于相应生成器的。例如，若计划使用安装程序，可以设置以下两个变量:
+需要手工提供一些信息，但是可以根据定义项目时指定的项目版本填充变量。还有更多的CPack变量，可以在本章末尾的扩展阅读部分的CPack链接中进行了解。其中一些是所有包生成器通用的，而一些是特定于相应生成器的。例如，若计划使用安装程序，可以设置以下两个变量:
 
 \begin{lstlisting}[style=styleCMake]
 set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
 \end{lstlisting}
 
-设置好所有的变量后，就可以选择CPack使用的生成器了。先在\texttt{CPACK\_GENERATOR}中放入一些基本的代码，CPACK依赖于一个变量:
+设置好的变量后，就可以选择CPack使用的生成器了。先在\texttt{CPACK\_GENERATOR}中放入一些基本的代码，CPACK依赖于一个变量:
 
 \begin{lstlisting}[style=styleCMake]
 list(APPEND CPACK_GENERATOR TGZ ZIP)
@@ -223,9 +223,9 @@ endif()
 
 很优雅，对吧？
 
-这些生成器提供了很多有用的变量，所以如果需要比这里描述的这些基本需求更多的东西，可以查阅CMake文档。
+这些生成器提供了很多变量，如果需要比这里描述的这些基本需求更多的东西，可以查阅CMake文档。
 
-最后，当涉及到变量时——还可以使用它们来避免打包不需要的文件。可以通过以下方式实现:
+最后，当涉及变量时——还可以使用它们来避免打包不需要的文件。可以通过以下方式实现:
 
 \begin{lstlisting}[style=styleCMake]
 set(CPACK_SOURCE_IGNORE_FILES /.git /dist /.*build.* /\\\\.DS_Store)

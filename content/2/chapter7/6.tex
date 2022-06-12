@@ -1,7 +1,7 @@
 
 已经展示了如何使用Conan安装依赖项。现在，尝试创建自己的Conan包。
 
-先在项目中创建一个新的顶层目录，命名为conan，将在其中存储使用此工具打包所需的文件:用于构建我们的包的脚本和测试环境。
+先在项目中创建一个新的顶层目录，命名为conan，将在其中存储使用此工具打包所需的文件:用于构建包的脚本和测试环境。
 
 \subsubsubsection{7.6.1\hspace{0.2cm}创建conanfile.py脚本}
 
@@ -12,7 +12,7 @@ configure_file(${PROJECT_SOURCE_DIR}/conan/conanfile.py.in
 	${CMAKE_CURRENT_BINARY_DIR}/conan/conanfile.py @ONLY)
 \end{lstlisting}
 
-文件将从一些无聊的Python导入开始，比如Conan在CMake项目中需要的那些:
+文件将从Python的\texttt{import}开始，比如Conan在CMake项目中需要的那些:
 
 \begin{lstlisting}[style=stylePython]
 import os
@@ -31,7 +31,7 @@ class CustomerConan(ConanFile):
 	topics = ("Customer", "domifair")
 \end{lstlisting}
 
-首先，从一堆通用变量开始，从CMake代码中获取项目版本。通常，描述将是一个多行字符串。这些主题对于在JFrog’s Artifactory等网站上找到库很有用，并且可以告诉读者我们的包是干什么的。现在来看看其他变量:
+首先，从一堆通用变量开始，从CMake代码中获取项目版本。通常，描述将是一个多行字符串。这些主题对于在JFrog的Artifactory等网站上找到库很有用，并且可以告诉读者我们的包是干什么的。现在来看看其他变量:
 
 \begin{lstlisting}[style=stylePython]
 	homepage = "https://example.com"
@@ -40,7 +40,7 @@ class CustomerConan(ConanFile):
 	/"
 \end{lstlisting}
 
-\texttt{homepage}应该指向项目的主页:文档、教程、FAQ和类似的东西都可以放在那里。另一方面，\texttt{url}是放置包存储库的位置。许多开放源码库在一个库中包含代码，而在另一个库中包含打包代码。还有种情况是，包是由中央的Conan包服务器构建的。在这种情况下，\texttt{url}应该指向 \url{https://github.com/conan-io/conan-center-index}。
+\texttt{homepage}应该指向项目的主页:文档、教程、FAQ和类似的东西都可以放在那里。另一方面，\texttt{url}是放置包存储库的位置。许多开放源码库在一个库中包含代码，而在另一个库中包含打包代码。还有种情况是，包是由中央的Conan包服务器构建的，这样\texttt{url}应该指向 \url{https://github.com/conan-io/conan-center-index}。
 
 接下来，可以指定如何构建我们的包:
 
@@ -89,7 +89,7 @@ class CustomerConan(ConanFile):
 		cmake.build()
 \end{lstlisting}
 
-Conan还支持非cmake的构建系统。构建完包之后，就可以打包了，这需要提供另一种方法:
+Conan还支持非CMake的构建系统。构建完包之后，就可以打包了，这需要提供另一种方法:
 
 \begin{lstlisting}[style=stylePython]
 	def package(self):
@@ -98,7 +98,7 @@ Conan还支持非cmake的构建系统。构建完包之后，就可以打包了�
 		self.copy("license*", ignore_case=True, keep_path=True)
 \end{lstlisting}
 
-注意我们是如何使用相同的\texttt{\_configure\_cmake()}函数来构建和打包项目的。除了安装二进制文件之外，还需要指定需要在哪里存放部署许可证。最后，让告诉Conan在安装我们的包时应该复制哪些东西:
+注意我们是如何使用相同的\texttt{\_configure\_cmake()}函数来构建和打包项目的。除了安装二进制文件之外，还需要指定在哪里存放部署许可证。最后，告诉Conan在安装包时应该复制哪些东西:
 
 \begin{lstlisting}[style=stylePython]
 	def imports(self):
@@ -113,13 +113,13 @@ Conan还支持非cmake的构建系统。构建完包之后，就可以打包了�
 		self.copy("*.dylib*", dst=dest, src="lib")
 \end{lstlisting}
 
-上面的代码指定在安装库时在何处解压缩许可证文件、库和可执行文件。
+上面的代码指定在安装库时，在何处解压缩许可证文件、库和可执行文件。
 
-现在，了解了如何构建一个Conan包，接下来来了解一下如何测试它是否按预期进行了安装。
+现在，了解了如何构建一个Conan包，接下来来测试安装包。
 
 \subsubsubsection{7.6.2\hspace{0.2cm}测试Conan包}
 
-当Conan构建了程序包，就应该测试这个包否构建正确。为了做到这一点，首先在conan目录中创建一个\texttt{test\_package}子目录。
+当Conan构建了程序包，就应该测试这个包否构建正确。首先在conan目录中创建一个\texttt{test\_package}子目录。
 
 还需要包含一个conanfile.py脚本，但这次是一个更小的脚本。应该是这样开始的:
 
@@ -132,7 +132,7 @@ class CustomerTestConan(ConanFile):
 	generators = "CMakeDeps"
 \end{lstlisting}
 
-这里没什么特别的。现在，应该提供构建测试包的逻辑:
+这里没什么特别的，提供构建测试包的逻辑:
 
 \begin{lstlisting}[style=stylePython]
 	def build(self):
@@ -143,7 +143,7 @@ class CustomerTestConan(ConanFile):
 		cmake.build()
 \end{lstlisting}
 
-马上就到写CMakeLists.txt文件的环节了。但是在写之前，还需要再完成两件事:导入方法和测试方法。导入方法可以这样写:
+马上就到写CMakeLists.txt文件的环节了。在写之前，还需要再完成两件事:导入方法和测试方法。导入方法可以这样写:
 
 \begin{lstlisting}[style=stylePython]
 	def imports(self):
@@ -181,18 +181,18 @@ target_link_libraries(example customer::customer)
 
 就这么简单，链接到所有提供的Conan库(在例子中，只有Customer库)。
 
-最后，用足够的逻辑来检查包是否成功创建了example.cpp文件:
+最后，检查包是否成功创建了example.cpp文件:
 
 \begin{lstlisting}[style=styleCXX]
 #include <customer/customer.h>
 int main() { responder{}.prepare_response("Conan"); }
 \end{lstlisting}
 
-开始运行所有这些前，需要在CMake的主构建树中做一些小的更改。现在来了解一下，如何正确地从CMake文件中导出Conan目标。 
+运行这些前，需要在CMake的主构建树中做一些小的更改。现在来了解一下，如何正确地从CMake文件中导出Conan目标。 
 
 \subsubsubsection{7.6.3\hspace{0.2cm}添加Conan打包代码到CMakeLists}
 
-还记得在重用质量代码的章节中编写的安装逻辑吗？如果依赖于Conan进行打包，可能不需要运行裸CMake导出和安装逻辑。假设只需要在不使用Conan的情况下导出和安装，就需要修改CMakeLists，看起来像这样:
+还记得在重用质量代码的章节中编写的安装逻辑吗？如果依赖于Conan进行打包，可能不需要运行裸CMake导出和安装逻辑。假设只需要在不使用Conan的情况下导出和安装，就需要修改CMakeLists:
 
 \begin{lstlisting}[style=styleCMake]
 if(NOT CONAN_EXPORTED)
@@ -222,9 +222,9 @@ install(
 	$<IF:$<BOOL:${CONAN_EXPORTED}>,licenses,${CMAKE_INSTALL_DOCDIR}>)
 \end{lstlisting}
 
-添加if语句和一个生成器表达式对于拥有干净的包来说是合理的，这就是所需要做的事情了。
+添加if语句和一个生成器表达式对于拥有干净的包来说是合理的，这就是所要做的事情了。
 
-最后一件事情——可以构建一个目标来创建Conan包。可以这样定义:
+最后一件事情——可以构建一个目标来创建Conan包:
 
 \begin{lstlisting}[style=styleCMake]
 add_custom_target(
@@ -238,12 +238,12 @@ add_custom_target(
 	VERBATIM)
 \end{lstlisting}
 
-现在，当运行\texttt{cmake -\,-build .-\,-target conan}(或\texttt{ninja conan}若已使用生成器并想命令行简单一些)，CMake将复制\texttt{test\_package}目录到构建文件夹，构建conan包，并使用复制的文件对其进行测试。
+当运行\texttt{cmake -\,-build .-\,-target conan}(或\texttt{ninja conan}若已使用生成器并想命令行简单一些)，CMake将复制\texttt{test\_package}目录到构建文件夹，构建conan包，并使用复制的文件对其进行测试。
 
 全部完成!
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}涉及到创建Conan包的内容远不止我们在这里描述到的，更多信息请参考Conan的文档。可以在扩展阅读找到相应的链接。
+\hspace*{0.7cm}涉及到创建Conan包的内容远不止在这里描述到的，更多信息请参考Conan的文档。可以在扩展阅读找到相应的链接。
 \end{tcolorbox}
 
 
