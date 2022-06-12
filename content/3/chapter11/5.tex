@@ -1,5 +1,5 @@
 
-协程是可以暂停执行并在稍后继续执行的函数，可以以与编写同步代码非常相似的方式编写异步代码。与使用\texttt{std::async}编写异步代码相比，这允许编写更清晰、更容易理解和维护的代码。不需要再写回调函数，也不需要用promise和future来处理冗长的\texttt{std::async}。
+协程是可以暂停执行并在稍后继续执行的函数，可以以与编写同步代码非常相似的方式编写异步代码。与使用\texttt{std::async}编写异步代码相比，这允许编写更清晰、更容易理解和维护的代码。不需要再写回调函数，也不需要用promise和future来处理\texttt{std::async}。
 
 除此之外，还可以为提供更好的性能。基于\texttt{std::async}的代码通常在切换线程和等待方面有更多的开销。与调用函数的开销相比，协程可以非常快捷地恢复和挂起，这意味着可以产生更好的延迟和吞吐量。此外，其设计目标是具有高度的可扩展性，甚至可以扩展到数十亿个并发协程。
 
@@ -14,10 +14,10 @@ C++协程无堆栈，它们的状态不存储在调用线程的堆栈上。这�
 
 \begin{itemize}
 \item 
-co\_await，暂停协程。
+\texttt{co\_await}，暂停协程。
 
 \item 
-co\_yield用于向调用方返回值，并暂停协程。
+\texttt{co\_yield}用于向调用方返回值，并暂停协程。
 
 \item 
 类似于Python在生成器中使用的\texttt{yield}关键字，允许惰性生成值。
@@ -26,15 +26,15 @@ co\_yield用于向调用方返回值，并暂停协程。
 co\_return，返回一个值并完成协程的执行，与\texttt{return}关键字等价。
 \end{itemize}
 
-只要函数体中有其中一个关键字，函数就会自动变成协程。虽然这意味着它是一个实现细节，但还有一个提示:协程返回类型必须满足某些要求(后面再说)。
+只要函数体中有其中一个关键字，函数就会自动变成协程。虽然这是一个实现细节，但还有一个提示:协程返回类型必须满足某些要求(后面再说)。
 
-协程是C++世界中的一等公民，可以获取它们的地址，将它们用作函数参数，从函数返回它们，并将它们存储在对象中。
+协程是C++世界中的一等公民，可以获取它们的地址，用作函数参数，从函数返回它们，并将它们存储在对象中。
 
-在C++中，可以在C++20之前编写协程。这要感谢Boost等库。Coroutine2，也就是彭博的Quantum。后者用来实现CoroKafka——使用协程高效处理Kafka流的库。随着标准C++协程的出现，新的库开始出现。现在，我们将向展示其中一个。
+在C++中，可以在C++20之前编写协程。这要感谢Boost等库。Coroutine2，也就是彭博的Quantum。后者用来实现CoroKafka——使用协程高效处理Kafka流的库。随着标准C++协程的出现，新的库开始出现。现在，将向展示其中一个。
 
 \subsubsubsection{11.5.1\hspace{0.2cm}与cppcoro的区别}
 
-从头编写基于协程的代码很困难。C++20只提供了编写协程的基本实用程序，所以在编写自己的协程时需要一组原语。Lewis Baker创建的cppcoro库是C++中最常用的协程框架之一。本节中，我们将展示这个库，并演示如何在编写基于协程的代码时使用它。
+从头编写基于协程的代码很困难。C++20只提供了编写协程的基本实用程序，所以在编写自己的协程时需要一组原语。Lewis Baker创建的cppcoro库是C++中最常用的协程框架之一。本节中，将展示这个库，并演示如何在编写基于协程的代码时使用它。
 
 先来概述一下库提供的协程类型:
 
@@ -60,17 +60,17 @@ co\_return，返回一个值并完成协程的执行，与\texttt{return}关键�
 
 应该使用这些类型作为协程的返回类型。通常，在生成器中(协程返回前面的生成器类型)，可以使用\texttt{co\_yield}的返回值(类似于Python生成器)。然而，在任务中，通常需要使用\texttt{co\_await}来安排工作。
 
-与前面的协程类型相比，这个库实际上提供了更多的编程抽象。它还提供以下类型:
+与前面的协程类型相比，这个库实际上提供了更多的编程抽象。还提供以下类型:
 
 \begin{itemize}
 \item 
-\texttt{co\_await}的可等待类型，比如协程事件和同步原语:互斥锁、锁存、障碍等。
+\texttt{co\_await}的可等待类型，比如协程事件和同步原语:互斥锁、锁存、栅栏等。
 
 \item 
 可取消，可以取消协程的执行。
 
 \item 
-调度器——可以通过它们调度工作的对象，例如\texttt{static\_thread\_pool}，或在特定线程上调度工作。
+调度器——可以调度工作的对象，例如\texttt{static\_thread\_pool}，或在特定线程上调度工作。
 
 \item 
 I/O和网络工具，允许读写文件和IP套接字。
@@ -86,7 +86,7 @@ I/O和网络工具，允许读写文件和IP套接字。
 \texttt{sync\_wait}: 阻塞式，直到传递的可等待对象完成工作。
 
 \item
-\texttt{when\_all}，\texttt{when\_all\_ready}: 返回一个可等待对象，该对象在传递的所有可等待对象完成时完成。这两者之间的区别在于处理子可等待对象的失败。即使在失败的情况下，\texttt{when\_all\_ready}将完成，调用者可以检查每个结果，而\texttt{when\_all}将重新抛出一个异常，如果任何子可等待对象抛出一个异常(虽然不知道是哪个)。它还会取消所有未完成的任务。
+\texttt{when\_all}，\texttt{when\_all\_ready}: 返回一个可等待对象，该对象在传递的所有可等待对象完成时完成。这两者之间的区别在于处理子可等待对象的失败。即使在失败的情况下，\texttt{when\_all\_ready}将完成，调用者可以检查每个结果，而\texttt{when\_all}将重新抛出一个异常，如果任何子可等待对象抛出一个异常(虽然不知道是哪个)，其还会取消所有未完成的任务。
 
 \item
 \texttt{fmap}: 与函数式编程类似，将函数应用于可等待对象。可以将其视为将一种类型的任务转换为另一种类型的任务。例如，可以通过调用\texttt{fmap(serialize, my\_coroutine())}来序列化协程返回的类型。
@@ -102,7 +102,7 @@ I/O和网络工具，允许读写文件和IP套接字。
 
 \subsubsubsection{11.5.2\hspace{0.2cm}剖析可等待程序和协程}
 
-除了cppcoro之外，标准库还提供了两个可等待对象:\texttt{suspend\_never}和\texttt{suspend\_always}。通过查看它们，可以看到如何在需要时实现自己的可等待对象:
+除了cppcoro之外，标准库还提供了两个可等待对象:\texttt{suspend\_never}和\texttt{suspend\_always}。通过了解它们，可以看到如何在需要时实现自己的可等待对象:
 
 \begin{lstlisting}[style=styleCXX]
 struct suspend_never {
@@ -131,7 +131,7 @@ struct suspend_always {
 \texttt{await\_suspend}返回\texttt{std::coroutine\_handle<PromiseType>}:另一个协程将恢复运行。
 \end{itemize}
 
-协程的背后还有更多的东西。即使协程不使用\texttt{return}关键字，编译器也会在后台生成代码，使它们能够编译和工作。当使用诸如\texttt{co\_yield}这样的关键字时，将把它们重写为对协助类型的适当成员函数的调用。例如，对\texttt{co\_yield x}的调用等价于\texttt{co\_await promise.yield\_value(x)}。如果想进一步了解协程更多信息，并编写自己的协程类型，请参阅扩展阅读部分的《第一个协程》一文。
+协程的背后还有更多的东西。即使协程不使用\texttt{return}关键字，编译器也会在后台生成代码，使它们能够编译和工作。当使用诸如\texttt{co\_yield}这样的关键字时，将把它们重写为对协助类型的适当成员函数的调用。例如，对\texttt{co\_yield x}的调用等价于\texttt{co\_await promise.yield\_value(x)}。如果想进一步了解协程更多信息，并编写自己的协程类型，请参阅扩展阅读部分的《第一个协程》。
 
 好了，让我们用这些知识来写自己的协程吧。我们将创建一个简单的应用程序来模拟有意义的工作，这里现来使用一个线程池来用一些数字填充向量。
 
@@ -159,7 +159,7 @@ int main() {
 	auto thread_pool = cppcoro::static_thread_pool{3};
 \end{lstlisting}
 
-希望使用三个池中的线程生成五个元素。cppcoro的线程池以一种简单的方法对工作进行安排。默认情况下，创建的线程数量与机器的硬件线程数量相同。接下来，需要具体说明相应的工作:
+希望使用三个池中的线程生成五个元素，cppcoro的线程池以一种简单的方法对工作进行安排。默认情况下，创建的线程数量与机器的硬件线程数量相同。接下来，需要具体说明相应的工作:
 
 \begin{lstlisting}[style=styleCXX]
 fmt::print("Thread {}: preparing work\n", std::this_thread::get_id());
@@ -169,7 +169,7 @@ fmt::print("Thread {}: starting work\n", std::this_thread::get_id());
 const auto ints = cppcoro::sync_wait(work);
 \end{lstlisting}
 
-在代码中散布日志消息，这样就可以更好地看到在哪个线程中发生了什么。这将帮助我们更好地理解协程是如何工作的。可以通过调用名为\texttt{do\_routine\_work}的协程来创建工作。返回协程，使用\texttt{sync\_wait}阻塞函数运行协程，协程只有在实际待时才会执行。这样，实际工作的将在这个函数调用中开始。
+在代码中散布日志消息，这样就可以更好地看到在哪个线程中发生了什么。可以通过调用名为\texttt{do\_routine\_work}的协程来创建工作。返回协程，使用\texttt{sync\_wait}阻塞函数运行协程，协程只有在实际待时才会执行。这样，实际工作的将在这个函数调用中开始。
 
 当运行有了结果，就可以把结果记录下来:
 
@@ -182,7 +182,7 @@ for (auto i : ints) {
 fmt::print("\n");
 \end{lstlisting}
 
-这里没有巫毒魔法。来定义我们的\texttt{do\_routine\_work}协程:
+定义我们的\texttt{do\_routine\_work}协程:
 
 \begin{lstlisting}[style=styleCXX]
 cppcoro::task<std::vector<int>>
@@ -200,9 +200,9 @@ fmt::print("Thread {}: passing execution to the pool\n",
 co_await thread_pool.schedule();
 \end{lstlisting}
 
-\texttt{schedule()}调用没有传入可调用对象来执行，在协程的情况下，实际上当前线程暂停协程。并开始执行它的调用程序。这意味着它现在将等待协程完成(在\texttt{sync\_wait}调用的地方)。
+\texttt{schedule()}调用没有传入可调用对象来执行，在协程的情况下，实际上当前线程暂停协程。并开始执行它的调用程序。现在将等待协程完成(在\texttt{sync\_wait}调用的地方)。
 
-与此同时，池中的一个线程将恢复协程——继续执行它的任务。以下是我们为此做的准备:
+与此同时，池中的一个线程将恢复协程——继续执行它的任务。以下是为此所做的准备:
 
 \begin{lstlisting}[style=styleCXX]
 fmt::print("Thread {}: running first pooled job\n",
@@ -217,10 +217,10 @@ co_await cppcoro::when_all_ready(std::move(tasks));
 co_return ints;
 \end{lstlisting}
 
-我们创建一个要执行的任务集，每个任务在互斥锁下填充一个整数。s\texttt{chedule\_on}调用池中的另一个线程运行填充协程。最后，等待所有的结果。此时，任务开始执行。最后，由于协程是一个任务，这里使用\texttt{co\_return}。
+我们创建一个要执行的任务集，每个任务在互斥锁下填充一个整数。\texttt{schedule\_on}调用池中的另一个线程运行填充协程。最后，等待所有的结果。此时，任务开始执行。最后，由于协程是一个任务，这里使用\texttt{co\_return}。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}不要忘记\texttt{co\_return}生成的值。如果移除\texttt{co\_return int;}，将简单地返回一个默认构造的数组。程序将运行，愉快地打印空数组，并以代码0退出。
+\hspace*{0.7cm}不要忘记\texttt{co\_return}生成的值。如果移除\texttt{co\_return int;}，将简单地返回一个默认构造的数组。程序将运行，打印空数组，并以代码0退出。
 \end{tcolorbox}
 
 最后一步是实现产生数字的协程:
@@ -233,7 +233,7 @@ cppcoro::async_mutex &mutex) {
 		std::chrono::milliseconds((WORK_ITEMS - i) * 200));
 \end{lstlisting}
 
-这个任务不返回任何值。相反，会把它加到数组上。它的繁重工作实际上是通过休眠几毫秒来完成的。睡醒后，协作程序将继续进行更有成效的工作:
+这个任务不返回任何值。相反，会把它加到数组上。繁重工作实际上是通过休眠几毫秒来完成的。睡醒后，协作程序将继续进行更有成效的工作:
 
 \begin{lstlisting}[style=styleCXX]
 {
@@ -245,7 +245,7 @@ cppcoro::async_mutex &mutex) {
 它将锁定互斥对象。其实，只是等待而已。当互斥锁锁定时，会给\texttt{vector}添加一个数字——与调用时相同的数字。
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
-\hspace*{0.7cm}还记得\texttt{co\_await}么？如果忘记了，可以不使用可等待对象(可能因为不使用每个可等待对象也是可以的)，那么就会跳过一些必要的计算。在例子中，这可能代表着不锁定互斥对象。
+\hspace*{0.7cm}还记得\texttt{co\_await}么？如果记不清了，可以不使用可等待对象(可能因为不使用每个可等待对象也是可以的)，那么就会跳过一些必要的计算。在例子中，这可能代表着不锁定互斥对象。
 \end{tcolorbox}
 
 现在来完成协程的实现:
@@ -257,7 +257,7 @@ co_return;
 
 一个简单的状态打印和一个\texttt{co\_return}来标记协程完成。返回时，协程框架就可以销毁了，释放其占用的内存。
 
-这是所有了！现在让我们运行代码，看看会发生什么:
+这是所有了！现在运行代码，看看会发生什么:
 
 \begin{tcblisting}{commandshell={}}
 Thread 140471890347840: preparing work
@@ -279,6 +279,6 @@ Thread 140471890347840: work done. Produced ints are: 4, 3, 1, 0, 2,
 
 主线程用于启动池上的工作，然后等待结果。然后，池中的三个线程产生数字。最后安排的任务实际上是第一个运行的任务，产生数字4。这是因为它一直在执行\texttt{do\_routine\_work}:首先，调度池中的其他任务，然后在调用\texttt{when\_all\_ready}时开始执行第一个任务。稍后，执行继续进行，第一个空闲线程接受池上调度的下一个任务，直到整个数组填满。最后，执行返回到主线程。
 
-这个小例子到此结束。通过它，我们就结束了本章的最后一部分。现在来回顾一下本章了解到的内容。
+这个例子到此结束。通过它，我们就结束了本章的最后一部分。现在来回顾一下本章了解到的内容。
 
 
