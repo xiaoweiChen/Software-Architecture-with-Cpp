@@ -1,10 +1,10 @@
-可以通过使用现代的C++结构，来减少代码中常见安全漏洞的数量，而不是使用较老的C等价代码。然而，总是有更安全的抽象也证明是脆弱的。仅仅选择更安全的实现，并认为已经尽了最大努力是不够的。大多数情况下，有一些方法可以进一步加强代码。
+可以通过使用现代的C++结构，来减少代码中常见安全漏洞的数量，而不是使用较老的C代码。然而，总是有更安全的抽象也证明是脆弱的。仅仅选择更安全的实现，并认为已经尽了最大努力是不够的。大多数情况下，有一些方法可以加强代码。
 
-但是什么是加强代码？根据定义，是减少系统表面脆弱性的过程。通常，这意味着关闭不使用的功能，并着眼于更简单的系统而不是复杂的系统。这还可能使用工具来增加现有功能的健壮性。
+什么是加强代码？根据定义，是减少系统表面脆弱性的过程。通常，这意味着关闭不使用的功能，并着眼于更简单的系统而不是复杂的系统。这还可能使用工具来增加现有功能的健壮性。
 
 当应用于操作系统级别时，这些工具可能意味着内核补丁、防火墙和入侵检测系统(IDS)。在应用程序级别，这可能意味着各种缓冲区溢出和下溢保护机制，使用容器和虚拟机(VM)进行特权隔离和进程隔离，或强制加密通信和存储。
 
-本节中，我们将关注应用程序级别的一些示例，而下一节将关注操作系统级别。
+本节中，将关注应用程序级别的一些示例，而下一节将关注操作系统级别。
 
 \subsubsubsection{10.4.1\hspace{0.2cm}面向安全性的内存分配器}
 
@@ -18,13 +18,13 @@ FreeGuard，可在\url{https://github.com/UTSASRG/FreeGuard}获得，并在\url{
 GrapheneOS项目的hardened\_malloc，可在\url{https://github.com/GrapheneOS/hardened\_malloc}处获得
 \end{itemize}
 
-FreeGuard于2017年发布，自那以来除了零星的bug修复外，并没有太大的变化。另一方面，hardened\_malloc正在积极地开发。这两个分配器都设计为作为标准malloc()的替代品。可以在不修改应用程序的情况下使用它们，只需设置LD\_PRELOAD环境变量或将库添加到/etc/preload.so配置文件中。FreeGuard的目标是Linux和64位x86系统上的Clang编译器，而hardened\_malloc的目标是更广泛的兼容性，尽管目前主要支持Android的Bionic，musl和glibc。hardened\_malloc也是基于OpenBSD的alloc, OpenBSD本身就是以安全为中心的项目。
+FreeGuard于2017年发布，自那以后除了零星的bug修复外，并没有太大的变化。另一方面，hardened\_malloc在积极地开发。这两个分配器都设计为作为标准malloc()的替代品。可以在不修改应用程序的情况下使用它们，只需设置LD\_PRELOAD环境变量或将库添加到/etc/preload.so配置文件中。FreeGuard的目标是Linux和64位x86系统上的Clang编译器，而hardened\_malloc的目标是更广泛的兼容性，尽管目前主要支持Android的Bionic，musl和glibc。hardened\_malloc也是基于OpenBSD的alloc，OpenBSD本身就是以安全为中心的项目。
 
-可以将所使用的集合替换为更安全的等价物，而不是替换内存分配器。SaferCPlusPlus(\url{https://duneroadrunner.github.io/SaferCPlusPlus/})项目提供了\texttt{std::vector<>}、\texttt{std::array<>}和\texttt{std::string}的替代品，这些替代品可以作为现有代码中的临时替换。该项目还包括防止未初始化使用或符号不匹配的基本类型的替代品、并发数据类型，以及指针和引用的替代品。
+可以将所使用的集合替换为更安全的等价物，而不是替换内存分配器。SaferCPlusPlus(\url{https://duneroadrunner.github.io/SaferCPlusPlus/})项目提供了\texttt{std::vector<>}、\texttt{std::array<>}和\texttt{std::string}的替代品，这些可以作为现有代码中的临时替换。该项目还包括防止未初始化使用或符号不匹配的基本类型的替代品、并发数据类型，以及指针和引用的替代品。
 
 \subsubsubsection{10.4.2\hspace{0.2cm}自动检查}
 
-有一些工具可以有助于确保正在构建的系统的安全性。
+一些工具可以有助于确保正在构建的系统的安全性。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -32,7 +32,7 @@ FreeGuard于2017年发布，自那以来除了零星的bug修复外，并没有�
 
 虽然编译器警告本身不是一种工具，但可以使用并调整编译器警告，以获得每个C++开发人员都将使用的工具——C++编译器——更好的输出。
 
-因为编译器可以做一些比标准要求的更深入的检查，所以建议利用这种可能性。当使用GCC或Clang等编译器时，推荐的设置包括\texttt{-Wall -Wextra}标志。这将产生更多的诊断信息，并在代码没有遵循诊断时产生警告。如果希望更严格一些，还可以启用\texttt{-Werror}，它会把所有警告转换为错误，并防止编译没有通过增强诊断的代码。如果想严格遵守标准，有\texttt{-pedantic}和\texttt{-pedanticerrors}标志，它们将检查代码是否符合标准。
+因为编译器可以做一些比标准要求的更深入的检查，所以建议利用这种可能性。当使用GCC或Clang等编译器时，推荐的设置包括\texttt{-Wall -Wextra}标志。这将产生更多的诊断信息，并在代码没有遵循诊断时产生警告。如果希望更严格一些，还可以启用\texttt{-Werror}，它会把所有警告转换为错误，并防止编译没有通过增强诊断的代码。如果想严格遵守标准，有\texttt{-pedantic}和\texttt{-pedanticerrors}标志，将检查代码是否符合标准。
 
 当使用CMake进行构建时，可以使用以下函数在编译期间启用这些标志:
 
@@ -50,7 +50,7 @@ target_compile_options(customer PRIVATE -Werror -Wall -Wextra)
 \noindent
 \textbf{静态分析}
 
-有一类工具可以提高代码的安全性，这就是所谓的静态应用程序安全测试(SAST)工具。它们是只关注安全方面的静态分析工具。
+有一类工具可以提高代码的安全性，这就是所谓的静态应用程序安全测试(SAST)工具，只关注安全方面的静态分析工具。
 
 SAST工具可以很好地集成到CI/CD流水中，它们只是读取源代码。输出通常也适用于CI/CD，因为它突出了源代码中特定位置发现的问题。另一方面，静态分析可能会忽略许多类型的问题，这些问题无法自动找到，或者仅通过静态分析无法找到。这些工具也不关心与配置相关的问题，因为配置文件没有在源代码本身中表示。
 
@@ -58,7 +58,7 @@ C++ SAST工具的例子包括以下开源解决方案:
 
 \begin{itemize}
 \item 
-Cppcheck(\url{http://cppcheck.sourceforge.net/})，是一个通用的静态分析工具，专注于低误报数量
+Cppcheck(\url{http://cppcheck.sourceforge.net/})，是一个通用的静态分析工具，专注于消除误报
 
 \item 
 Flawfinder(\url{https://dwheeler.com/flawfinder/})，似乎没有积极地维护
@@ -70,7 +70,7 @@ LGTM(\url{https://lgtm.com/help/lgtm/about-lgtm})，支持几种不同的语言�
 SonarQube(\url{https://www.sonarqube.org/})，可以很好的CI/CD集成和语言覆盖，并提供了一个商业版本
 
 \item 
-Checkmarx CxSAST(\url{https://www.checkmarx.com/products/staticapplication-security-testing/})，它可以零配置和语言覆盖
+Checkmarx CxSAST(\url{https://www.checkmarx.com/products/staticapplication-security-testing/})，可以零配置和语言覆盖
 
 \item 
 CodeSonar(\url{https://www.grammatech.com/products/codesonar})，专注于深度分析和发现缺陷
@@ -100,9 +100,9 @@ Veracode静态分析(\url{https://www.veracode.com/products/binarystatic-analysi
 
 就像对源代码执行静态分析一样，对生成的二进制文件执行动态分析，名称中的“动态”是指观察代码在动作中处理的实际数据。当关注安全性时，这类工具也可以称为动态应用程序安全测试(DAST)。
 
-与SAST相比，主要优势是可以找到许多从源代码分析角度看不到的流。当然，这也带来了一个缺点，必须运行应用程序才能执行分析。我们知道，运行应用程序可能既耗时又耗内存。
+与SAST相比，主要优势是可以找到许多从源代码分析角度看不到的流。当然，这也有缺点，必须运行应用程序才能执行分析，这可能既耗时又耗内存。
 
-DAST工具通常专注于Web相关的漏洞，如XSS、SQL(和其他)注入，或公开的敏感信息。下一小节中，将更多地关注更通用的动态分析工具之一Valgrind。
+DAST工具通常专注于Web相关的漏洞，如XSS、SQL(和其他)注入，或公开的敏感信息。下一小节中，将更多地关注更通用的动态分析工具Valgrind。
 
 \hspace*{\fill} \\ %插入空行
 \noindent
@@ -124,11 +124,11 @@ AddressSanitizer(ASan)保护代码免受与内存寻址相关的问题，例如�
 
 AddressSanitizerLeakSanitizer(LSan)集成了ASan来查找内存泄漏，默认在x86\_64 Linux和x86\_64 macOS上启用。需要设置一个环境变量，\texttt{ASAN\_OPTIONS=detect\_leaks=1}，这样LSan在过程结束时就可以执行泄漏检测。LSan也可以作为一个独立的库使用，而不需要AddressSanitizer，但是这种模式的测试要少得多。
 
-正如前面提到的，threadsantizer(TSan)可以检测并发性问题，如数据竞争和死锁。可以使用\texttt{-fsanitize=thread}标志来启用。
+Threadsantizer(TSan)可以检测并发性问题，如数据竞争和死锁。可以使用\texttt{-fsanitize=thread}标志来启用。
 
 MemorySanitizer(MSan)专注于与访问未初始化内存相关的bug，实现了在前一小节中介绍的Valgrind的一些特性。MSan支持64位x86、ARM、PowerPC和MIPS平台。可以使用Clang的\texttt{-fsanitize=memory -fPIE -pie}标志来启用(还会打开独立于位置的可执行文件，这个稍后会讨论)。
 
-硬件辅助地址消杀程序(HWASAN)类似于常规的ASan。主要区别是在可能的情况下使用硬件辅助。目前，该特性仅在64位ARM架构上可用。
+硬件辅助地址消杀程序(HWASAN)类似于常规的ASan。主要区别是在可能的情况下使用硬件辅助，该特性目前仅在64位ARM架构上可用。
 
 UndefinedBehaviorSanitizer(UBSan)查找未定义行为的其他可能原因，如整数溢出、被零除或不当的位移位操作。可以使用Clang的\texttt{-fsanitize=undefined}标志来启用它。
 
@@ -162,7 +162,7 @@ Google的ClusterFuzz: \url{https://github.com/google/clusterfuzz} (和OSSFuzz: \
 
 这样，应用程序的崩溃、泄漏和安全问题就不会传播到整个系统，从而使它变得无用或受损。由于每个进程都有自己的沙箱，最坏的情况是只丢失这一个服务。
 
-对于C和C++代码，也有沙盒API(SAPI：\url{https://github.com/google/sandboxed-api})是一个由谷歌领导的开源项目，允许为库而不是整个过程构建沙盒。它在谷歌自己的Chrome和Chromium网络浏览器中就有使用。
+对于C和C++代码，也有沙盒API(SAPI：\url{https://github.com/google/sandboxed-api})是一个由Google领导的开源项目，允许为库而不是整个过程构建沙盒。它在Google的Chrome和Chromium网络浏览器中就有使用。
 
 尽管VM和容器可以是过程隔离策略的一部分，但不要将它们与微服务混淆，后者通常使用类似的构建块。微服务是一种架构设计模式，它们并不自动等于更好的安全性。
 

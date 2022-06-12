@@ -1,7 +1,7 @@
 
-至于框架，目前的标准是谷歌的GTest。它们与对应的GMock组成了一个小型工具套件，可以遵循C++测试的最佳实践。
+至于框架，目前的标准是Google的GTest，与对应的GMock组成了一个小型工具套件，可以遵循C++测试的最佳实践。
 
-GTest/GMock组合的其他替代是Catch2、CppUnit和Doctest。CppUnit已经存在很长一段时间了，但缺少更新，所以不推荐使用。Catch2和Doctest都支持现代C++标准——特别是C++14、C++17和C++20。
+GTest/GMock组合的其他替代方案是Catch2、CppUnit和Doctest。CppUnit已经存在很长一段时间了，但缺少更新，所以不推荐使用。Catch2和Doctest都支持现代C++标准——特别是C++14、C++17和C++20。
 
 为了比较这些测试框架，将使用想要测试的代码库。以它为基础，在每个框架中实现测试。
 
@@ -49,9 +49,9 @@ TEST_CASE("Basic responses",
 
 \subsubsubsection{8.3.3\hspace{0.2cm}CppUnit}
 
-下面是用CppUnit编写的测试示例，我们将把它分成几个片段。
+下面是用CppUnit编写的测试示例，将把它分成几个片段。
 
-下面的代码为使用CppUnit库中的构造做了准备工作:
+代码为使用CppUnit库中的构造做了准备工作:
 
 \begin{lstlisting}[style=styleCXX]
 #include <cppunit/BriefTestProgressListener.h>
@@ -72,7 +72,7 @@ using namespace CppUnit;
 using namespace std;
 \end{lstlisting}
 
-接下来，必须定义测试类并实现执行测试用例的方法。之后，必须注册这个类，以便在测试运行器中使用它:
+接下来，必须定义测试类并实现执行测试用例的方法。之后，注册这个类，以便在测试运行器中使用:
 
 \begin{lstlisting}[style=styleCXX]
 class TestBasicResponses : public CppUnit::TestFixture {
@@ -146,7 +146,7 @@ TEST_CASE("Basic responses") {
 
 \subsubsubsection{8.3.5\hspace{0.2cm}编译时测试}
 
-模板元编程允许编写在编译时执行的C++代码。在C++11中添加的\texttt{constexpr}关键字允许开发者使用更多的编译时代码，而C++20中的\texttt{consteval}关键字旨在对代码的计算方式有更大的控制权。
+模板元编程允许编写在编译时执行的C++代码。C++11中添加的\texttt{constexpr}关键字允许开发者使用更多的编译时代码，而C++20中的\texttt{consteval}关键字旨在对代码的计算方式有更大的控制权。
 
 编译时编程的问题是没有简单的方法来进行测试。虽然用于执行时代码的单元测试框架非常丰富(正如刚才看到的)，但关于编译时编程的资源并不多。部分原因可能是编译时编程仍然很复杂，而且只针对专家。
 
