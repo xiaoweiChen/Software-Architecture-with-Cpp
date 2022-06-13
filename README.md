@@ -75,7 +75,7 @@ Design modern systems using effective architecture concepts, design patterns, an
 
 ## 本书相关
 
-* github翻译地址：https://github.com/xiaoweiChen/XXXX
+* github翻译地址：https://github.com/xiaoweiChen/Software-Architecture-with-Cpp
 * 本书源码：https://github.com/PacktPublishing/Software-Architecture-with-Cpp
 * 译文的LaTeX 环境配置：https://www.cnblogs.com/1625--H/p/11524968.html 
 * vscode中配置latex：https://blog.csdn.net/Ruins_LEE/article/details/123555016
