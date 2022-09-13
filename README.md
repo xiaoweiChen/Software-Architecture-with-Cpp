@@ -4,6 +4,8 @@ Design modern systems using effective architecture concepts, design patterns, an
 
 (*使用有效的架构计模式和C++20进行系统设计*)
 
+<a><img src="cover.png" height="256px" align="right"></a>
+
 * 作者：Adrian Ostrowski，Piotr Gaczkowski
 
 * 译者：陈晓伟
